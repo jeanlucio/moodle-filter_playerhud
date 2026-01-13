@@ -1,25 +1,21 @@
 <?php
 // O namespace diz ao Moodle onde este arquivo mora.
-// Equivalente a pasta: filter/playerhud/classes
 namespace filter_playerhud;
 
 defined('MOODLE_INTERNAL') || die();
 
-// A classe agora se chama "text_filter" e extende a classe global "\moodle_text_filter"
 class text_filter extends \moodle_text_filter {
     
     public function filter($text, array $options = array()) {
         global $USER, $DB, $OUTPUT, $COURSE;
 
         // 1. Verificação rápida (Performance)
-        // Se o texto não tem nenhum código nosso, retorna logo.
         if (strpos($text, '[PLAYERHUD_') === false) {
             return $text;
         }
 
-        // 2. Segurança
+        // 2. Segurança: Se não estiver logado ou for visitante, esconde os códigos
         if (!isloggedin() || isguestuser() || $COURSE->id == SITEID) {
-            // Limpa os códigos para não aparecer texto estranho para visitantes
             $text = str_replace('[PLAYERHUD_WIDGET]', '', $text);
             $text = preg_replace('/\[PLAYERHUD_ITEM id=\d+\]/', '', $text);
             return $text; 
@@ -31,7 +27,6 @@ class text_filter extends \moodle_text_filter {
         if (!$playerhud) {
             // Se o professor ainda não criou a atividade
             if (has_capability('moodle/course:update', \context_course::instance($COURSE->id))) {
-                // Mostra aviso discreto apenas se tentar usar o widget
                 if (strpos($text, '[PLAYERHUD_WIDGET]') !== false) {
                     return '<div class="alert alert-warning">Aviso: Crie uma atividade PlayerHUD neste curso para ativar o Widget.</div>';
                 }
@@ -50,12 +45,14 @@ class text_filter extends \moodle_text_filter {
             
             // Busca dados do Jogador
             $player = \mod_playerhud\game::get_player($playerhud->id, $USER->id);
-            $current_xp = $player->currentxp;
             
-            // Cálculo de Nível
-            $level = floor($current_xp / 100) + 1;
-            $next_level_xp = $level * 100;
-            $width = ($next_level_xp > 0) ? ($current_xp / $next_level_xp) * 100 : 0;
+            // --- CORREÇÃO AQUI: USA A NOVA FUNÇÃO get_game_stats ---
+            $stats = \mod_playerhud\game::get_game_stats($playerhud->id, $player->currentxp);
+            
+            $current_xp = $player->currentxp;
+            $level      = $stats['level'];
+            $total_xp   = $stats['total_game_xp']; // Meta Total do Jogo
+            $width      = $stats['progress'];      // Porcentagem (0-100)
             
             // Busca itens (limitado a 4)
             $items = \mod_playerhud\game::get_inventory($USER->id, $playerhud->id);
@@ -77,7 +74,7 @@ class text_filter extends \moodle_text_filter {
                     <div class="flex-grow-1" style="min-width: 200px;">
                         <div class="d-flex justify-content-between small text-muted mb-1">
                             <span>XP Atual: <strong>'.$current_xp.'</strong></span>
-                            <span>Próximo Nível: '.$next_level_xp.'</span>
+                            <span>Meta do Curso: '.$total_xp.'</span>
                         </div>
                         <div class="progress" style="height: 12px; border-radius: 6px; background-color: #e9ecef;">
                             <div class="progress-bar bg-success" role="progressbar" style="width: '.$width.'%;"></div>
@@ -120,16 +117,12 @@ class text_filter extends \moodle_text_filter {
         // =========================================================
         // PARTE 2: ITENS COLETÁVEIS [PLAYERHUD_ITEM id=X]
         // =========================================================
-        
-        // Expressão regular para achar todos os códigos [PLAYERHUD_ITEM id=123]
         $pattern = '/\[PLAYERHUD_ITEM id=(\d+)\]/i';
         
         if (preg_match_all($pattern, $text, $matches)) {
-            // $matches[1] contém a lista de IDs encontrados (ex: 1, 2)
             foreach ($matches[1] as $key => $itemid) {
-                $fullcode = $matches[0][$key]; // O código completo para substituir
+                $fullcode = $matches[0][$key];
                 
-                // Busca o item no banco
                 $item = $DB->get_record('playerhud_items', ['id' => $itemid]);
                 
                 if (!$item) {
@@ -137,11 +130,10 @@ class text_filter extends \moodle_text_filter {
                     continue;
                 }
 
-                // Verifica se o aluno já tem o item
                 $has_item = \mod_playerhud\game::has_item($USER->id, $itemid);
 
                 if ($has_item) {
-                    // --- CASO A: JÁ TEM (Verde) ---
+                    // JÁ TEM (Verde)
                     $replacement = '
                     <div class="playerhud-collect-card collected" style="border: 2px solid #28a745; background: #e8f5e9; padding: 15px; border-radius: 8px; display: inline-flex; align-items: center; gap: 15px; margin: 10px 0;">
                         <div style="font-size: 30px;">✅</div>
@@ -151,12 +143,9 @@ class text_filter extends \moodle_text_filter {
                         </div>
                     </div>';
                 } else {
-                    // --- CASO B: NÃO TEM (Botão de Pegar) ---
-                    
-                    // Cria link para o arquivo collect.php
+                    // DISPONÍVEL (Botão)
                     $collecturl = new \moodle_url('/mod/playerhud/collect.php', ['id' => $cm->id, 'itemid' => $item->id]);
                     
-                    // Verifica se é imagem URL ou Emoji
                     $icon = (strpos($item->image, 'http') === 0) 
                         ? '<img src="'.$item->image.'" style="width:40px; height:40px; object-fit:contain;">' 
                         : '<span style="font-size:30px;">'.$item->image.'</span>';
@@ -171,8 +160,6 @@ class text_filter extends \moodle_text_filter {
                         <a href="'.$collecturl->out().'" class="btn btn-primary btn-sm">🖐 Pegar Item</a>
                     </div>';
                 }
-
-                // Troca o código pelo HTML gerado
                 $text = str_replace($fullcode, $replacement, $text);
             }
         }
