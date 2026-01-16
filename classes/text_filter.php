@@ -61,7 +61,7 @@ class text_filter extends \moodle_text_filter {
              // 3. Monta a lista visual (Cards)
              $widget_items_html = '';
              $items_shown = 0;
-             $MAX_ITEMS_WIDGET = 6; // Mostrar até 6 itens no topo para não quebrar layout
+             $MAX_ITEMS_WIDGET = 4; // Mostrar até 4 itens no topo para não quebrar layout
 
              foreach ($all_items as $item) {
                 if ($items_shown >= $MAX_ITEMS_WIDGET) break;
