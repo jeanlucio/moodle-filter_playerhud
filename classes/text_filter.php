@@ -231,6 +231,110 @@ class text_filter extends \moodle_text_filter {
         }
 
         // =========================================================
+        // PARTE 2.5: CARTÃO DE TROCA (SHOP SHORTCODE)
+        // =========================================================
+        $pattern_trade = '/\[PLAYERHUD_TRADE id=(\d+)\]/i';
+        if (preg_match_all($pattern_trade, $text, $matches_trade)) {
+            
+            foreach ($matches_trade[1] as $key => $tradeid) {
+                $fullcode = $matches_trade[0][$key];
+                
+                // 1. Busca a Troca
+                $trade = $DB->get_record('playerhud_trades', ['id' => $tradeid]);
+                if (!$trade) { 
+                    $text = str_replace($fullcode, '', $text); 
+                    continue; 
+                }
+
+                // 2. Verificações de Grupo
+                if ($trade->groupid > 0) {
+                    if (!groups_is_member($trade->groupid, $USER->id)) {
+                        // Se não é do grupo, esconde
+                        $text = str_replace($fullcode, '', $text); 
+                        continue;
+                    }
+                }
+
+                // 3. Busca Requisitos (Paga)
+                $sql_req = "SELECT r.*, i.name, i.image 
+                              FROM {playerhud_trade_requirements} r
+                              JOIN {playerhud_items} i ON r.itemid = i.id
+                             WHERE r.tradeid = :tid";
+                $reqs = $DB->get_records_sql($sql_req, ['tid' => $trade->id]);
+
+                // 4. Busca Recompensas (Recebe)
+                $sql_rew = "SELECT r.*, i.name, i.image, i.xp
+                              FROM {playerhud_trade_rewards} r
+                              JOIN {playerhud_items} i ON r.itemid = i.id
+                             WHERE r.tradeid = :tid";
+                $rews = $DB->get_records_sql($sql_rew, ['tid' => $trade->id]);
+
+                // --- MONTAGEM DO HTML ---
+                
+                // HTML dos Requisitos
+                $html_req = '';
+                foreach ($reqs as $r) {
+                    $media = \mod_playerhud\utils::get_item_display_data((object)['id'=>$r->itemid, 'image'=>$r->image], $cm->context);
+                    $icon = $media['is_image'] ? 
+                        "<img src='{$media['url']}' style='width:24px;height:24px;object-fit:contain;'>" : 
+                        "<span style='font-size:20px;'>{$media['content']}</span>";
+                    $html_req .= "<div class='mr-2 mb-1 text-center' style='line-height:1; display:inline-block;'>$icon<br><small>{$r->qty}x</small></div>";
+                }
+
+                // HTML das Recompensas
+                $html_rew = '';
+                foreach ($rews as $r) {
+                    $media = \mod_playerhud\utils::get_item_display_data((object)['id'=>$r->itemid, 'image'=>$r->image], $cm->context);
+                    $icon = $media['is_image'] ? 
+                        "<img src='{$media['url']}' style='width:24px;height:24px;object-fit:contain;'>" : 
+                        "<span style='font-size:20px;'>{$media['content']}</span>";
+                    $html_rew .= "<div class='mr-2 mb-1 text-center' style='line-height:1; display:inline-block;'>$icon<br><small>{$r->qty}x</small></div>";
+                }
+
+                // Botão de Ação
+                $process_url = new \moodle_url('/mod/playerhud/process_trade.php', ['id' => $cm->id, 'tradeid' => $trade->id, 'sesskey' => sesskey()]);
+                
+                // Verifica se já completou (se for única)
+                $is_completed = false;
+                if ($trade->onetime && $DB->record_exists('playerhud_trade_log', ['tradeid'=>$trade->id, 'userid'=>$USER->id])) {
+                    $is_completed = true;
+                }
+
+                if ($is_completed) {
+                    $btn = '<button class="btn btn-secondary btn-sm btn-block" disabled>✅ Já resgatado</button>';
+                } else {
+                    $btn = '<a href="'.$process_url->out().'" class="btn btn-primary btn-sm btn-block shadow-sm" onclick="return confirm(\'Confirmar troca?\');">🤝 Realizar Troca</a>';
+                }
+
+                // O CARD FINAL
+                $card_html = '
+                <div class="playerhud-trade-shortcode card shadow-sm mb-3" style="max-width: 400px; border: 1px solid #dee2e6;">
+                    <div class="card-header bg-white font-weight-bold py-2">
+                        ⚖️ '.format_string($trade->name).'
+                    </div>
+                    <div class="card-body p-2">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="text-center" style="width: 45%;">
+                                <div class="text-danger small font-weight-bold text-uppercase mb-1">Paga</div>
+                                '.$html_req.'
+                            </div>
+                            <div class="text-muted"><i class="fa fa-chevron-right"></i></div>
+                            <div class="text-center" style="width: 45%;">
+                                <div class="text-success small font-weight-bold text-uppercase mb-1">Recebe</div>
+                                '.$html_rew.'
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light p-2">
+                        '.$btn.'
+                    </div>
+                </div>';
+
+                $text = str_replace($fullcode, $card_html, $text);
+            }
+        }
+
+        // =========================================================
         // PARTE 3: INJEÇÃO DO SCRIPT E MODAL (GLOBAL)
         // =========================================================
         if ($needs_script) {
@@ -441,8 +545,11 @@ class text_filter extends \moodle_text_filter {
                     openModal(target);
                 }
                 
-                // Fechar modal
-                if (e.target.classList.contains("ph-modal-close-f")) {
+                // Fechar modal (Correção: usa .closest para pegar cliques no ícone interno)
+                if (e.target.closest(".ph-modal-close-f")) {
+                    // Previne comportamentos padrões se necessário
+                    e.preventDefault();
+                    
                     if (typeof jQuery !== "undefined") {
                         jQuery("#phItemModalFilter").modal("hide");
                     }
