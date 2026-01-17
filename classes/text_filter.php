@@ -29,6 +29,44 @@ class text_filter extends \moodle_text_filter {
         if (!$playerhud) return $text;
 
         $cm = get_coursemodule_from_instance('playerhud', $playerhud->id, $playerhud->course);
+
+       // 1. Busca dados do jogador
+        $player = \mod_playerhud\game::get_player($playerhud->id, $USER->id);
+        
+        // 2. Verifica se aceitou a gamificação
+        $is_gamified = ($player->enable_gamification == 1);
+
+        // 3. Verifica se é Professor/Gerente (usamos o contexto do curso)
+        $course_context = \context_course::instance($COURSE->id);
+        $is_teacher = has_capability('mod/playerhud:addinstance', $course_context);
+        
+        // =========================================================
+        // CENÁRIO 1: USUÁRIO NÃO QUER GAMIFICAR (OPT-OUT)
+        // Só esconde se estiver desligado E NÃO FOR professor
+        // =========================================================
+        if (!$is_gamified && !$is_teacher) {
+            
+            // Substitui o Widget por uma mensagem simples (Link para view.php)
+            if (strpos($text, '[PLAYERHUD_WIDGET]') !== false) {
+                $url = new \moodle_url('/mod/playerhud/view.php', ['id' => $cm->id]);
+                // HTML Discreto
+                $simple_msg = \html_writer::tag('div', 
+                    \html_writer::link($url, get_string('click_to_enable', 'filter_playerhud'), ['class' => 'btn btn-sm btn-light border']),
+                    ['class' => 'text-center my-2']
+                );
+                $text = str_replace('[PLAYERHUD_WIDGET]', $simple_msg, $text);
+            }
+
+            // Remove todos os Drops e Trocas (Esconde itens)
+            $text = preg_replace('/\[PLAYERHUD_DROP id=\d+\]/', '', $text);
+            $text = preg_replace('/\[PLAYERHUD_TRADE id=\d+\]/', '', $text);
+
+            return $text; // Retorna aqui, economizando processamento
+        }
+        // =========================================================
+        // CENÁRIO 2: USUÁRIO GAMIFICADO OU PROFESSOR (SEGUE O FLUXO NORMAL)
+        // =========================================================
+
         $cm->context = \context_module::instance($cm->id);
         
         $needs_script = false;

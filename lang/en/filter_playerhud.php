@@ -17,4 +17,6 @@ $string['collected'] = 'Collected!';
 $string['wait'] = 'Wait:';
 $string['ready'] = 'Ready!';
 $string['take'] = '🖐 Take';
-$string['yours'] = 'Owned: {$a}'; // {$a} será substituído pelo número
+$string['yours'] = 'Owned: {$a}'; 
+
+$string['click_to_enable'] = '✨ Click to enable Gamification';

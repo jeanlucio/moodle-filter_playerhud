@@ -20,3 +20,5 @@ $string['wait'] = 'Aguarde:';
 $string['ready'] = 'Pronto!';
 $string['take'] = '🖐 Pegar';
 $string['yours'] = 'Tens: {$a}';
+
+$string['click_to_enable'] = '✨ Clique para ativar sua Gamificação';
