@@ -79,8 +79,7 @@ class text_filter extends \moodle_text_filter {
              
              // Dados do Jogador
              $player = \mod_playerhud\game::get_player($playerhud->id, $USER->id);
-             $stats = \mod_playerhud\game::get_game_stats($playerhud->id, $player->currentxp);
-             
+             $stats = \mod_playerhud\game::get_game_stats($playerhud, $player->currentxp);             
              // --- LÓGICA DE ITENS (Igual ao view.php) ---
              // 1. Busca todos os itens ATIVOS e COM DROPS
              $sql_items = "SELECT i.* FROM {playerhud_items} i 
@@ -216,14 +215,34 @@ class text_filter extends \moodle_text_filter {
         }
 
         // =========================================================
-        // PARTE 2: BOTÕES DE DROP
+        // PARTE 2: BOTÕES DE DROP (COM MODOS: CARD, TEXTO, IMAGEM)
         // =========================================================
-        $pattern = '/\[PLAYERHUD_DROP id=(\d+)\]/i';
+        // Regex mais ampla para capturar atributos variados
+        // Ex: [PLAYERHUD_DROP id=10 mode=text text="Pegar Ouro"]
+        $pattern = '/\[PLAYERHUD_DROP\s+([^\]]+)\]/i';
+        
         if (preg_match_all($pattern, $text, $matches)) {
             $needs_script = true;
-            foreach ($matches[1] as $key => $dropid) {
+            
+            foreach ($matches[1] as $key => $attributes_str) {
                 $fullcode = $matches[0][$key];
                 
+                // 1. Parser de Atributos (Transforma string em array)
+                $attrs = [];
+                // Pega id=123
+                if (preg_match('/id=(\d+)/i', $attributes_str, $m)) $attrs['id'] = $m[1];
+                // Pega mode=text ou mode=image
+                if (preg_match('/mode=([a-z]+)/i', $attributes_str, $m)) $attrs['mode'] = strtolower($m[1]);
+                // Pega text="Bla bla" ou text=Bla
+                if (preg_match('/text=["\']?([^"\']*)["\']?/i', $attributes_str, $m)) $attrs['text'] = $m[1];
+                
+                // Validação Básica
+                if (empty($attrs['id'])) { continue; } // Sem ID não funciona
+                $dropid = (int)$attrs['id'];
+                $mode = isset($attrs['mode']) ? $attrs['mode'] : 'card'; // Padrão é card
+                $custom_text = isset($attrs['text']) ? $attrs['text'] : null;
+
+                // 2. Busca Dados no Banco
                 $drop = $DB->get_record('playerhud_drops', ['id' => $dropid]);
                 if (!$drop) { $text = str_replace($fullcode, '', $text); continue; }
 
@@ -233,38 +252,100 @@ class text_filter extends \moodle_text_filter {
                 $inventory = $DB->get_records('playerhud_inventory', ['userid' => $USER->id, 'dropid' => $drop->id], 'timecreated DESC');
                 $count = count($inventory);
                 $last_collected = $inventory ? reset($inventory) : null;
-                
-                // Dados visuais
-                $media_data = \mod_playerhud\utils::get_item_display_data($item, $cm->context);
-                $display_name = format_string($item->name);
-                $display_xp = ($drop->maxusage == 0) ? get_string('infinite', 'filter_playerhud') : "+".$item->xp." XP";
-                
-                if ($media_data['is_image']) {
-                    $display_icon = '<img src="'.$media_data['url'].'" style="width:40px; height:40px; object-fit:contain;">';
-                } else {
-                    $display_icon = '<span style="font-size:30px;">'.$media_data['content'].'</span>';
-                }
 
-                // Regras
+                // 3. Regras de Tempo/Limite
                 $limit_reached = ($drop->maxusage > 0 && $count >= $drop->maxusage);
                 $seconds_wait = $drop->respawntime;
                 $ready_time = $last_collected ? ($last_collected->timecreated + $seconds_wait) : 0;
                 $is_cooldown = ($last_collected && $now < $ready_time);
-                
-                $card_style = "padding: 15px; border-radius: 8px; display: inline-flex; align-items: center; gap: 15px; margin: 10px 0;";
 
-                if ($limit_reached) {
-                    $status_html = '<div class="playerhud-collect-card collected" style="border: 2px solid #28a745; background: #e8f5e9; '.$card_style.'"><div style="font-size: 30px;">✅</div><div><strong>'.$display_name.'</strong> <span class="badge badge-success badge-pill">'.$count.'</span><br><small class="text-success">'.get_string('collected', 'filter_playerhud').'</small></div></div>';
-                } elseif ($is_cooldown) {
-                    // COOLDOWN (Amarelo)
-                    $status_html = '<div class="playerhud-collect-card cooldown" style="border: 2px solid #ffc107; background: #fff3cd; '.$card_style.'"><div style="font-size: 30px; opacity: 0.5;">⏳</div><div><strong>'.$display_name.'</strong> <span class="badge badge-secondary badge-pill">'.$count.'</span><br><small class="text-muted">'.get_string('wait', 'filter_playerhud').' <strong class="ph-timer" data-deadline="'.$ready_time.'">...</strong></small></div></div>';
-                } else {
-                    // DISPONÍVEL (Botão Ativo)
-                    $collecturl = new \moodle_url('/mod/playerhud/collect.php', ['id' => $cm->id, 'dropid' => $drop->id, 'sesskey' => sesskey()]);
-                    $counter_badge = ($count > 0) ? '<span class="badge badge-info badge-pill">'.get_string('yours', 'filter_playerhud', $count).'</span>' : '';
-                    $status_html = '<div class="playerhud-collect-card available" id="ph-drop-'.$drop->id.'" style="border: 2px dashed #0f6cbf; background: #f8f9fa; '.$card_style.'"><div>'.$display_icon.'</div><div><strong>'.$display_name.'</strong> '.$counter_badge.'<br><small class="text-muted">'.$display_xp.'</small></div><a href="'.$collecturl->out().'" class="btn btn-primary btn-sm ml-3 ph-collect-btn" data-dropid="'.$drop->id.'">'.get_string('take', 'filter_playerhud').'</a></div>';
+                // 4. Prepara URL e Dados Visuais
+                $collecturl = new \moodle_url('/mod/playerhud/collect.php', ['id' => $cm->id, 'dropid' => $drop->id, 'sesskey' => sesskey()]);
+                $media_data = \mod_playerhud\utils::get_item_display_data($item, $cm->context);
+                
+                // Nome a ser exibido (Usa o customizado ou o nome do item)
+                $display_label = $custom_text ? format_string($custom_text) : format_string($item->name);
+
+                // =====================================================
+                // RENDERIZAÇÃO POR MODO
+                // =====================================================
+                $html_output = '';
+                
+                // --- MODO 1: TEXTO (Link simples) ---
+                if ($mode == 'text') {
+                    if ($limit_reached) {
+                        $html_output = '<span class="text-success" style="cursor:default;">✅ ' . $display_label . '</span>';
+                    } elseif ($is_cooldown) {
+                        $html_output = '<span class="text-muted" style="cursor:wait;" title="Aguarde...">⏳ ' . $display_label . ' <small class="ph-timer" data-deadline="'.$ready_time.'">...</small></span>';
+                    } else {
+                        // Link clicável
+                        $html_output = '<a href="'.$collecturl->out().'" class="ph-action-collect text-primary" data-mode="text">'.$display_label.'</a>';
+                    }
                 }
-                $text = str_replace($fullcode, $status_html, $text);
+                
+                // --- MODO 2: IMAGEM (Apenas o ícone) ---
+                elseif ($mode == 'image') {
+                    $img_src = $media_data['is_image'] ? $media_data['url'] : '';
+                    $emoji   = $media_data['is_image'] ? '' : $media_data['content'];
+                    
+                    $style = "transition: transform 0.2s; display:inline-block; cursor:pointer;";
+                    $timer_html = ''; // Variável para guardar o HTML do relógio
+
+                    if ($limit_reached) {
+                        $style .= "opacity: 0.5; filter: grayscale(100%); cursor: default;";
+                        $title = get_string('collected', 'filter_playerhud');
+                    } elseif ($is_cooldown) {
+                        $style .= "opacity: 0.7; cursor: wait;";
+                        $title = get_string('wait', 'filter_playerhud');
+                        // CORREÇÃO: Mostra o timer visível abaixo da imagem
+                        $timer_html = '<div class="small text-muted text-center ph-timer" style="font-size:10px; line-height:1;" data-deadline="'.$ready_time.'">...</div>';
+                    } else {
+                        $style .= "filter: drop-shadow(0 4px 2px rgba(0,0,0,0.1));";
+                        $title = get_string('take', 'filter_playerhud') . " " . $display_label;
+                    }
+
+                    $content = $media_data['is_image'] 
+                        ? '<img src="'.$img_src.'" style="width:50px; height:50px; object-fit:contain;">'
+                        : '<span style="font-size:40px;">'.$emoji.'</span>';
+
+                    if (!$limit_reached && !$is_cooldown) {
+                        // Ativo
+                        $html_output = '<a href="'.$collecturl->out().'" class="ph-action-collect ph-hover-scale" style="'.$style.'" title="'.$title.'" data-mode="image">'.$content.'</a>';
+                    } else {
+                        // Bloqueado ou Esperando (com timer embaixo)
+                        $html_output = '<div style="display:inline-block; text-align:center;">';
+                        $html_output .= '<div style="'.$style.'" title="'.$title.'">'.$content.'</div>';
+                        $html_output .= $timer_html;
+                        $html_output .= '</div>';
+                    }
+                }
+
+                // --- MODO 3: CARD (Padrão Completo) ---
+                else {
+                    // (Lógica visual original do Card)
+                    $display_name = format_string($item->name);
+                    $display_xp = ($drop->maxusage == 0) ? get_string('infinite', 'filter_playerhud') : "+".$item->xp." XP";
+                    
+                    if ($media_data['is_image']) {
+                        $display_icon = '<img src="'.$media_data['url'].'" style="width:40px; height:40px; object-fit:contain;">';
+                    } else {
+                        $display_icon = '<span style="font-size:30px;">'.$media_data['content'].'</span>';
+                    }
+
+                    $card_style = "padding: 15px; border-radius: 8px; display: inline-flex; align-items: center; gap: 15px; margin: 10px 0;";
+
+                    if ($limit_reached) {
+                        $html_output = '<div class="playerhud-collect-card collected" style="border: 2px solid #28a745; background: #e8f5e9; '.$card_style.'"><div style="font-size: 30px;">✅</div><div><strong>'.$display_name.'</strong> <span class="badge badge-success badge-pill">'.$count.'</span><br><small class="text-success">'.get_string('collected', 'filter_playerhud').'</small></div></div>';
+                    } elseif ($is_cooldown) {
+                        $html_output = '<div class="playerhud-collect-card cooldown" style="border: 2px solid #ffc107; background: #fff3cd; '.$card_style.'"><div style="font-size: 30px; opacity: 0.5;">⏳</div><div><strong>'.$display_name.'</strong> <span class="badge badge-secondary badge-pill">'.$count.'</span><br><small class="text-muted">'.get_string('wait', 'filter_playerhud').' <strong class="ph-timer" data-deadline="'.$ready_time.'">...</strong></small></div></div>';
+                    } else {
+                        $counter_badge = ($count > 0) ? '<span class="badge badge-info badge-pill">'.get_string('yours', 'filter_playerhud', $count).'</span>' : '';
+                        // Note a classe nova: ph-action-collect
+                        $html_output = '<div class="playerhud-collect-card available" style="border: 2px dashed #0f6cbf; background: #f8f9fa; '.$card_style.'"><div>'.$display_icon.'</div><div><strong>'.$display_name.'</strong> '.$counter_badge.'<br><small class="text-muted">'.$display_xp.'</small></div><a href="'.$collecturl->out().'" class="btn btn-primary btn-sm ml-3 ph-action-collect" data-mode="card">'.get_string('take', 'filter_playerhud').'</a></div>';
+                    }
+                }
+                
+                $text = str_replace($fullcode, $html_output, $text);
             }
         }
 
@@ -457,8 +538,12 @@ class text_filter extends \moodle_text_filter {
         </div>';
     }
 
-    private function get_javascript_footer() {
+private function get_javascript_footer() {
         return '
+        <style>
+            .ph-hover-scale:hover { transform: scale(1.1); }
+            .ph-loading { opacity: 0.5; pointer-events: none; cursor: wait !important; }
+        </style>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script id="ph-super-script">
         document.addEventListener("DOMContentLoaded", function() {
@@ -468,7 +553,7 @@ class text_filter extends \moodle_text_filter {
                 didOpen: (toast) => { toast.addEventListener("mouseenter", Swal.stopTimer); toast.addEventListener("mouseleave", Swal.resumeTimer); }
             });
 
-            // 1. TIMER E AUTO-RELOAD
+            // 1. TIMER E AUTO-RELOAD (Mantido igual)
             setInterval(function() {
                 var now = Math.floor(Date.now() / 1000);
                 document.querySelectorAll(".ph-timer").forEach(function(el) {
@@ -476,8 +561,6 @@ class text_filter extends \moodle_text_filter {
                     var diff = deadline - now;
                     if (diff <= 0) {
                         el.innerHTML = "'.get_string('ready', 'filter_playerhud').'";
-                        el.style.color = "green";
-                        // AUTO-RELOAD QUANDO PRONTO!
                         if (!el.getAttribute("data-reloading")) {
                             el.setAttribute("data-reloading", "true");
                             setTimeout(function(){ location.reload(); }, 1500);
@@ -490,53 +573,72 @@ class text_filter extends \moodle_text_filter {
                 });
             }, 1000);
 
-            // 2. COLETA
+            // 2. COLETA UNIFICADA (Texto, Imagem ou Card)
             document.body.addEventListener("click", function(e) {
-                if (e.target && e.target.classList.contains("ph-collect-btn")) {
+                // Procura o elemento clicado ou seu pai que tenha a classe
+                var trigger = e.target.closest(".ph-action-collect");
+                
+                if (trigger) {
                     e.preventDefault(); 
-                    var btn = e.target;
-                    var originalText = btn.innerHTML;
-                    var url = btn.getAttribute("href") + "&ajax=1";
                     
-                    btn.innerHTML = "⏳ ..."; 
-                    btn.style.opacity = "0.7";
+                    var mode = trigger.getAttribute("data-mode");
+                    var originalContent = trigger.innerHTML;
+                    var url = trigger.getAttribute("href") + "&ajax=1";
+                    
+                    // Feedback Visual de Carregamento
+                    trigger.classList.add("ph-loading");
+                    
+                    if (mode === "text") {
+                        trigger.innerHTML = "⏳ ...";
+                    } else if (mode === "card") {
+                        trigger.innerHTML = "⏳";
+                    }
+                    // Modo imagem apenas fica opaco pelo CSS ph-loading
 
                     fetch(url).then(response => response.json()).then(data => {
                         if (data.success) {
-                            Toast.fire({ icon: "success", title: data.message }).then(() => { location.reload(); });
+                            // Sucesso!
+                            Toast.fire({ icon: "success", title: data.message }).then(() => { 
+                                location.reload(); 
+                            });
+                            
+                            // Feedback imediato antes do reload
+                            if (mode === "text") {
+                                trigger.innerHTML = "✅ " + data.message;
+                                trigger.style.color = "green";
+                            }
                         } else {
+                            // Erro
                             Toast.fire({ icon: "warning", title: data.message });
-                            btn.innerHTML = originalText; 
-                            btn.style.opacity = "1";
+                            // Restaura
+                            trigger.innerHTML = originalContent; 
+                            trigger.classList.remove("ph-loading");
                         }
                     }).catch(err => { 
                         console.error(err);
-                        window.location.href = btn.getAttribute("href"); 
+                        window.location.href = trigger.getAttribute("href"); // Fallback
                     });
                 }
             });
 
-            // 3. ABRIR MODAL (WIDGET)
-            // Usamos jQuery se disponível (padrão Moodle) ou Vanilla JS
+            // 3. ABRIR MODAL (WIDGET) - Mantido igual
             var openModal = function(trigger) {
                 var name = trigger.getAttribute("data-name");
-                var infiniteTxt = trigger.getAttribute("data-infinite"); // Texto (Infinito)
+                var infiniteTxt = trigger.getAttribute("data-infinite");
                 var xp = trigger.getAttribute("data-xp");
                 var img = trigger.getAttribute("data-image");
                 var isImg = trigger.getAttribute("data-isimage");
                 var count = trigger.getAttribute("data-count");
-                
-                // Pega HTML da descrição escondida
                 var descDiv = trigger.querySelector(".ph-item-description-content");
                 var descHtml = descDiv ? descDiv.innerHTML : "";
 
-                // Preenche
-                var title = document.getElementById("phModalTitleF");
-                var nameEl = document.getElementById("phModalNameF");
-                var xpEl = document.getElementById("phModalXPF");
-                var descEl = document.getElementById("phModalDescF");
-                var badgeEl = document.getElementById("phModalCountBadgeF");
-                var imgContainer = document.getElementById("phModalImageContainerF");
+                var title = document.getElementById("phModalTitle");
+                var nameEl = document.getElementById("phModalName");
+                var xpEl = document.getElementById("phModalXP");
+                var descEl = document.getElementById("phModalDesc");
+                var badgeEl = document.getElementById("phModalCountBadge");
+                var imgContainer = document.getElementById("phModalImageContainer");
+                var dateEl = document.getElementById("phModalDate");
 
                 if(title) title.innerText = name;
                 if(nameEl) {
@@ -544,10 +646,9 @@ class text_filter extends \moodle_text_filter {
                     if(infiniteTxt) nameEl.innerHTML += "<br><small class=\'text-muted\' style=\'font-weight:normal;\'>"+infiniteTxt+"</small>";
                 }
                 if(xpEl) xpEl.innerText = xp;
-                
                 if(descEl) {
                     if (descHtml && descHtml.trim() !== "") descEl.innerHTML = descHtml;
-                    else descEl.innerHTML = "<i class=\'text-muted\'>Sem descrição.</i>";
+                    else descEl.innerHTML = "<i class=\'text-muted\'> - </i>";
                 }
 
                 if(badgeEl) {
@@ -567,33 +668,28 @@ class text_filter extends \moodle_text_filter {
                         imgContainer.innerHTML = "<span style=\'font-size: 80px;\'>"+img+"</span>";
                     }
                 }
+                
+                // Esconde data pois no widget genérico não temos essa info fácil
+                if(dateEl) dateEl.style.display = "none";
 
-                // Abre usando jQuery do Moodle (Bootstrap)
                 if (typeof jQuery !== "undefined") {
                     jQuery("#phItemModalFilter").modal("show");
                 }
             };
 
-            // Listener Global para o Widget
             document.body.addEventListener("click", function(e) {
-                // Sobe a árvore para achar o container .ph-widget-trigger
                 var target = e.target.closest(".ph-widget-trigger");
                 if (target) {
                     e.preventDefault();
                     openModal(target);
                 }
-                
-                // Fechar modal (Correção: usa .closest para pegar cliques no ícone interno)
                 if (e.target.closest(".ph-modal-close-f")) {
-                    // Previne comportamentos padrões se necessário
                     e.preventDefault();
-                    
                     if (typeof jQuery !== "undefined") {
                         jQuery("#phItemModalFilter").modal("hide");
                     }
                 }
             });
-
         });
         </script>';
     }
