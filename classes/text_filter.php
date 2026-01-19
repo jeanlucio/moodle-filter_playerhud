@@ -48,7 +48,7 @@ public function filter($text, array $options = array()) {
         // CENÁRIO 1: USUÁRIO NÃO QUER GAMIFICAR (OPT-OUT)
         // Só esconde se estiver desligado E NÃO FOR professor
         // =========================================================
-        if (!$is_gamified && !$is_teacher) {
+        if (!$is_gamified) {
             
             // Substitui o Widget por uma mensagem simples (Link para view.php)
             if (strpos($text, '[PLAYERHUD_WIDGET]') !== false) {
@@ -139,17 +139,38 @@ public function filter($text, array $options = array()) {
 
                 // Se NÃO TEM (Desenha cinza)
                 if (empty($user_copies)) {
-                    // ... (código do item vazio/cinza mantido igual) ...
-                    // Apenas certifique-se de que aqui dentro também não excede
+                    
+                    // 1. Define o visual (Cinza/Transparente)
+                    $style = "width:30px; height:30px; object-fit:contain; filter: grayscale(100%); opacity: 0.4;";
+                    
+                    if ($media_data['is_image']) {
+                         $display = \html_writer::empty_tag('img', ['src' => $media_data['url'], 'style' => $style]);
+                    } else {
+                         $display = \html_writer::span($media_data['content'], '', ['style' => "font-size:24px; $style"]);
+                    }
+
+                    // 2. CORREÇÃO: Define as variáveis que estavam faltando e causando o erro
+                    $tooltip = format_string($item->name) . " " . get_string('not_collected', 'mod_playerhud');
+                    $trigger_class = "ph-widget-trigger"; // Permite clicar para ver detalhes mesmo sem ter
+
+                    // 3. Renderiza se houver espaço
                     if ($items_shown < $MAX_ITEMS_WIDGET) {
-                        // ... lógica de renderização do item vazio ...
-                        // (Se quiser economizar espaço aqui, vou resumir a chamada:)
-                        $widget_items_html .= $this->render_mini_card($item, $display, $tooltip, $trigger_class, $media_data, false, 0, "", "");
+                        $widget_items_html .= $this->render_mini_card(
+                            $item, 
+                            $display, 
+                            $tooltip, 
+                            $trigger_class, 
+                            $media_data, 
+                            false, // has_it
+                            0,     // count
+                            "",    // badge_label
+                            ""     // infinite_text
+                        );
                         $items_shown++;
                     }
 
                 } else {
-                    // SE TEM (Separa Finito e Infinito)
+                    // SE TEM (Separa Finito e Infinito) - MANTIDO IGUAL
                     $stack_finite = 0;
                     $stack_infinite = 0;
                     
@@ -171,7 +192,7 @@ public function filter($text, array $options = array()) {
                              $display = \html_writer::span($media_data['content'], '', ['style' => "font-size:24px; $style"]);
                         }
                         
-                        $badge_label = "x{$stack_finite}"; // Simplificado conforme seu pedido anterior
+                        $badge_label = "x{$stack_finite}";
 
                         $widget_items_html .= $this->render_mini_card($item, $display, format_string($item->name), "ph-widget-trigger", $media_data, true, $stack_finite, $badge_label, "");
                         $items_shown++;
@@ -196,29 +217,54 @@ public function filter($text, array $options = array()) {
              
              $url = new \moodle_url('/mod/playerhud/view.php', ['id' => $cm->id]);
              
-            // HTML DO WIDGET
+            // --- LÓGICA DO RANKING (FINAL) ---
+             $rank_html = '';
+             
+             // Só exibe se: Ranking Ativo + Aluno Visível + NÃO é Professor
+             if (!empty($playerhud->enable_ranking) && $player->ranking_visibility == 1 && !$is_teacher) {
+                 
+                 $my_rank = \mod_playerhud\game::get_user_rank($playerhud->id, $USER->id, $player->currentxp);
+                 $rank_icon = ($my_rank <= 3) ? '🏆' : '#';
+                 
+                 $rank_url = new \moodle_url('/mod/playerhud/view.php', ['id' => $cm->id, 'tab' => 'ranking']);
+
+                 $rank_html = '<a href="'.$rank_url->out().'" class="badge badge-light border text-decoration-none ml-2" title="'.get_string('view_ranking', 'mod_playerhud').'" style="font-size: 0.9em;">
+                                 '.$rank_icon.' '.$my_rank.'
+                               </a>';
+             }
+
+             // HTML DO WIDGET
              $html = '
             <div class="playerhud-widget-bar" style="background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #dee2e6; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
                 <div class="d-flex align-items-center flex-wrap gap-3">
                     
+     
                     <div class="d-flex align-items-center mr-4">' .
                         $OUTPUT->user_picture($USER, ['size' => 50]) . '
                         <div class="ml-2" style="margin-left: 10px;">
                             <div style="font-weight: bold; font-size: 1.1em;">' . fullname($USER) . '</div>
-                            <div class="badge badge-pill '.$stats['level_class'].'" style="font-size: 0.9em;">
-                                '.get_string('level', 'filter_playerhud').' '.$stats['level'].' / '.$stats['max_levels'].'
+                            
+                            <div class="d-flex align-items-center mt-1">
+                                <div class="badge badge-pill '.$stats['level_class'].'" style="font-size: 0.9em;">
+                                    '.get_string('level', 'filter_playerhud').' '.$stats['level'].' / '.$stats['max_levels'].'
+                                </div>
+                                '.$rank_html.'
                             </div>
+
                         </div>
                     </div> <div class="flex-grow-1" style="min-width: 200px;">
                         <div class="d-flex justify-content-between small text-muted mb-1">
+                    
                             <span>'.get_string('currentxp', 'filter_playerhud').': <strong>'.$player->currentxp.'</strong></span>
                             <span>'.get_string('coursegoal', 'filter_playerhud').': '.$stats['total_game_xp'].'</span>
                         </div>
                         <div class="progress" style="height: 12px; border-radius: 6px; background-color: #e9ecef;">
+     
                             <div class="progress-bar bg-success" role="progressbar" style="width: '.$stats['progress'].'%;"></div>
                         </div>
                     </div>
             
+                
                     <div class="d-flex align-items-center gap-2 pl-3" style="border-left: 1px solid #eee; padding-left: 15px;">
                         <div class="text-muted small mr-2" style="white-space: nowrap;">'.get_string('items', 'filter_playerhud').'</div>' .
                         $widget_items_html . 
