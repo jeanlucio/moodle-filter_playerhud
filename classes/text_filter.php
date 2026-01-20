@@ -6,174 +6,119 @@ defined('MOODLE_INTERNAL') || die();
 class text_filter extends \moodle_text_filter {
     
     protected static $course_huds = [];
-    protected static $modal_injected = false; // Controle para não duplicar o modal na página
+    protected static $modal_injected = false; 
 
-public function filter($text, array $options = array()) {
+    public function filter($text, array $options = array()) {
         global $USER, $DB, $OUTPUT, $COURSE;
 
         // 1. Verificação Rápida
         if (strpos($text, '[PLAYERHUD_') === false) { return $text; }
 
-        // 2. Verifica permissões
-        // Se não estiver logado ou for visitante, remove TUDO
+        // 2. Verifica permissões e contexto
         if (!isloggedin() || isguestuser() || $COURSE->id == SITEID) {
             $text = str_replace('[PLAYERHUD_WIDGET]', '', $text);
-            // CORREÇÃO: Regex mais ampla para pegar qualquer atributo dentro do colchete
             $text = preg_replace('/\[PLAYERHUD_DROP\s+[^\]]+\]/', '', $text);
             $text = preg_replace('/\[PLAYERHUD_TRADE\s+[^\]]+\]/', '', $text);
             return $text; 
         }
 
-        // 3. CACHE DO HUD
+        // 3. Cache da Instância
         if (!isset(self::$course_huds[$COURSE->id])) {
             self::$course_huds[$COURSE->id] = $DB->get_record('playerhud', ['course' => $COURSE->id], '*', IGNORE_MULTIPLE);
         }
         $playerhud = self::$course_huds[$COURSE->id];
-        if (!$playerhud) return $text;
+        
+        if (!$playerhud) {
+            $text = str_replace('[PLAYERHUD_WIDGET]', '', $text);
+            return $text;
+        }
 
         $cm = get_coursemodule_from_instance('playerhud', $playerhud->id, $playerhud->course);
-
-        // 1. Busca dados do jogador
         $player = \mod_playerhud\game::get_player($playerhud->id, $USER->id);
         
-        // 2. Verifica se aceitou a gamificação
-        // CORREÇÃO DO WARNING: Usamos !empty() para evitar erro se a propriedade não existir ainda
+        // Verifica Opt-in
         $is_gamified = (!empty($player->enable_gamification) && $player->enable_gamification == 1);
-
-        // 3. Verifica se é Professor/Gerente
         $course_context = \context_course::instance($COURSE->id);
         $is_teacher = has_capability('mod/playerhud:addinstance', $course_context);
-        
-        // =========================================================
-        // CENÁRIO 1: USUÁRIO NÃO QUER GAMIFICAR (OPT-OUT)
-        // Só esconde se estiver desligado E NÃO FOR professor
-        // =========================================================
+
+        // CENÁRIO: USUÁRIO OFF (OPT-OUT)
         if (!$is_gamified) {
-            
-            // Substitui o Widget por uma mensagem simples (Link para view.php)
             if (strpos($text, '[PLAYERHUD_WIDGET]') !== false) {
                 $url = new \moodle_url('/mod/playerhud/view.php', ['id' => $cm->id]);
-                // HTML Discreto
                 $simple_msg = \html_writer::tag('div', 
-                    \html_writer::link($url, get_string('click_to_enable', 'filter_playerhud'), ['class' => 'btn btn-sm btn-light border']),
-                    ['class' => 'text-center my-2']
+                    \html_writer::link($url, get_string('click_to_enable', 'filter_playerhud'), ['class' => 'btn btn-sm btn-light border shadow-sm']),
+                    ['class' => 'text-center my-3']
                 );
                 $text = str_replace('[PLAYERHUD_WIDGET]', $simple_msg, $text);
             }
-
-            // CORREÇÃO: Regex agressiva para esconder drops e trades com atributos
-            // Remove tudo que começa com [PLAYERHUD_DROP ... até fechar o colchete ]
             $text = preg_replace('/\[PLAYERHUD_DROP\s+[^\]]+\]/', '', $text);
             $text = preg_replace('/\[PLAYERHUD_TRADE\s+[^\]]+\]/', '', $text);
-
-            return $text; // Retorna aqui, economizando processamento
+            return $text;
         }
-        // =========================================================
-        // CENÁRIO 2: USUÁRIO GAMIFICADO OU PROFESSOR (SEGUE O FLUXO NORMAL)
-        // =========================================================
 
+        // CENÁRIO: USUÁRIO ON
         $cm->context = \context_module::instance($cm->id);
-        
         $needs_script = false;
         $now = time();
 
-        // =========================================================
-        // PARTE 1: O WIDGET (Barra de Status + Mochila Miniatura)
-        // =========================================================
+        // --- PARTE 1: O WIDGET ---
         if (strpos($text, '[PLAYERHUD_WIDGET]') !== false) {
-             
-             // Dados do Jogador
-             $player = \mod_playerhud\game::get_player($playerhud->id, $USER->id);
              $stats = \mod_playerhud\game::get_game_stats($playerhud, $player->currentxp);             
-             // --- LÓGICA DE ITENS (Igual ao view.php) ---
-             // 1. Busca todos os itens ATIVOS e COM DROPS
+             
+             // Busca e Ordena Itens
              $sql_items = "SELECT i.* FROM {playerhud_items} i 
                            WHERE i.playerhudid = :pid AND i.enabled = 1 
                            AND EXISTS (SELECT 1 FROM {playerhud_drops} d WHERE d.itemid = i.id)
                            ORDER BY i.xp ASC";
              $all_items = $DB->get_records_sql($sql_items, ['pid' => $playerhud->id]);
-
-            // 2. Busca Inventário do Usuário (ORDENADO POR DATA DESC) [cite: 18]
              $raw_inventory = $DB->get_records('playerhud_inventory', ['userid' => $USER->id], 'timecreated DESC');
              
              $inventory_by_item = [];
-             $last_collection_map = []; // Mapa para saber quando foi a última coleta de cada item
+             $last_collection_map = [];
 
              foreach ($raw_inventory as $inv) {
                  $inventory_by_item[$inv->itemid][] = $inv;
-                 // Como a query já vem DESC, o primeiro registro encontrado é o mais recente
                  if (!isset($last_collection_map[$inv->itemid])) {
                      $last_collection_map[$inv->itemid] = $inv->timecreated;
                  }
              }
 
-             // --- ORDENAÇÃO INTELIGENTE ---
-             // Converte objetos para array para poder ordenar
+             // Ordenação
              $sorted_items = (array)$all_items;
-             
              usort($sorted_items, function($a, $b) use ($last_collection_map) {
-                 // Pega a data da última coleta (ou 0 se não tiver)
                  $time_a = isset($last_collection_map[$a->id]) ? $last_collection_map[$a->id] : 0;
                  $time_b = isset($last_collection_map[$b->id]) ? $last_collection_map[$b->id] : 0;
-
-                 if ($time_a == $time_b) {
-                     // Desempate: quem tem menor ID (ou menor XP) aparece antes se ninguém tiver nada
-                     return ($a->xp < $b->xp) ? -1 : 1; 
-                 }
-                 // Quem tem data MAIOR (mais recente) vem PRIMEIRO (-1)
+                 if ($time_a == $time_b) return ($a->xp < $b->xp) ? -1 : 1; 
                  return ($time_a > $time_b) ? -1 : 1;
              });
 
-             // 3. Monta a lista visual (Cards)
+             // Monta HTML
              $widget_items_html = '';
              $items_shown = 0;
              $MAX_ITEMS_WIDGET = 4; 
 
-             // Agora usamos a lista ordenada
              foreach ($sorted_items as $item) {
-                // Trava de segurança principal
                 if ($items_shown >= $MAX_ITEMS_WIDGET) break;
-
+                
                 $user_copies = isset($inventory_by_item[$item->id]) ? $inventory_by_item[$item->id] : [];
                 $media_data = \mod_playerhud\utils::get_item_display_data($item, $cm->context);
-
-                // Se NÃO TEM (Desenha cinza)
+                
                 if (empty($user_copies)) {
-                    
-                    // 1. Define o visual (Cinza/Transparente)
+                    // Item Faltante
                     $style = "width:30px; height:30px; object-fit:contain; filter: grayscale(100%); opacity: 0.4;";
-                    
-                    if ($media_data['is_image']) {
-                         $display = \html_writer::empty_tag('img', ['src' => $media_data['url'], 'style' => $style]);
-                    } else {
-                         $display = \html_writer::span($media_data['content'], '', ['style' => "font-size:24px; $style"]);
-                    }
+                    $display = $media_data['is_image'] ? 
+                        \html_writer::empty_tag('img', ['src' => $media_data['url'], 'style' => $style]) : 
+                        \html_writer::span($media_data['content'], '', ['style' => "font-size:24px; $style"]);
 
-                    // 2. CORREÇÃO: Define as variáveis que estavam faltando e causando o erro
-                    $tooltip = format_string($item->name) . " " . get_string('not_collected', 'mod_playerhud');
-                    $trigger_class = "ph-widget-trigger"; // Permite clicar para ver detalhes mesmo sem ter
-
-                    // 3. Renderiza se houver espaço
-                    if ($items_shown < $MAX_ITEMS_WIDGET) {
-                        $widget_items_html .= $this->render_mini_card(
-                            $item, 
-                            $display, 
-                            $tooltip, 
-                            $trigger_class, 
-                            $media_data, 
-                            false, // has_it
-                            0,     // count
-                            "",    // badge_label
-                            ""     // infinite_text
-                        );
-                        $items_shown++;
-                    }
-
+                    $widget_items_html .= $this->render_mini_card(
+                        $item, $display, format_string($item->name)." ".get_string('not_collected', 'mod_playerhud'), 
+                        "ph-widget-trigger", $media_data, false, 0, "", ""
+                    );
+                    $items_shown++;
                 } else {
-                    // SE TEM (Separa Finito e Infinito) - MANTIDO IGUAL
+                    // Item Coletado
                     $stack_finite = 0;
                     $stack_infinite = 0;
-                    
                     foreach ($user_copies as $copy) {
                         $is_infinite = false;
                         if ($copy->dropid > 0) {
@@ -183,30 +128,16 @@ public function filter($text, array $options = array()) {
                         if ($is_infinite) $stack_infinite++; else $stack_finite++;
                     }
 
-                    // Renderiza Finito (SE AINDA HOUVER ESPAÇO)
-                    if ($stack_finite > 0 && $items_shown < $MAX_ITEMS_WIDGET) {
-                        $style = "width:30px; height:30px; object-fit:contain;";
-                        if ($media_data['is_image']) {
-                             $display = \html_writer::empty_tag('img', ['src' => $media_data['url'], 'style' => $style]);
-                        } else {
-                             $display = \html_writer::span($media_data['content'], '', ['style' => "font-size:24px; $style"]);
-                        }
-                        
-                        $badge_label = "x{$stack_finite}";
+                    $style = "width:30px; height:30px; object-fit:contain;";
+                    $display = $media_data['is_image'] ? 
+                        \html_writer::empty_tag('img', ['src' => $media_data['url'], 'style' => $style]) : 
+                        \html_writer::span($media_data['content'], '', ['style' => "font-size:24px; $style"]);
 
-                        $widget_items_html .= $this->render_mini_card($item, $display, format_string($item->name), "ph-widget-trigger", $media_data, true, $stack_finite, $badge_label, "");
+                    if ($stack_finite > 0 && $items_shown < $MAX_ITEMS_WIDGET) {
+                        $widget_items_html .= $this->render_mini_card($item, $display, format_string($item->name), "ph-widget-trigger", $media_data, true, $stack_finite, "x{$stack_finite}", "");
                         $items_shown++;
                     }
-
-                    // Renderiza Infinito (SE AINDA HOUVER ESPAÇO)
                     if ($stack_infinite > 0 && $items_shown < $MAX_ITEMS_WIDGET) {
-                        $style = "width:30px; height:30px; object-fit:contain;";
-                        if ($media_data['is_image']) {
-                             $display = \html_writer::empty_tag('img', ['src' => $media_data['url'], 'style' => $style]);
-                        } else {
-                             $display = \html_writer::span($media_data['content'], '', ['style' => "font-size:24px; $style"]);
-                        }
-                        
                         $widget_items_html .= $this->render_mini_card($item, $display, format_string($item->name)." (Infinito)", "ph-widget-trigger", $media_data, true, $stack_infinite, "x{$stack_infinite}", "(Infinito)");
                         $items_shown++;
                     }
@@ -214,101 +145,70 @@ public function filter($text, array $options = array()) {
              }
 
              if (empty($widget_items_html)) $widget_items_html = \html_writer::span(get_string('empty', 'filter_playerhud'), 'small text-muted');
-             
              $url = new \moodle_url('/mod/playerhud/view.php', ['id' => $cm->id]);
              
-            // --- LÓGICA DO RANKING (FINAL) ---
+             // Ranking
              $rank_html = '';
-             
-             // Só exibe se: Ranking Ativo + Aluno Visível + NÃO é Professor
              if (!empty($playerhud->enable_ranking) && $player->ranking_visibility == 1 && !$is_teacher) {
-                 
                  $my_rank = \mod_playerhud\game::get_user_rank($playerhud->id, $USER->id, $player->currentxp);
                  $rank_icon = ($my_rank <= 3) ? '🏆' : '#';
-                 
                  $rank_url = new \moodle_url('/mod/playerhud/view.php', ['id' => $cm->id, 'tab' => 'ranking']);
-
-                 $rank_html = '<a href="'.$rank_url->out().'" class="badge badge-light border text-decoration-none ml-2" title="'.get_string('view_ranking', 'mod_playerhud').'" style="font-size: 0.9em;">
-                                 '.$rank_icon.' '.$my_rank.'
-                               </a>';
+                 $rank_html = '<a href="'.$rank_url->out().'" class="badge badge-light border text-decoration-none ml-2" title="'.get_string('view_ranking', 'mod_playerhud').'" style="font-size: 0.9em;">'.$rank_icon.' '.$my_rank.'</a>';
              }
 
-             // HTML DO WIDGET
+             // HTML Widget
              $html = '
             <div class="playerhud-widget-bar" style="background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #dee2e6; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
                 <div class="d-flex align-items-center flex-wrap gap-3">
-                    
-     
                     <div class="d-flex align-items-center mr-4">' .
                         $OUTPUT->user_picture($USER, ['size' => 50]) . '
                         <div class="ml-2" style="margin-left: 10px;">
                             <div style="font-weight: bold; font-size: 1.1em;">' . fullname($USER) . '</div>
-                            
                             <div class="d-flex align-items-center mt-1">
                                 <div class="badge badge-pill '.$stats['level_class'].'" style="font-size: 0.9em;">
-                                    '.get_string('level', 'filter_playerhud').' '.$stats['level'].' / '.$stats['max_levels'].'
+                                   '.get_string('level', 'filter_playerhud').' '.$stats['level'].' / '.$stats['max_levels'].'
                                 </div>
                                 '.$rank_html.'
                             </div>
-
                         </div>
-                    </div> <div class="flex-grow-1" style="min-width: 200px;">
+                    </div> 
+                    <div class="flex-grow-1" style="min-width: 200px;">
                         <div class="d-flex justify-content-between small text-muted mb-1">
-                    
-                            <span>'.get_string('currentxp', 'filter_playerhud').': <strong>'.$player->currentxp.'</strong></span>
+                             <span>'.get_string('currentxp', 'filter_playerhud').': <strong>'.$player->currentxp.'</strong></span>
                             <span>'.get_string('coursegoal', 'filter_playerhud').': '.$stats['total_game_xp'].'</span>
                         </div>
                         <div class="progress" style="height: 12px; border-radius: 6px; background-color: #e9ecef;">
-     
                             <div class="progress-bar bg-success" role="progressbar" style="width: '.$stats['progress'].'%;"></div>
                         </div>
                     </div>
-            
-                
                     <div class="d-flex align-items-center gap-2 pl-3" style="border-left: 1px solid #eee; padding-left: 15px;">
                         <div class="text-muted small mr-2" style="white-space: nowrap;">'.get_string('items', 'filter_playerhud').'</div>' .
                         $widget_items_html . 
                     '</div>
-
                     <div class="ml-auto"><a href="'.$url->out().'" class="btn btn-sm btn-outline-primary">'.get_string('openbackpack', 'filter_playerhud').'</a></div>
                 </div>
             </div>';
-            
             $text = str_replace('[PLAYERHUD_WIDGET]', $html, $text);
-            
-            // Ativa o script do Modal
             $needs_script = true;
         }
 
-        // =========================================================
-        // PARTE 2: BOTÕES DE DROP (COM MODOS: CARD, TEXTO, IMAGEM)
-        // =========================================================
-        // Regex mais ampla para capturar atributos variados
-        // Ex: [PLAYERHUD_DROP id=10 mode=text text="Pegar Ouro"]
+        // --- PARTE 2: BOTÕES DE DROP ---
         $pattern = '/\[PLAYERHUD_DROP\s+([^\]]+)\]/i';
-        
         if (preg_match_all($pattern, $text, $matches)) {
             $needs_script = true;
-            
             foreach ($matches[1] as $key => $attributes_str) {
                 $fullcode = $matches[0][$key];
                 
-                // 1. Parser de Atributos (Transforma string em array)
                 $attrs = [];
-                // Pega id=123
                 if (preg_match('/id=(\d+)/i', $attributes_str, $m)) $attrs['id'] = $m[1];
-                // Pega mode=text ou mode=image
                 if (preg_match('/mode=([a-z]+)/i', $attributes_str, $m)) $attrs['mode'] = strtolower($m[1]);
-                // Pega text="Bla bla" ou text=Bla
                 if (preg_match('/text=["\']?([^"\']*)["\']?/i', $attributes_str, $m)) $attrs['text'] = $m[1];
                 
-                // Validação Básica
-                if (empty($attrs['id'])) { continue; } // Sem ID não funciona
+                if (empty($attrs['id'])) continue;
                 $dropid = (int)$attrs['id'];
-                $mode = isset($attrs['mode']) ? $attrs['mode'] : 'card'; // Padrão é card
+                $mode = isset($attrs['mode']) ? $attrs['mode'] : 'card';
                 $custom_text = isset($attrs['text']) ? $attrs['text'] : null;
 
-                // 2. Busca Dados no Banco
                 $drop = $DB->get_record('playerhud_drops', ['id' => $dropid]);
                 if (!$drop) { $text = str_replace($fullcode, '', $text); continue; }
 
@@ -318,44 +218,30 @@ public function filter($text, array $options = array()) {
                 $inventory = $DB->get_records('playerhud_inventory', ['userid' => $USER->id, 'dropid' => $drop->id], 'timecreated DESC');
                 $count = count($inventory);
                 $last_collected = $inventory ? reset($inventory) : null;
-
-                // 3. Regras de Tempo/Limite
                 $limit_reached = ($drop->maxusage > 0 && $count >= $drop->maxusage);
                 $seconds_wait = $drop->respawntime;
                 $ready_time = $last_collected ? ($last_collected->timecreated + $seconds_wait) : 0;
                 $is_cooldown = ($last_collected && $now < $ready_time);
 
-                // 4. Prepara URL e Dados Visuais
                 $collecturl = new \moodle_url('/mod/playerhud/collect.php', ['id' => $cm->id, 'dropid' => $drop->id, 'sesskey' => sesskey()]);
                 $media_data = \mod_playerhud\utils::get_item_display_data($item, $cm->context);
-                
-                // Nome a ser exibido (Usa o customizado ou o nome do item)
                 $display_label = $custom_text ? format_string($custom_text) : format_string($item->name);
 
-                // =====================================================
-                // RENDERIZAÇÃO POR MODO
-                // =====================================================
                 $html_output = '';
-                
-                // --- MODO 1: TEXTO (Link simples) ---
+
                 if ($mode == 'text') {
                     if ($limit_reached) {
                         $html_output = '<span class="text-success" style="cursor:default;">✅ ' . $display_label . '</span>';
                     } elseif ($is_cooldown) {
                         $html_output = '<span class="text-muted" style="cursor:wait;" title="Aguarde...">⏳ ' . $display_label . ' <small class="ph-timer" data-deadline="'.$ready_time.'">...</small></span>';
                     } else {
-                        // Link clicável
                         $html_output = '<a href="'.$collecturl->out().'" class="ph-action-collect text-primary" data-mode="text">'.$display_label.'</a>';
                     }
-                }
-                
-                // --- MODO 2: IMAGEM (Apenas o ícone) ---
-                elseif ($mode == 'image') {
+                } elseif ($mode == 'image') {
                     $img_src = $media_data['is_image'] ? $media_data['url'] : '';
                     $emoji   = $media_data['is_image'] ? '' : $media_data['content'];
-                    
                     $style = "transition: transform 0.2s; display:inline-block; cursor:pointer;";
-                    $timer_html = ''; // Variável para guardar o HTML do relógio
+                    $timer_html = '';
 
                     if ($limit_reached) {
                         $style .= "opacity: 0.5; filter: grayscale(100%); cursor: default;";
@@ -363,167 +249,136 @@ public function filter($text, array $options = array()) {
                     } elseif ($is_cooldown) {
                         $style .= "opacity: 0.7; cursor: wait;";
                         $title = get_string('wait', 'filter_playerhud');
-                        // CORREÇÃO: Mostra o timer visível abaixo da imagem
                         $timer_html = '<div class="small text-muted text-center ph-timer" style="font-size:10px; line-height:1;" data-deadline="'.$ready_time.'">...</div>';
                     } else {
                         $style .= "filter: drop-shadow(0 4px 2px rgba(0,0,0,0.1));";
                         $title = get_string('take', 'filter_playerhud') . " " . $display_label;
                     }
 
-                    $content = $media_data['is_image'] 
-                        ? '<img src="'.$img_src.'" style="width:50px; height:50px; object-fit:contain;">'
-                        : '<span style="font-size:40px;">'.$emoji.'</span>';
+                    $content = $media_data['is_image'] ? '<img src="'.$img_src.'" style="width:50px; height:50px; object-fit:contain;">' : '<span style="font-size:40px;">'.$emoji.'</span>';
 
                     if (!$limit_reached && !$is_cooldown) {
-                        // Ativo
                         $html_output = '<a href="'.$collecturl->out().'" class="ph-action-collect ph-hover-scale" style="'.$style.'" title="'.$title.'" data-mode="image">'.$content.'</a>';
                     } else {
-                        // Bloqueado ou Esperando (com timer embaixo)
-                        $html_output = '<div style="display:inline-block; text-align:center;">';
-                        $html_output .= '<div style="'.$style.'" title="'.$title.'">'.$content.'</div>';
-                        $html_output .= $timer_html;
-                        $html_output .= '</div>';
+                        $html_output = '<div style="display:inline-block; text-align:center;"><div style="'.$style.'" title="'.$title.'">'.$content.'</div>'.$timer_html.'</div>';
                     }
-                }
-
-                // --- MODO 3: CARD (Padrão Completo) ---
-                else {
-                    // (Lógica visual original do Card)
-                    $display_name = format_string($item->name);
+                } else {
+                    // MODO CARD PADRONIZADO
                     $display_xp = ($drop->maxusage == 0) ? get_string('infinite', 'filter_playerhud') : "+".$item->xp." XP";
-                    
-                    if ($media_data['is_image']) {
-                        $display_icon = '<img src="'.$media_data['url'].'" style="width:40px; height:40px; object-fit:contain;">';
-                    } else {
-                        $display_icon = '<span style="font-size:30px;">'.$media_data['content'].'</span>';
-                    }
-
-                    $card_style = "padding: 15px; border-radius: 8px; display: inline-flex; align-items: center; gap: 15px; margin: 10px 0;";
+                    $display_icon = $media_data['is_image'] ? 
+                        '<img src="'.$media_data['url'].'" style="max-width: 100%; max-height: 100%; object-fit: contain;">' : 
+                        '<div class="emoji-display" style="font-size: 2em;">'.$media_data['content'].'</div>';
+                    $counter_badge = ($count > 0) ? '<span class="badge badge-info badge-pill position-absolute" style="top:5px; right:5px; font-size:0.7rem;">'.get_string('yours', 'filter_playerhud', $count).'</span>' : '';
 
                     if ($limit_reached) {
-                        $html_output = '<div class="playerhud-collect-card collected" style="border: 2px solid #28a745; background: #e8f5e9; '.$card_style.'"><div style="font-size: 30px;">✅</div><div><strong>'.$display_name.'</strong> <span class="badge badge-success badge-pill">'.$count.'</span><br><small class="text-success">'.get_string('collected', 'filter_playerhud').'</small></div></div>';
+                        $card_status_class = "ph-owned"; 
+                        $status_msg = '<div class="mt-2 text-center small font-weight-bold text-success" style="font-size: 0.7rem;"><i class="fa fa-check-circle"></i> '.get_string('collected', 'filter_playerhud').'</div>';
+                        $action_btn = '<button disabled class="btn btn-light btn-sm btn-block text-success border-success" style="font-size:0.7rem;">✔</button>';
                     } elseif ($is_cooldown) {
-                        $html_output = '<div class="playerhud-collect-card cooldown" style="border: 2px solid #ffc107; background: #fff3cd; '.$card_style.'"><div style="font-size: 30px; opacity: 0.5;">⏳</div><div><strong>'.$display_name.'</strong> <span class="badge badge-secondary badge-pill">'.$count.'</span><br><small class="text-muted">'.get_string('wait', 'filter_playerhud').' <strong class="ph-timer" data-deadline="'.$ready_time.'">...</strong></small></div></div>';
+                        $card_status_class = "";
+                        $status_msg = '<div class="mt-2 text-center small font-weight-bold text-warning" style="font-size: 0.7rem;">'.get_string('wait', 'filter_playerhud').' <span class="ph-timer" data-deadline="'.$ready_time.'">...</span></div>';
+                        $action_btn = '<button disabled class="btn btn-light btn-sm btn-block text-muted" style="font-size:0.7rem;">⏳</button>';
                     } else {
-                        $counter_badge = ($count > 0) ? '<span class="badge badge-info badge-pill">'.get_string('yours', 'filter_playerhud', $count).'</span>' : '';
-                        // Note a classe nova: ph-action-collect
-                        $html_output = '<div class="playerhud-collect-card available" style="border: 2px dashed #0f6cbf; background: #f8f9fa; '.$card_style.'"><div>'.$display_icon.'</div><div><strong>'.$display_name.'</strong> '.$counter_badge.'<br><small class="text-muted">'.$display_xp.'</small></div><a href="'.$collecturl->out().'" class="btn btn-primary btn-sm ml-3 ph-action-collect" data-mode="card">'.get_string('take', 'filter_playerhud').'</a></div>';
+                        $card_status_class = "ph-item-trigger"; 
+                        $status_msg = '<div class="text-center"><small class="text-muted font-weight-bold">'.$display_xp.'</small></div>';
+                        $action_btn = '<a href="'.$collecturl->out().'" class="btn btn-primary btn-sm btn-block ph-action-collect shadow-sm mt-2" data-mode="card" style="font-size:0.75rem;">'.get_string('take', 'filter_playerhud').'</a>';
                     }
+
+                    $html_output = '
+                    <div class="playerhud-item-card card p-3 '.$card_status_class.'" style="width: 150px; display:inline-block; vertical-align:top; margin:5px; position: relative;">
+                        '.$counter_badge.'
+                        <div class="playerhud-icon-container text-center mb-2" style="height: 50px; display: flex; align-items: center; justify-content: center;">'.$display_icon.'</div>
+                        <strong class="text-center d-block mb-1 text-truncate" style="line-height: 1.2;">'.format_string($item->name).'</strong>
+                        '.$status_msg.'
+                        '.($limit_reached ? '' : $action_btn).'
+                    </div>';
                 }
-                
                 $text = str_replace($fullcode, $html_output, $text);
             }
         }
 
-        // =========================================================
-        // PARTE 2.5: CARTÃO DE TROCA (SHOP SHORTCODE)
-        // =========================================================
+        // --- PARTE 3: CARTÃO DE TROCA (QUE EU TINHA ESQUECIDO) ---
+        // Refatorado para usar o estilo novo (ph-trade-card)
         $pattern_trade = '/\[PLAYERHUD_TRADE id=(\d+)\]/i';
         if (preg_match_all($pattern_trade, $text, $matches_trade)) {
-            
             foreach ($matches_trade[1] as $key => $tradeid) {
                 $fullcode = $matches_trade[0][$key];
-                
-                // 1. Busca a Troca
                 $trade = $DB->get_record('playerhud_trades', ['id' => $tradeid]);
-                if (!$trade) { 
-                    $text = str_replace($fullcode, '', $text); 
-                    continue; 
-                }
+                if (!$trade) { $text = str_replace($fullcode, '', $text); continue; }
 
-                // 2. Verificações de Grupo
-                if ($trade->groupid > 0) {
-                    if (!groups_is_member($trade->groupid, $USER->id)) {
-                        // Se não é do grupo, esconde
-                        $text = str_replace($fullcode, '', $text); 
-                        continue;
+                if ($trade->groupid != 0) {
+                    if ($trade->groupid > 0) {
+                        if (!groups_is_member($trade->groupid, $USER->id)) { $text = str_replace($fullcode, '', $text); continue; }
+                    } else {
+                        $groupingid = abs($trade->groupid);
+                        $user_groups = groups_get_all_groups($COURSE->id, $USER->id, $groupingid);
+                        if (empty($user_groups)) { $text = str_replace($fullcode, '', $text); continue; }
                     }
                 }
 
-                // 3. Busca Requisitos (Paga)
-                $sql_req = "SELECT r.*, i.name, i.image 
-                              FROM {playerhud_trade_requirements} r
-                              JOIN {playerhud_items} i ON r.itemid = i.id
-                             WHERE r.tradeid = :tid";
+                $sql_req = "SELECT r.*, i.name, i.image FROM {playerhud_trade_requirements} r JOIN {playerhud_items} i ON r.itemid = i.id WHERE r.tradeid = :tid";
                 $reqs = $DB->get_records_sql($sql_req, ['tid' => $trade->id]);
-
-                // 4. Busca Recompensas (Recebe)
-                $sql_rew = "SELECT r.*, i.name, i.image, i.xp
-                              FROM {playerhud_trade_rewards} r
-                              JOIN {playerhud_items} i ON r.itemid = i.id
-                             WHERE r.tradeid = :tid";
+                $sql_rew = "SELECT r.*, i.name, i.image, i.xp FROM {playerhud_trade_rewards} r JOIN {playerhud_items} i ON r.itemid = i.id WHERE r.tradeid = :tid";
                 $rews = $DB->get_records_sql($sql_rew, ['tid' => $trade->id]);
 
-                // --- MONTAGEM DO HTML ---
-                
-                // HTML dos Requisitos
                 $html_req = '';
+                $can_afford = true;
                 foreach ($reqs as $r) {
                     $media = \mod_playerhud\utils::get_item_display_data((object)['id'=>$r->itemid, 'image'=>$r->image], $cm->context);
-                    $icon = $media['is_image'] ? 
-                        "<img src='{$media['url']}' style='width:24px;height:24px;object-fit:contain;'>" : 
-                        "<span style='font-size:20px;'>{$media['content']}</span>";
-                    $html_req .= "<div class='mr-2 mb-1 text-center' style='line-height:1; display:inline-block;'>$icon<br><small>{$r->qty}x</small></div>";
+                    $icon = $media['is_image'] ? "<img src='{$media['url']}' style='width:24px;height:24px;object-fit:contain;'>" : "<span style='font-size:20px;'>{$media['content']}</span>";
+                    
+                    // Verifica saldo na hora
+                    $user_has = $DB->count_records('playerhud_inventory', ['userid'=>$USER->id, 'itemid'=>$r->itemid]);
+                    if($user_has < $r->qty) $can_afford = false;
+                    $status_cls = ($user_has >= $r->qty) ? 'text-muted' : 'text-danger font-weight-bold';
+
+                    $html_req .= "<div class='ph-trade-item-row $status_cls'><div class='mr-2'>$icon</div><div>{$r->qty}x {$r->name} <small>({$user_has}/{$r->qty})</small></div></div>";
                 }
 
-                // HTML das Recompensas
                 $html_rew = '';
                 foreach ($rews as $r) {
                     $media = \mod_playerhud\utils::get_item_display_data((object)['id'=>$r->itemid, 'image'=>$r->image], $cm->context);
-                    $icon = $media['is_image'] ? 
-                        "<img src='{$media['url']}' style='width:24px;height:24px;object-fit:contain;'>" : 
-                        "<span style='font-size:20px;'>{$media['content']}</span>";
-                    $html_rew .= "<div class='mr-2 mb-1 text-center' style='line-height:1; display:inline-block;'>$icon<br><small>{$r->qty}x</small></div>";
+                    $icon = $media['is_image'] ? "<img src='{$media['url']}' style='width:24px;height:24px;object-fit:contain;'>" : "<span style='font-size:20px;'>{$media['content']}</span>";
+                    $html_rew .= "<div class='ph-trade-item-row text-dark'><div class='mr-2'>$icon</div><div><strong>{$r->qty}x {$r->name}</strong></div></div>";
                 }
 
-                // Botão de Ação
                 $process_url = new \moodle_url('/mod/playerhud/process_trade.php', ['id' => $cm->id, 'tradeid' => $trade->id, 'sesskey' => sesskey()]);
-                
-                // Verifica se já completou (se for única)
-                $is_completed = false;
-                if ($trade->onetime && $DB->record_exists('playerhud_trade_log', ['tradeid'=>$trade->id, 'userid'=>$USER->id])) {
-                    $is_completed = true;
-                }
+                $is_completed = ($trade->onetime && $DB->record_exists('playerhud_trade_log', ['tradeid'=>$trade->id, 'userid'=>$USER->id]));
 
                 if ($is_completed) {
-                    $btn = '<button class="btn btn-secondary btn-sm btn-block" disabled>✅ Já resgatado</button>';
+                    $btn = '<button class="btn btn-secondary btn-sm btn-block" disabled><i class="fa fa-check"></i> '.get_string('trade_redeemed', 'mod_playerhud').'</button>';
+                } elseif ($can_afford) {
+                    $btn = '<a href="'.$process_url->out().'" class="btn btn-success btn-sm btn-block shadow-sm" onclick="return confirm(\''.get_string('trade_confirm', 'mod_playerhud').'\');"><i class="fa fa-exchange"></i> '.get_string('trade_perform', 'mod_playerhud').'</a>';
                 } else {
-                    $btn = '<a href="'.$process_url->out().'" class="btn btn-primary btn-sm btn-block shadow-sm" onclick="return confirm(\'Confirmar troca?\');">🤝 Realizar Troca</a>';
+                    $btn = '<button class="btn btn-light btn-sm btn-block text-muted" disabled style="cursor:not-allowed;"><i class="fa fa-lock"></i> '.get_string('trade_insufficient', 'mod_playerhud').'</button>';
                 }
 
-                // O CARD FINAL
+                $disabled_cls = (!$can_afford && !$is_completed) ? 'ph-trade-disabled' : '';
+
                 $card_html = '
-                <div class="playerhud-trade-shortcode card shadow-sm mb-3" style="max-width: 400px; border: 1px solid #dee2e6;">
-                    <div class="card-header bg-white font-weight-bold py-2">
-                        ⚖️ '.format_string($trade->name).'
+                <div class="ph-trade-card '.$disabled_cls.'" style="max-width: 400px;">
+                    <div class="p-2 bg-light border-bottom font-weight-bold">
+                       ⚖️ '.format_string($trade->name).'
                     </div>
-                    <div class="card-body p-2">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="text-center" style="width: 45%;">
-                                <div class="text-danger small font-weight-bold text-uppercase mb-1">Paga</div>
-                                '.$html_req.'
-                            </div>
-                            <div class="text-muted"><i class="fa fa-chevron-right"></i></div>
-                            <div class="text-center" style="width: 45%;">
-                                <div class="text-success small font-weight-bold text-uppercase mb-1">Recebe</div>
-                                '.$html_rew.'
-                            </div>
+                    <div class="ph-trade-body">
+                        <div class="ph-trade-section ph-trade-req">
+                            <small class="text-uppercase text-danger font-weight-bold mb-2" style="font-size:0.65rem;">'.get_string('shop_pay', 'mod_playerhud').'</small>
+                            '.$html_req.'
+                        </div>
+                        <div class="ph-trade-arrow text-muted"><i class="fa fa-arrow-right"></i></div>
+                        <div class="ph-trade-section ph-trade-give">
+                            <small class="text-uppercase text-success font-weight-bold mb-2" style="font-size:0.65rem;">'.get_string('shop_receive', 'mod_playerhud').'</small>
+                            '.$html_rew.'
                         </div>
                     </div>
-                    <div class="card-footer bg-light p-2">
-                        '.$btn.'
-                    </div>
+                    <div class="card-footer bg-white border-0 pt-0 text-center">'.$btn.'</div>
                 </div>';
-
                 $text = str_replace($fullcode, $card_html, $text);
             }
         }
 
-        // =========================================================
-        // PARTE 3: INJEÇÃO DO SCRIPT E MODAL (GLOBAL)
-        // =========================================================
+        // --- PARTE 4: INJEÇÃO DE SCRIPT ---
         if ($needs_script) {
-            // Só adiciona o modal se ainda não foi adicionado nesta página request
             if (!self::$modal_injected) {
                 $text .= $this->get_modal_html();
                 self::$modal_injected = true;
@@ -536,233 +391,30 @@ public function filter($text, array $options = array()) {
         return $text;
     }
 
-    // Função Auxiliar para renderizar ícone do Widget
+    // Auxiliares (Modal e JS)
     private function render_mini_card($item, $display_html, $tooltip, $trigger_class, $media_data, $has_it, $count, $count_label, $infinite_text) {
-        
-        $badge = "";
-        if ($has_it && $count > 0) {
-            $badge = \html_writer::span($count_label, 'badge badge-light border position-absolute', 
-                ['style' => 'bottom: -8px; right: -8px; font-size: 0.65rem; padding: 2px 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);']);
-        }
-
-        // Prepara dados para o Modal (data-attributes)
-        $desc = "";
-        if (!empty($item->description)) {
-            // Limpa o texto para evitar quebra de HTML no atributo
-            $desc = format_text($item->description, FORMAT_HTML);
-        }
-        
-        // Atributos
+        $badge = ($has_it && $count > 0) ? \html_writer::span($count_label, 'badge badge-light border position-absolute', ['style' => 'bottom: -8px; right: -8px; font-size: 0.65rem; padding: 2px 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);']) : "";
+        $desc = !empty($item->description) ? format_text($item->description, FORMAT_HTML) : "";
         $attrs = [
             'class' => 'playerhud-mini-item position-relative ' . $trigger_class,
             'style' => 'transition: transform 0.2s; margin-right: 12px; cursor: pointer;',
             'title' => $tooltip,
-            'data-name' => format_string($item->name), // Nome limpo
+            'data-name' => format_string($item->name),
             'data-xp' => ($infinite_text ? "0 XP" : "+{$item->xp} XP"),
             'data-image' => $media_data['is_image'] ? $media_data['url'] : $media_data['content'],
             'data-isimage' => $media_data['is_image'],
             'data-count' => $count,
-            'data-infinite' => $infinite_text // Passa texto "(Infinito)" se existir
+            'data-infinite' => $infinite_text
         ];
-
-        // Hack para passar HTML complexo: div oculta dentro do card
         $hidden_desc = \html_writer::div($desc, 'd-none ph-item-description-content');
-
         return \html_writer::div($display_html . $badge . $hidden_desc, null, $attrs);
     }
 
-    // HTML do Modal (Cópia simplificada do Mustache)
     private function get_modal_html() {
-        return '
-        <div class="modal fade" id="phItemModalFilter" tabindex="-1" role="dialog" aria-hidden="true" style="z-index: 10500;">
-          <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-              <div class="modal-header d-flex justify-content-between align-items-center">
-                <h5 class="modal-title font-weight-bold m-0" id="phModalTitleF">Detalhes</h5>
-                <button type="button" class="close ph-modal-close-f" aria-label="Close" style="margin-left: auto;">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <div class="d-flex align-items-start">
-                    <div id="phModalImageContainerF" class="mr-4 text-center" style="min-width: 100px;"></div>
-                    <div class="flex-grow-1">
-                        <div class="d-flex align-items-center flex-wrap mb-3">
-                            <h4 id="phModalNameF" class="m-0 mr-2" style="font-weight: bold;">Nome</h4>
-                            <span id="phModalCountBadgeF" class="badge badge-primary badge-pill mr-1" style="font-size: 0.9em; display:none;">x0</span>
-                            <span id="phModalXPF" class="badge badge-info" style="font-size: 0.9em;">XP</span>
-                        </div>
-                        <div id="phModalDescF" class="text-muted text-break"></div>
-                    </div>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary ph-modal-close-f">Fechar</button>
-              </div>
-            </div>
-          </div>
-        </div>';
+        return '<div class="modal fade" id="phItemModalFilter" tabindex="-1" role="dialog" aria-hidden="true" style="z-index: 10500;"><div class="modal-dialog modal-dialog-centered" role="document"><div class="modal-content"><div class="modal-header d-flex justify-content-between align-items-center"><h5 class="modal-title font-weight-bold m-0" id="phModalTitleF">'.get_string('details', 'mod_playerhud').'</h5><button type="button" class="close ph-modal-close-f" aria-label="Close" style="margin-left: auto;"><span aria-hidden="true">&times;</span></button></div><div class="modal-body"><div class="d-flex align-items-start"><div id="phModalImageContainerF" class="mr-4 text-center" style="min-width: 100px;"></div><div class="flex-grow-1"><div class="d-flex align-items-center flex-wrap mb-3"><h4 id="phModalNameF" class="m-0 mr-2" style="font-weight: bold;">Nome</h4><span id="phModalCountBadgeF" class="badge badge-primary badge-pill mr-1" style="font-size: 0.9em; display:none;">x0</span><span id="phModalXPF" class="badge badge-info" style="font-size: 0.9em;">XP</span></div><div id="phModalDescF" class="text-muted text-break"></div></div></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary ph-modal-close-f">'.get_string('close', 'mod_playerhud').'</button></div></div></div></div>';
     }
 
-private function get_javascript_footer() {
-        return '
-        <style>
-            .ph-hover-scale:hover { transform: scale(1.1); }
-            .ph-loading { opacity: 0.5; pointer-events: none; cursor: wait !important; }
-        </style>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script id="ph-super-script">
-        document.addEventListener("DOMContentLoaded", function() {
-            
-            const Toast = Swal.mixin({
-                toast: true, position: "top-end", showConfirmButton: false, timer: 2000, timerProgressBar: true,
-                didOpen: (toast) => { toast.addEventListener("mouseenter", Swal.stopTimer); toast.addEventListener("mouseleave", Swal.resumeTimer); }
-            });
-
-            // 1. TIMER E AUTO-RELOAD (Mantido igual)
-            setInterval(function() {
-                var now = Math.floor(Date.now() / 1000);
-                document.querySelectorAll(".ph-timer").forEach(function(el) {
-                    var deadline = parseInt(el.getAttribute("data-deadline"));
-                    var diff = deadline - now;
-                    if (diff <= 0) {
-                        el.innerHTML = "'.get_string('ready', 'filter_playerhud').'";
-                        if (!el.getAttribute("data-reloading")) {
-                            el.setAttribute("data-reloading", "true");
-                            setTimeout(function(){ location.reload(); }, 1500);
-                        }
-                    } else {
-                        var minutes = Math.floor((diff % 3600) / 60);
-                        var seconds = diff % 60;
-                        el.innerHTML = minutes + "m " + (seconds < 10 ? "0" : "") + seconds + "s";
-                    }
-                });
-            }, 1000);
-
-            // 2. COLETA UNIFICADA (Texto, Imagem ou Card)
-            document.body.addEventListener("click", function(e) {
-                // Procura o elemento clicado ou seu pai que tenha a classe
-                var trigger = e.target.closest(".ph-action-collect");
-                
-                if (trigger) {
-                    e.preventDefault(); 
-                    
-                    var mode = trigger.getAttribute("data-mode");
-                    var originalContent = trigger.innerHTML;
-                    var url = trigger.getAttribute("href") + "&ajax=1";
-                    
-                    // Feedback Visual de Carregamento
-                    trigger.classList.add("ph-loading");
-                    
-                    if (mode === "text") {
-                        trigger.innerHTML = "⏳ ...";
-                    } else if (mode === "card") {
-                        trigger.innerHTML = "⏳";
-                    }
-                    // Modo imagem apenas fica opaco pelo CSS ph-loading
-
-                    fetch(url).then(response => response.json()).then(data => {
-                        if (data.success) 
-                        {
-                            // 1. Exibe a mensagem de sucesso
-                            Toast.fire({ icon: "success", title: data.message });
-
-                            // 2. Feedback visual imediato no botão (enquanto espera)
-                            if (mode === "text") {
-                                trigger.innerHTML = "✅ " + data.message;
-                                trigger.style.color = "green";
-                            }
-
-                            // 3. AGUARDA 2 SEGUNDOS ANTES DE RECARREGAR
-                            // Isso garante que o aluno leia a mensagem antes da página piscar
-                            setTimeout(function() {
-                                location.reload();
-                            }, 2000); 
-
-                        } else {
-                            // Erro
-                            Toast.fire({ icon: "warning", title: data.message });
-                            // Restaura
-                            trigger.innerHTML = originalContent; 
-                            trigger.classList.remove("ph-loading");
-                        }
-                    }).catch(err => { 
-                        console.error(err);
-                        window.location.href = trigger.getAttribute("href"); // Fallback
-                    });
-                }
-            });
-
-            // 3. ABRIR MODAL (WIDGET) - Mantido igual
-            var openModal = function(trigger) {
-                var name = trigger.getAttribute("data-name");
-                var infiniteTxt = trigger.getAttribute("data-infinite");
-                var xp = trigger.getAttribute("data-xp");
-                var img = trigger.getAttribute("data-image");
-                var isImg = trigger.getAttribute("data-isimage");
-                var count = trigger.getAttribute("data-count");
-                var descDiv = trigger.querySelector(".ph-item-description-content");
-                var descHtml = descDiv ? descDiv.innerHTML : "";
-
-                var title = document.getElementById("phModalTitle");
-                var nameEl = document.getElementById("phModalName");
-                var xpEl = document.getElementById("phModalXP");
-                var descEl = document.getElementById("phModalDesc");
-                var badgeEl = document.getElementById("phModalCountBadge");
-                var imgContainer = document.getElementById("phModalImageContainer");
-                var dateEl = document.getElementById("phModalDate");
-
-                if(title) title.innerText = name;
-                if(nameEl) {
-                    nameEl.innerHTML = name;
-                    if(infiniteTxt) nameEl.innerHTML += "<br><small class=\'text-muted\' style=\'font-weight:normal;\'>"+infiniteTxt+"</small>";
-                }
-                if(xpEl) xpEl.innerText = xp;
-                if(descEl) {
-                    if (descHtml && descHtml.trim() !== "") descEl.innerHTML = descHtml;
-                    else descEl.innerHTML = "<i class=\'text-muted\'> - </i>";
-                }
-
-                if(badgeEl) {
-                    if (count && count > 0) {
-                        badgeEl.innerText = "x" + count;
-                        badgeEl.style.display = "inline-block";
-                    } else {
-                        badgeEl.style.display = "none";
-                    }
-                }
-
-                if(imgContainer) {
-                    imgContainer.innerHTML = "";
-                    if (isImg == "1" || isImg == "true") {
-                        imgContainer.innerHTML = "<img src=\'"+img+"\' style=\'max-width: 120px; max-height: 120px; object-fit:contain;\'>";
-                    } else {
-                        imgContainer.innerHTML = "<span style=\'font-size: 80px;\'>"+img+"</span>";
-                    }
-                }
-                
-                // Esconde data pois no widget genérico não temos essa info fácil
-                if(dateEl) dateEl.style.display = "none";
-
-                if (typeof jQuery !== "undefined") {
-                    jQuery("#phItemModalFilter").modal("show");
-                }
-            };
-
-            document.body.addEventListener("click", function(e) {
-                var target = e.target.closest(".ph-widget-trigger");
-                if (target) {
-                    e.preventDefault();
-                    openModal(target);
-                }
-                if (e.target.closest(".ph-modal-close-f")) {
-                    e.preventDefault();
-                    if (typeof jQuery !== "undefined") {
-                        jQuery("#phItemModalFilter").modal("hide");
-                    }
-                }
-            });
-        });
-        </script>';
+    private function get_javascript_footer() {
+        return '<style>.ph-hover-scale:hover { transform: scale(1.1); } .ph-loading { opacity: 0.5; pointer-events: none; cursor: wait !important; }</style><script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script><script id="ph-super-script">document.addEventListener("DOMContentLoaded", function() { const Toast = Swal.mixin({ toast: true, position: "top-end", showConfirmButton: false, timer: 2000, timerProgressBar: true, didOpen: (toast) => { toast.addEventListener("mouseenter", Swal.stopTimer); toast.addEventListener("mouseleave", Swal.resumeTimer); } }); setInterval(function() { var now = Math.floor(Date.now() / 1000); document.querySelectorAll(".ph-timer").forEach(function(el) { var deadline = parseInt(el.getAttribute("data-deadline")); var diff = deadline - now; if (diff <= 0) { el.innerHTML = "'.get_string('ready', 'filter_playerhud').'"; if (!el.getAttribute("data-reloading")) { el.setAttribute("data-reloading", "true"); setTimeout(function(){ location.reload(); }, 1500); } } else { var minutes = Math.floor((diff % 3600) / 60); var seconds = diff % 60; el.innerHTML = minutes + "m " + (seconds < 10 ? "0" : "") + seconds + "s"; } }); }, 1000); document.body.addEventListener("click", function(e) { var trigger = e.target.closest(".ph-action-collect"); if (trigger) { e.preventDefault(); var mode = trigger.getAttribute("data-mode"); var originalContent = trigger.innerHTML; var url = trigger.getAttribute("href") + "&ajax=1"; trigger.classList.add("ph-loading"); if (mode === "text") { trigger.innerHTML = "⏳ ..."; } else if (mode === "card") { trigger.innerHTML = "⏳"; } fetch(url).then(response => response.json()).then(data => { if (data.success) { Toast.fire({ icon: "success", title: data.message }); if (mode === "text") { trigger.innerHTML = "✅ " + data.message; trigger.style.color = "green"; } setTimeout(function() { location.reload(); }, 2000); } else { Toast.fire({ icon: "warning", title: data.message }); trigger.innerHTML = originalContent; trigger.classList.remove("ph-loading"); } }).catch(err => { console.error(err); window.location.href = trigger.getAttribute("href"); }); } }); var openModal = function(trigger) { var name = trigger.getAttribute("data-name"); var infiniteTxt = trigger.getAttribute("data-infinite"); var xp = trigger.getAttribute("data-xp"); var img = trigger.getAttribute("data-image"); var isImg = trigger.getAttribute("data-isimage"); var count = trigger.getAttribute("data-count"); var descDiv = trigger.querySelector(".ph-item-description-content"); var descHtml = descDiv ? descDiv.innerHTML : ""; var title = document.getElementById("phModalTitleF"); var nameEl = document.getElementById("phModalNameF"); var xpEl = document.getElementById("phModalXPF"); var descEl = document.getElementById("phModalDescF"); var badgeEl = document.getElementById("phModalCountBadgeF"); var imgContainer = document.getElementById("phModalImageContainerF"); if(title) title.innerText = name; if(nameEl) { nameEl.innerHTML = name; if(infiniteTxt) nameEl.innerHTML += "<br><small class=\'text-muted\' style=\'font-weight:normal;\'>"+infiniteTxt+"</small>"; } if(xpEl) xpEl.innerText = xp; if(descEl) { if (descHtml && descHtml.trim() !== "") descEl.innerHTML = descHtml; else descEl.innerHTML = "<i class=\'text-muted\'> - </i>"; } if(badgeEl) { if (count && count > 0) { badgeEl.innerText = "x" + count; badgeEl.style.display = "inline-block"; } else { badgeEl.style.display = "none"; } } if(imgContainer) { imgContainer.innerHTML = ""; if (isImg == "1" || isImg == "true") { imgContainer.innerHTML = "<img src=\'"+img+"\' style=\'max-width: 120px; max-height: 120px; object-fit:contain;\'>"; } else { imgContainer.innerHTML = "<span style=\'font-size: 80px;\'>"+img+"</span>"; } } if (typeof jQuery !== "undefined") { jQuery("#phItemModalFilter").modal("show"); } }; document.body.addEventListener("click", function(e) { var target = e.target.closest(".ph-widget-trigger"); if (target) { e.preventDefault(); openModal(target); } if (e.target.closest(".ph-modal-close-f")) { e.preventDefault(); if (typeof jQuery !== "undefined") { jQuery("#phItemModalFilter").modal("hide"); } } }); });</script>';
     }
 }
