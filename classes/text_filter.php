@@ -511,7 +511,8 @@ class text_filter extends \moodle_text_filter {
                 .ph-loading { opacity: 0.5; pointer-events: none; cursor: wait !important; }
                </style>';
         
-        $js .= '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
+        $swal_url = new \moodle_url('/mod/playerhud/js/sweetalert2.all.min.js');
+        $js .= '<script src="' . $swal_url->out() . '"></script>';
         
         $js .= '<script id="ph-super-script">
         document.addEventListener("DOMContentLoaded", function() { 
