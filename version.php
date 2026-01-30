@@ -29,4 +29,4 @@ $plugin->version   = 2026012901;     // The current module version (Date: YYYYMM
 $plugin->requires  = 2022112800;     // Requires Moodle 4.1+.
 $plugin->maturity  = MATURITY_ALPHA;
 $plugin->release   = 'v0.11';
-$plugin->dependencies = ['mod_playerhud' => 2026012901]; // Forces the matching mod version.
+$plugin->dependencies = ['block_playerhud' => 2026012901]; // Forces the matching mod version.
