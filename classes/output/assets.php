@@ -11,7 +11,7 @@ class assets {
      */
     public function get_modals_html() {
         return '
-        <div class="modal fade" id="phItemModalFilter" tabindex="-1" aria-hidden="true" style="z-index: 10500;">
+        <div class="modal fade" id="phItemModalFilter" tabindex="-1" aria-labelledby="phModalTitleF" aria-hidden="true" style="z-index: 10500;">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">

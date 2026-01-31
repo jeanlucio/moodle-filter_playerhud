@@ -90,7 +90,7 @@ class text_filter extends \moodle_text_filter {
             }
         }
 
-        // 5. Inject Global Assets (JS via AMD / Modais) only once.
+// 5. Inject Global Assets (JS via AMD / Modais) only once.
         if ($needs_assets && !self::$assetsinjected) {
             
             // Injeta HTML estático (Modais)
@@ -99,17 +99,24 @@ class text_filter extends \moodle_text_filter {
                 $text .= $assets->get_modals_html();
             }
 
-            // Injeta JS via AMD (Padrão Moodle 4.x - Sem JS Inline)
-            // Certifique-se de que o arquivo 'filter/playerhud/amd/src/timers.js' existe e foi compilado (grunt amd)
-            $jsStrings = [
+            // A. JS de Timers (Contagem regressiva)
+            $jsTimerStrings = [
                 'ready' => get_string('ready', 'block_playerhud'),
                 'take'  => get_string('take', 'block_playerhud'),
                 'label' => get_string('next_collection_in', 'block_playerhud')
             ];
-            
-            // Verifica se $PAGE está disponível (deve estar, pois declaramos globalmente)
             if (isset($PAGE) && $PAGE->requires) {
-                $PAGE->requires->js_call_amd('block_playerhud/timers', 'init', [$jsStrings]);
+                $PAGE->requires->js_call_amd('block_playerhud/timers', 'init', [$jsTimerStrings]);
+            }
+
+            // B. NOVO: JS de Coleta AJAX (Resolve o problema do foco/reload)
+            $jsCollectStrings = [
+                'collected' => get_string('collected', 'block_playerhud'), // "Coletado"
+                'error' => get_string('error_connection', 'block_playerhud')
+            ];
+            if (isset($PAGE) && $PAGE->requires) {
+                // Aqui chamamos o novo arquivo que criamos
+                $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', [$jsCollectStrings]);
             }
 
             self::$assetsinjected = true;
