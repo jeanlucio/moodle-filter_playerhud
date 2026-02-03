@@ -7,26 +7,45 @@ class render {
 
     /**
      * Renderiza o botão de Drop (Shortcode).
-     * Suporta: [PLAYERHUD_DROP code=... mode=... text=...]
+     * Suporta: [PLAYERHUD_DROP code=... mode=... text=... button_text=... button_emoji=...]
      */
     public static function render_drop($attributes_str, $blockinstanceid) {
-        global $DB, $USER, $CFG;
+        global $DB, $USER, $CFG, $COURSE;
         require_once($CFG->dirroot . '/blocks/playerhud/lib.php');
 
-        // 1. Parse Attributes (Extrai ID, CODE, MODE e TEXT)
+        // 1. Parse Attributes (Extrai ID, CODE, MODE, TEXT e personalizações)
         $attrs = [];
         
         // Captura ID numérico (Legado)
-        if (preg_match('/id=(\d+)/i', $attributes_str, $m)) $attrs['id'] = $m[1];
+        if (preg_match('/id=(\d+)/i', $attributes_str, $m)) {
+            $attrs['id'] = $m[1];
+        }
         
         // Captura Código Hash (Novo padrão seguro)
-        if (preg_match('/code=([a-zA-Z0-9]+)/i', $attributes_str, $m)) $attrs['code'] = $m[1];
+        if (preg_match('/code=([a-zA-Z0-9]+)/i', $attributes_str, $m)) {
+            $attrs['code'] = $m[1];
+        }
         
         // Captura Modo (card, text, image)
-        if (preg_match('/mode=([a-z]+)/i', $attributes_str, $m)) $attrs['mode'] = strtolower($m[1]);
+        if (preg_match('/mode=([a-z]+)/i', $attributes_str, $m)) {
+            $attrs['mode'] = strtolower($m[1]);
+        }
         
-        // Captura Texto Personalizado (suporta aspas ou não)
-        if (preg_match('/text=["\']?([^"\']*)["\']?/i', $attributes_str, $m)) $attrs['text'] = $m[1];
+        // Captura Texto do Link (modo texto)
+        if (preg_match('/text=["\']?([^"\']*)["\']?/i', $attributes_str, $m)) {
+            $attrs['text'] = $m[1];
+        }
+
+        // --- NOVOS ATRIBUTOS DE PERSONALIZAÇÃO ---
+        // Captura Texto do Botão (modo card)
+        if (preg_match('/button_text=["\']?([^"\']*)["\']?/i', $attributes_str, $m)) {
+            $attrs['button_text'] = $m[1];
+        }
+        
+        // Captura Emoji do Botão (modo card)
+        if (preg_match('/button_emoji=["\']?([^"\']*)["\']?/i', $attributes_str, $m)) {
+            $attrs['button_emoji'] = $m[1];
+        }
 
         // 2. Fetch Data (Prioridade para CODE, fallback para ID)
         $data = null;
@@ -40,28 +59,37 @@ class render {
         }
 
         // Validação: Se não achou ou pertence a outro bloco, não renderiza nada.
-        if (!$data || $data->blockinstanceid != $blockinstanceid) return '';
+        if (!$data || $data->blockinstanceid != $blockinstanceid) {
+            return '';
+        }
 
         $dropid = $data->dropid;
         $mode = $attrs['mode'] ?? 'card';
         $customtext = $attrs['text'] ?? null;
 
         // 3. Lógica do Jogo (Verificar Inventário e Cooldown)
-        $inventory = $DB->get_records('block_playerhud_inventory', ['userid' => $USER->id, 'dropid' => $dropid], 'timecreated DESC');
+        $inventory = $DB->get_records('block_playerhud_inventory', [
+            'userid' => $USER->id, 
+            'dropid' => $dropid
+        ], 'timecreated DESC');
+        
         $count = count($inventory);
         $lastcollected = $inventory ? reset($inventory) : null;
 
+        // Verifica se atingiu o limite máximo de coletas
         $limitreached = ($data->maxusage > 0 && $count >= $data->maxusage);
         
+        // Verifica Cooldown
         $readytime = 0;
         $iscooldown = false;
         if ($lastcollected && $data->respawntime > 0) {
             $readytime = $lastcollected->timecreated + $data->respawntime;
-            if (time() < $readytime) $iscooldown = true;
+            if (time() < $readytime) {
+                $iscooldown = true;
+            }
         }
 
         // 4. Preparação da URL e Assets
-        global $COURSE;
         $collecturl = new \moodle_url('/blocks/playerhud/collect.php', [
             'instanceid' => $blockinstanceid,
             'dropid' => $dropid,
@@ -71,16 +99,24 @@ class render {
         
         $context = \context_block::instance($blockinstanceid);
         
-        // Helper para pegar imagem/emoji
+        // Helper para pegar imagem/emoji do item
         $fakeitem = (object)['id' => $data->itemid, 'image' => $data->image];
         $media = \block_playerhud\utils::get_item_display_data($fakeitem, $context);
         
-        // Rótulo: Usa texto personalizado se houver, senão usa nome do item
+        // Rótulo principal (Nome do item ou texto personalizado)
         $label = $customtext ?: format_string($data->itemname);
 
-        // Strings comuns (usando as do filtro ou bloco conforme disponibilidade)
+        // Strings base
         $strcollected = get_string('collected', 'block_playerhud');
-        $strtake = get_string('take', 'block_playerhud');
+        
+        // Define texto do botão: Customizado > Padrão ("Pegar")
+        $strtake = !empty($attrs['button_text']) ? $attrs['button_text'] : get_string('take', 'block_playerhud');
+        
+        // Define HTML do Emoji customizado (se houver)
+        $emojiHtml = '';
+        if (!empty($attrs['button_emoji'])) {
+            $emojiHtml = '<span aria-hidden="true" class="me-1">' . s($attrs['button_emoji']) . '</span> ';
+        }
 
         // --- RENDERIZAÇÃO POR MODO ---
         
@@ -116,24 +152,32 @@ class render {
         }
 
         // C. MODO CARD (Padrão Completo)
+        // Adicionada a classe 'ph-card-compact' para corrigir altura excessiva
         $statusClass = $limitreached ? 'ph-owned' : ($iscooldown ? '' : 'ph-item-trigger');
         $btnHtml = '';
 
         if ($limitreached) {
             $btnHtml = '<button disabled class="btn btn-light btn-sm w-100 text-success border-success">✔ ' . $strcollected . '</button>';
         } else if ($iscooldown) {
+            // Timer ativo
             $btnHtml = '<button disabled class="btn btn-light btn-sm w-100 text-muted">⏳ <span class="ph-timer" data-deadline="' . $readytime . '">...</span></button>';
         } else {
-            $btnHtml = '<a href="' . $collecturl->out() . '" class="btn btn-primary btn-sm w-100 ph-action-collect shadow-sm mt-2" data-mode="card">' . $strtake . '</a>';
+            // Botão de Coleta (Disponível) com personalização de Texto e Emoji
+            $btnHtml = '<a href="' . $collecturl->out() . '" class="btn btn-primary btn-sm w-100 ph-action-collect shadow-sm mt-2" data-mode="card">' . $emojiHtml . $strtake . '</a>';
         }
 
         $iconHtml = $media['is_image'] 
             ? '<img src="' . $media['url'] . '" style="max-width:100%; max-height:100%; object-fit:contain;" alt="">'
-            : '<div style="font-size:2.5em;">' . $media['content'] . '</div>';
+            : '<div style="font-size:2.5em; line-height:1;">' . $media['content'] . '</div>';
+
+        // Badge de contagem
+        $badgeHtml = ($count > 0) 
+            ? '<span class="badge bg-info text-dark rounded-pill position-absolute" style="top:5px; right:5px; font-size:0.7rem;">x' . $count . '</span>' 
+            : '';
 
         return '
-        <div class="playerhud-item-card card p-3 ' . $statusClass . '" style="width: 160px; display:inline-block; vertical-align:top; margin:5px; position: relative;">
-            ' . ($count > 0 ? '<span class="badge bg-info text-dark rounded-pill position-absolute" style="top:5px; right:5px; font-size:0.7rem;">x' . $count . '</span>' : '') . '
+        <div class="playerhud-item-card ph-card-compact card p-3 ' . $statusClass . '" style="width: 160px; display:inline-block; vertical-align:top; margin:5px; position: relative;">
+            ' . $badgeHtml . '
             <div class="text-center mb-2" style="height: 60px; display: flex; align-items: center; justify-content: center;">' . $iconHtml . '</div>
             <strong class="text-center d-block mb-2 text-truncate" title="' . s($data->itemname) . '">' . format_string($data->itemname) . '</strong>
             ' . $btnHtml . '
