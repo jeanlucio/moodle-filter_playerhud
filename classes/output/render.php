@@ -112,10 +112,12 @@ class render {
         // Define texto do botão: Customizado > Padrão ("Pegar")
         $strtake = !empty($attrs['button_text']) ? $attrs['button_text'] : get_string('take', 'block_playerhud');
         
-        // Define HTML do Emoji customizado (se houver)
+       $emojiChar = isset($attrs['button_emoji']) ? $attrs['button_emoji'] : '🖐';
+
+        // Define HTML do Emoji
         $emojiHtml = '';
-        if (!empty($attrs['button_emoji'])) {
-            $emojiHtml = '<span aria-hidden="true" class="me-1">' . s($attrs['button_emoji']) . '</span> ';
+        if (!empty($emojiChar)) {
+            $emojiHtml = '<span aria-hidden="true" class="me-1">' . s($emojiChar) . '</span> ';
         }
 
         // --- RENDERIZAÇÃO POR MODO ---
