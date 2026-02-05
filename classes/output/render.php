@@ -165,7 +165,8 @@ public static function render_drop($attributes_str, $blockinstanceid) {
             ? '<span class="badge bg-info text-dark rounded-pill position-absolute ph-badge-count" style="top:5px; right:5px; font-size:0.7rem;">x' . $count . '</span>' 
             : '<span class="badge bg-info text-dark rounded-pill position-absolute ph-badge-count" style="display:none; top:5px; right:5px; font-size:0.7rem;">x0</span>';
 
-        $statusClass = $limitreached ? 'ph-owned' : ($iscooldown ? '' : 'ph-item-trigger');
+        // CORREÇÃO: Removemos 'ph-item-trigger'. O Drop tem seus próprios gatilhos internos.
+        $statusClass = $limitreached ? 'ph-owned' : ''; 
         $btnHtml = '';
 
         if ($limitreached) {
