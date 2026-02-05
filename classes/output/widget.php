@@ -12,7 +12,7 @@ class widget {
         $this->courseid = $courseid;
     }
 
-    public function render() {
+public function render() {
         global $USER, $DB, $OUTPUT, $CFG;
 
         // 1. Get Player Data
@@ -43,11 +43,17 @@ class widget {
 
         $stats = \block_playerhud\game::get_game_stats($config, $this->instance->id, $player->currentxp);
 
+        // --- CÁLCULO CORRIGIDO: XP Atual / Total Geral do Jogo ---
+        $xp_total_game = isset($stats['total_game_xp']) ? $stats['total_game_xp'] : 0;
+        $xp_display = $player->currentxp . ' / ' . $xp_total_game . ' XP';
+        
+        $level_display = $stats['level'] . ' / ' . $stats['max_levels'];
+        // -------------------------------
+
         // 3. Fetch Recent Items
         $recentitems = [];
         $rawinventory = \block_playerhud\game::get_inventory($USER->id, $this->instance->id);
         
-        // ALTERAÇÃO: Limite fixado em 5
         $limit = 5; 
         $count = 0;
         $seen_items = [];
@@ -77,7 +83,6 @@ class widget {
         $url_backpack = new \moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id]);
         $url_story = new \moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id, 'tab' => 'chapters']);
         
-        // ALTERAÇÃO: Avatar aumentado para 75px
         $avatar = $OUTPUT->user_picture($USER, ['size' => 75, 'class' => 'ph-base-avatar rounded-circle border border-2 border-white shadow-sm']);
 
         $strlevel = get_string('level', 'filter_playerhud');
@@ -85,7 +90,6 @@ class widget {
         $strstory = get_string('story_shortcut', 'filter_playerhud');
 
         // Render Items HTML
-        // ALTERAÇÃO: Adicionada classe 'ph-widget-stash' para o JS encontrar
         $items_html = '<div class="d-flex flex-wrap gap-1 mt-2 ph-widget-stash" style="min-height: 34px;">';
         
         if (!empty($recentitems)) {
@@ -94,12 +98,15 @@ class widget {
                     ? '<img src="' . $item->image . '" alt="" style="width: 100%; height: 100%; object-fit: contain;">' 
                     : '<span class="ph-mini-emoji" aria-hidden="true" style="font-size:1.2rem; line-height: 1;">' . $item->content . '</span>';
                 
+                // NOTA: Adicionada classe 'ph-item-trigger' para o JS capturar o clique
+                // Adicionado tabindex="0" e role="button" para acessibilidade
                 $items_html .= '
                 <div class="ph-mini-item ph-item-trigger border bg-white rounded d-flex align-items-center justify-content-center overflow-hidden position-relative shadow-sm" 
                      role="button" 
                      tabindex="0"
                      style="width:34px; height:34px; min-width:34px;"
                      title="' . $item->name . '"
+                     aria-label="' . get_string('details', 'block_playerhud') . ': ' . $item->name . '"
                      data-name="' . $item->name . '"
                      data-xp="' . $item->xp . '"
                      data-image="' . $item->image . '"
@@ -114,10 +121,6 @@ class widget {
         }
         $items_html .= '</div>';
 
-        // --- FINAL OUTPUT ---
-        // ALTERAÇÃO: Removido 'border' genérico. Adicionado estilo para remover borda branca lateral.
-        // A cor da borda esquerda agora é injetada diretamente via style para garantir prioridade.
-                
         $html = '
         <div class="playerhud-widget-container rounded mb-4 shadow-sm overflow-hidden d-flex align-items-stretch position-relative">
             
@@ -129,9 +132,9 @@ class widget {
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <div class="d-flex align-items-center">
                         <h4 class="m-0 me-2 fw-bold text-dark">' . fullname($USER) . '</h4>
-                        <span class="badge ' . $stats['level_class'] . ' border shadow-sm px-2">' . $strlevel . ' ' . $stats['level'] . '</span>
+                        <span class="badge ' . $stats['level_class'] . ' border shadow-sm px-2">' . $strlevel . ' ' . $level_display . '</span>
                     </div>
-                    <div class="small text-muted fw-bold">' . $player->currentxp . ' XP</div>
+                    <div class="small text-muted fw-bold">' . $xp_display . '</div>
                 </div>
 
                 <div class="progress" style="height: 10px; background-color: rgba(0,0,0,0.05); border-radius: 5px;">
