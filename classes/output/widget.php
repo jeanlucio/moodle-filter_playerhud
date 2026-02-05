@@ -13,18 +13,15 @@ class widget {
     }
 
     public function render() {
-        global $USER, $DB, $OUTPUT;
+        global $USER, $DB, $OUTPUT, $CFG;
 
         // 1. Get Player Data
-        // Nota: Usamos as classes do BLOCO agora.
         $player = $DB->get_record('block_playerhud_user', [
             'blockinstanceid' => $this->instance->id, 
             'userid' => $USER->id
         ]);
 
         if (!$player) {
-            // Se o aluno nunca entrou, cria o registro silenciosamente ou mostra botão.
-            // Para performance no filtro, mostramos botão de "Ativar".
             $url = new \moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id]);
             return \html_writer::tag('div', 
                 \html_writer::link($url, get_string('click_to_enable', 'filter_playerhud'), ['class' => 'btn btn-primary']),
@@ -36,49 +33,152 @@ class widget {
             return ''; // Opt-out
         }
 
-        // 2. Calculate Stats
+        // 2. Load Config & Stats
         $config = unserialize(base64_decode($this->instance->configdata));
         if (!$config) $config = new \stdClass();
 
-        // Usamos a lógica do bloco
-        require_once($GLOBALS['CFG']->dirroot . '/blocks/playerhud/classes/game.php');
+        require_once($CFG->dirroot . '/blocks/playerhud/classes/game.php');
+        require_once($CFG->dirroot . '/blocks/playerhud/classes/utils.php');
+        require_once($CFG->dirroot . '/blocks/playerhud/lib.php');
+
         $stats = \block_playerhud\game::get_game_stats($config, $this->instance->id, $player->currentxp);
 
-        // 3. Render HTML (Compact Version for Filter)
+        // 3. Fetch Recent Items
+        $recentitems = [];
+        $rawinventory = \block_playerhud\game::get_inventory($USER->id, $this->instance->id);
+        
+        // ALTERAÇÃO: Limite fixado em 14
+        $limit = 14; 
+        $count = 0;
+        $seen_items = [];
+        $context = \context_block::instance($this->instance->id);
+
+        foreach ($rawinventory as $invitem) {
+            if ($count >= $limit) break;
+            if (in_array($invitem->id, $seen_items)) continue;
+            
+            $seen_items[] = $invitem->id;
+
+            $media = \block_playerhud\utils::get_item_display_data($invitem, $context);
+            
+            $recentitems[] = (object)[
+                'name' => format_string($invitem->name),
+                'xp' => '+' . $invitem->xp . ' XP',
+                'image' => $media['is_image'] ? $media['url'] : strip_tags($media['content']),
+                'isimage' => $media['is_image'],
+                'content' => $media['content'],
+                'description' => htmlspecialchars($invitem->description ?? ''),
+                'date' => userdate($invitem->collecteddate, get_string('strftimedatefullshort', 'langconfig'))
+            ];
+            $count++;
+        }
+
+        // 4. Build HTML
         $url_backpack = new \moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id]);
         $url_story = new \moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id, 'tab' => 'chapters']);
+        
+        // ALTERAÇÃO: Avatar aumentado para 75px
+        $avatar = $OUTPUT->user_picture($USER, ['size' => 75, 'class' => 'ph-base-avatar rounded-circle border border-2 border-white shadow-sm']);
 
-        // Avatar simples para o filtro (para não pesar)
-        $avatar = $OUTPUT->user_picture($USER, ['size' => 50, 'class' => 'ph-base-avatar rounded-circle']);
+        $strlevel = get_string('level', 'filter_playerhud');
+        $stropen = get_string('openbackpack', 'filter_playerhud');
+        $strstory = get_string('story_shortcut', 'filter_playerhud');
 
-        // HTML structure
+        // Render Items HTML
+        // ALTERAÇÃO: Adicionada classe 'ph-widget-stash' para o JS encontrar
+        $items_html = '<div class="d-flex flex-wrap gap-1 mt-2 ph-widget-stash" style="min-height: 34px;">';
+        
+        if (!empty($recentitems)) {
+            foreach ($recentitems as $item) {
+                $content = $item->isimage 
+                    ? '<img src="' . $item->image . '" alt="" style="width: 100%; height: 100%; object-fit: contain;">' 
+                    : '<span class="ph-mini-emoji" aria-hidden="true" style="font-size:1.2rem; line-height: 1;">' . $item->content . '</span>';
+                
+                $items_html .= '
+                <div class="ph-mini-item ph-item-trigger border bg-white rounded d-flex align-items-center justify-content-center overflow-hidden position-relative shadow-sm" 
+                     role="button" 
+                     tabindex="0"
+                     style="width:34px; height:34px; min-width:34px;"
+                     title="' . $item->name . '"
+                     data-name="' . $item->name . '"
+                     data-xp="' . $item->xp . '"
+                     data-image="' . $item->image . '"
+                     data-isimage="' . ($item->isimage ? 1 : 0) . '"
+                     data-date="' . $item->date . '">
+                     <div class="d-none ph-item-description-content">' . $item->description . '</div>
+                     ' . $content . '
+                </div>';
+            }
+        } else {
+            $items_html .= '<span class="small text-muted align-self-center" style="font-size:0.7rem;">' . get_string('items', 'filter_playerhud') . ' ' . get_string('empty', 'filter_playerhud') . '</span>';
+        }
+        $items_html .= '</div>';
+
+        // --- FINAL OUTPUT ---
+        // ALTERAÇÃO: Removido 'border' genérico. Adicionado estilo para remover borda branca lateral.
+        // A cor da borda esquerda agora é injetada diretamente via style para garantir prioridade.
+        
         $html = '
-        <div class="playerhud-widget-container tier-' . $stats['level_class'] . ' p-3 border rounded mb-3 bg-white shadow-sm">
-            <div class="d-flex align-items-center">
-                <div class="me-3">' . $avatar . '</div>
-                <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <strong class="text-dark">' . fullname($USER) . '</strong>
-                        <span class="badge bg-light text-dark border">Level ' . $stats['level'] . '</span>
-                    </div>
-                    <div class="progress" style="height: 10px;">
-                        <div class="progress-bar bg-success" role="progressbar" style="width: ' . $stats['progress'] . '%;"></div>
-                    </div>
-                    <div class="d-flex justify-content-between mt-1" style="font-size: 0.75rem;">
-                        <span class="text-muted">' . $player->currentxp . ' XP</span>
-                        <span class="text-muted">' . $stats['total_game_xp'] . ' Total</span>
-                    </div>
-                </div>
-                <div class="ms-3 d-flex flex-column gap-1">
-                    <a href="' . $url_backpack->out() . '" class="btn btn-sm btn-primary" title="' . get_string('openbackpack', 'filter_playerhud') . '">
-                        🎒
-                    </a>
-                    <a href="' . $url_story->out() . '" class="btn btn-sm btn-outline-secondary" title="' . get_string('story_shortcut', 'filter_playerhud') . '">
-                        📖
-                    </a>
-                </div>
+        <div class="playerhud-widget-container rounded mb-4 bg-white shadow-sm overflow-hidden d-flex align-items-stretch position-relative" 
+             style="border-left: 6px solid !important;">
+            
+            <style>.playerhud-widget-container.' . $stats['level_class'] . ' { border-left-color: var(--ph-' . $stats['level_class'] . '-color, #6c757d) !important; }</style>
+            
+            <div class="p-3 bg-light d-flex align-items-center justify-content-center border-end" style="min-width: 110px;">
+                ' . $avatar . '
             </div>
-        </div>';
+
+            <div class="p-3 flex-grow-1 d-flex flex-column justify-content-center">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="d-flex align-items-center">
+                        <h4 class="m-0 me-2 fw-bold text-dark">' . fullname($USER) . '</h4>
+                        <span class="badge ' . $stats['level_class'] . ' border shadow-sm px-2">' . $strlevel . ' ' . $stats['level'] . '</span>
+                    </div>
+                    <div class="small text-muted fw-bold">' . $player->currentxp . ' XP</div>
+                </div>
+
+                <div class="progress" style="height: 10px; background-color:#e9ecef; border-radius: 5px;">
+                    <div class="progress-bar ' . $stats['level_class'] . '" role="progressbar" 
+                         style="width: ' . $stats['progress'] . '%;" 
+                         aria-valuenow="' . $stats['progress'] . '" aria-valuemin="0" aria-valuemax="100">
+                         <span class="visually-hidden">' . $stats['progress'] . '% Complete</span>
+                    </div>
+                </div>
+
+                ' . $items_html . '
+            </div>
+
+            <div class="p-2 border-start bg-light d-flex flex-column justify-content-center gap-2" style="min-width: 70px;">
+                <a href="' . $url_backpack->out() . '" 
+                   class="btn btn-primary btn-sm d-flex align-items-center justify-content-center shadow-sm" 
+                   style="width: 45px; height: 45px; border-radius: 10px;"
+                   data-bs-toggle="tooltip" 
+                   data-bs-placement="left" 
+                   title="' . $stropen . '"
+                   aria-label="' . $stropen . '">
+                    <span aria-hidden="true" style="font-size:1.4rem;">🎒</span>
+                </a>
+                
+                <a href="' . $url_story->out() . '" 
+                   class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center shadow-sm bg-white" 
+                   style="width: 45px; height: 45px; border-radius: 10px;"
+                   data-bs-toggle="tooltip" 
+                   data-bs-placement="left" 
+                   title="' . $strstory . '"
+                   aria-label="' . $strstory . '">
+                    <span aria-hidden="true" style="font-size:1.4rem;">📖</span>
+                </a>
+            </div>
+        </div>
+        
+        <script>
+        require(["jquery", "theme_boost/tooltip"], function($, Tooltip) {
+            $("[data-bs-toggle=\'tooltip\']").tooltip();
+        });
+        </script>
+        ';
+
+        $html = str_replace('playerhud-widget-container', 'playerhud-widget-container ' . $stats['level_class'], $html);
 
         return $html;
     }
