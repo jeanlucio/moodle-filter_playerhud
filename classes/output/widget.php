@@ -117,12 +117,9 @@ class widget {
         // --- FINAL OUTPUT ---
         // ALTERAÇÃO: Removido 'border' genérico. Adicionado estilo para remover borda branca lateral.
         // A cor da borda esquerda agora é injetada diretamente via style para garantir prioridade.
-        
+                
         $html = '
-        <div class="playerhud-widget-container rounded mb-4 bg-white shadow-sm overflow-hidden d-flex align-items-stretch position-relative" 
-             style="border-left: 6px solid !important;">
-            
-            <style>.playerhud-widget-container.' . $stats['level_class'] . ' { border-left-color: var(--ph-' . $stats['level_class'] . '-color, #6c757d) !important; }</style>
+        <div class="playerhud-widget-container rounded mb-4 shadow-sm overflow-hidden d-flex align-items-stretch position-relative">
             
             <div class="p-3 bg-light d-flex align-items-center justify-content-center border-end" style="min-width: 110px;">
                 ' . $avatar . '
@@ -137,7 +134,7 @@ class widget {
                     <div class="small text-muted fw-bold">' . $player->currentxp . ' XP</div>
                 </div>
 
-                <div class="progress" style="height: 10px; background-color:#e9ecef; border-radius: 5px;">
+                <div class="progress" style="height: 10px; background-color: rgba(0,0,0,0.05); border-radius: 5px;">
                     <div class="progress-bar ' . $stats['level_class'] . '" role="progressbar" 
                          style="width: ' . $stats['progress'] . '%;" 
                          aria-valuenow="' . $stats['progress'] . '" aria-valuemin="0" aria-valuemax="100">
