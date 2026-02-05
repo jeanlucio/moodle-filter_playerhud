@@ -47,8 +47,8 @@ class widget {
         $recentitems = [];
         $rawinventory = \block_playerhud\game::get_inventory($USER->id, $this->instance->id);
         
-        // ALTERAÇÃO: Limite fixado em 14
-        $limit = 14; 
+        // ALTERAÇÃO: Limite fixado em 5
+        $limit = 5; 
         $count = 0;
         $seen_items = [];
         $context = \context_block::instance($this->instance->id);
