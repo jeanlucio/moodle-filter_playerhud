@@ -43,11 +43,18 @@ public function render() {
 
         $stats = \block_playerhud\game::get_game_stats($config, $this->instance->id, $player->currentxp);
 
-        // --- CÁLCULO CORRIGIDO: XP Atual / Total Geral do Jogo ---
+       // --- CÁLCULO CORRIGIDO: XP Atual / Total Geral do Jogo ---
         $xp_total_game = isset($stats['total_game_xp']) ? $stats['total_game_xp'] : 0;
-        $xp_display = $player->currentxp . ' / ' . $xp_total_game . ' XP';
         
-        $level_display = $stats['level'] . ' / ' . $stats['max_levels'];
+        // Aqui mantemos o " XP" pois o widget constrói o HTML manualmente
+        $xp_display = $player->currentxp . ' / ' . $xp_total_game . ' XP';
+
+        // Lógica do Troféu
+        if ($player->currentxp >= $xp_total_game && $xp_total_game > 0) {
+            $xp_display .= ' 🏆';
+        }
+        
+        $level_display = $stats['level'] . '/' . $stats['max_levels'];
         // -------------------------------
 
         // 3. Fetch Recent Items
