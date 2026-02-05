@@ -26,7 +26,7 @@ public static function render_drop($attributes_str, $blockinstanceid) {
         $data = null;
         if (!empty($attrs['code'])) {
             if (function_exists('block_playerhud_get_drop_details_by_code')) {
-                $data = block_playerhud_get_drop_details_by_code($attrs['code']);
+                $data = block_playerhud_get_drop_details_by_code($attrs['code'], $blockinstanceid);
             }
         } elseif (!empty($attrs['id'])) {
             $data = block_playerhud_get_drop_details_for_filter((int)$attrs['id']);
