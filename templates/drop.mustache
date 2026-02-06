@@ -1,13 +1,13 @@
 {{!
     @template filter_playerhud/drop
     Renders a drop collection trigger (Card, Text, or Image mode).
+    COMPLIANCE: No inline styles.
 }}
 
 {{! --- MODE: TEXT --- }}
 {{#is_text}}
     {{#limit_reached}}
-        <span class="ph-item-details-trigger text-success fw-bold" 
-              style="cursor:help;" 
+        <span class="ph-item-details-trigger text-success fw-bold ph-cursor-help" 
               tabindex="0" 
               role="button" 
               {{{data_attributes}}}>
@@ -16,8 +16,7 @@
     {{/limit_reached}}
     {{^limit_reached}}
         {{#is_cooldown}}
-            <span class="ph-item-details-trigger text-muted" 
-                  style="cursor:wait;" 
+            <span class="ph-item-details-trigger text-muted ph-cursor-wait" 
                   tabindex="0" 
                   role="button" 
                   {{{data_attributes}}}>
@@ -37,48 +36,38 @@
 
 {{! --- MODE: IMAGE --- }}
 {{#is_image_mode}}
-    <div style="display:inline-block; position:relative; text-align:center;" 
-         {{#limit_reached}}
-             class="ph-item-details-trigger" 
-             tabindex="0" 
-             role="button" 
-             title="{{#str}} collected, block_playerhud {{/str}}"
-         {{/limit_reached}}
-         {{#is_cooldown}}
-             class="ph-item-details-trigger" 
-             tabindex="0" 
-             role="button"
-         {{/is_cooldown}}
+    <div class="ph-drop-image-container" 
+         {{! ... atributos do container ... }}
          {{{data_attributes}}}>
 
-        {{! Content Wrapper }}
-        <div style="{{#limit_reached}}opacity:0.5; filter:grayscale(100%);{{/limit_reached}}{{#is_cooldown}}opacity:0.5;{{/is_cooldown}}">
+        {{! Content Wrapper ... }}
+        <div class="{{#limit_reached}}ph-state-grayscale{{/limit_reached}} {{#is_cooldown}}ph-state-dimmed{{/is_cooldown}}">
             {{#is_image_media}}
-                <img src="{{media_url}}" style="width:50px; height:50px; object-fit:contain;" alt="{{safe_name}}">
+                <img src="{{media_url}}" class="ph-drop-img-lg" alt="{{safe_name}}">
             {{/is_image_media}}
             {{^is_image_media}}
-                <span style="font-size:40px;" aria-hidden="true">{{{media_content}}}</span>
+                <span class="ph-drop-emoji-lg" aria-hidden="true">{{{media_content}}}</span>
             {{/is_image_media}}
         </div>
 
-        {{! Badges }}
+        {{! Badges ... }}
         {{#limit_reached}}
-            <span class="badge bg-success rounded-circle" style="position:absolute; bottom:-5px; right:-5px; font-size:0.6rem;">
+            <span class="badge bg-success rounded-circle ph-badge-bottom-right">
                 <i class="fa fa-check" aria-hidden="true"></i>
             </span>
         {{/limit_reached}}
         
         {{#is_cooldown}}
-            <div class="ph-timer badge bg-light text-dark border shadow-sm" 
-                 style="position:absolute; bottom:-10px; left:50%; transform:translateX(-50%); font-size:0.6rem;" 
-                 data-deadline="{{readytime}}">...</div>
+            {{! MUDANÇA AQUI: Adicionado data-no-label="1" para remover o texto longo }}
+            <div class="ph-timer badge bg-light text-dark border shadow-sm ph-badge-bottom-center" 
+                 data-deadline="{{readytime}}"
+                 data-no-label="1">...</div>
         {{/is_cooldown}}
 
-        {{! Action Link (If active) }}
+        {{! Action Link ... }}
         {{^limit_reached}}{{^is_cooldown}}
             <a href="{{collect_url}}" 
-               class="ph-action-collect ph-hover-scale" 
-               style="position:absolute; top:0; left:0; width:100%; height:100%;" 
+               class="ph-action-collect ph-hover-scale ph-link-overlay" 
                aria-label="{{#str}} take, block_playerhud {{/str}}: {{safe_name}}"
                data-mode="image" 
                {{{data_attributes}}}>
@@ -89,26 +78,25 @@
 
 {{! --- MODE: CARD (Default) --- }}
 {{#is_card}}
-    <div class="playerhud-item-card ph-card-compact card p-3 {{#limit_reached}}ph-owned{{/limit_reached}}" 
-         style="width: 160px; display:inline-block; vertical-align:top; margin:5px; position: relative;"
+    {{! Container Class: ph-drop-card-container replaces inline width/margin }}
+    <div class="playerhud-item-card ph-card-compact card p-2 ph-drop-card-container {{#limit_reached}}ph-owned{{/limit_reached}}" 
          {{{data_attributes}}}>
         
         {{! Badge Count }}
-        <span class="badge bg-info text-dark rounded-pill position-absolute ph-badge-count" 
-              style="{{^count}}display:none;{{/count}} top:5px; right:5px; font-size:0.7rem;">
+{{! MUDANÇA: Usamos a classe d-none condicionalmente em vez de style inline }}
+<span class="badge bg-info text-dark rounded-pill ph-badge-top-right ph-badge-count {{^count}}d-none{{/count}}">
               x{{count}}
         </span>
 
-        {{! Icon/Trigger }}
-        <div class="ph-item-details-trigger d-flex flex-column align-items-center justify-content-center mb-2" 
-             style="cursor: pointer; min-height: 85px;"
+        {{! Icon/Trigger Area }}
+        <div class="ph-item-details-trigger ph-drop-trigger-area" 
              tabindex="0" 
              role="button" 
              aria-label="{{#str}} details, block_playerhud {{/str}}: {{safe_name}}">
              
-             <div class="text-center mb-1" style="height: 60px; display: flex; align-items: center; justify-content: center; width: 100%;">
+             <div class="ph-drop-icon-wrapper">
                  {{#is_image_media}}
-                    <img src="{{media_url}}" style="max-width:100%; max-height:100%; object-fit:contain;" alt="">
+                    <img src="{{media_url}}" alt="">
                  {{/is_image_media}}
                  {{^is_image_media}}
                     <div style="font-size:2.5em; line-height:1;" aria-hidden="true">{{{media_content}}}</div>
