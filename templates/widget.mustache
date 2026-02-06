@@ -1,0 +1,90 @@
+{{!
+    @template filter_playerhud/widget
+    Widget displayed by the [PLAYERHUD_WIDGET] shortcode.
+}}
+<div class="playerhud-widget-container {{level_class}}">
+    
+    {{! Left: Avatar }}
+    <div class="ph-widget-left">
+        <div class="ph-widget-avatar">
+            {{{userpicture}}}
+        </div>
+    </div>
+
+    {{! Center: Stats & Stash }}
+    <div class="ph-widget-center">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <div class="d-flex align-items-center">
+                <h4 class="m-0 me-2 fw-bold text-dark">{{fullname}}</h4>
+                <span class="badge {{level_class}} border shadow-sm px-2">
+                    {{#str}} level, filter_playerhud {{/str}} {{level_display}}
+                </span>
+            </div>
+            <div class="small text-muted fw-bold">{{xp_display}}</div>
+        </div>
+
+        <div class="ph-progress-container">
+            <div class="progress-bar ph-progress-bar {{level_class}}" role="progressbar" 
+                 style="width: {{progress}}%;" 
+                 aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100">
+                 <span class="visually-hidden">{{progress}}% {{#str}} completed, core {{/str}}</span>
+            </div>
+        </div>
+
+        <div class="ph-widget-stash">
+            {{#items}}
+                <div class="ph-mini-item ph-item-trigger" 
+                     role="button" 
+                     tabindex="0"
+                     title="{{name}}"
+                     aria-label="{{#str}} details, block_playerhud {{/str}}: {{name}}"
+                     data-name="{{name}}"
+                     data-xp="{{xp}}"
+                     data-image="{{image}}"
+                     data-isimage="{{isimage}}"
+                     data-date="{{date}}">
+                     
+                     <div class="d-none ph-item-description-content">{{description}}</div>
+                     
+                     {{#isimage}}
+                        <img src="{{image}}" alt="">
+                     {{/isimage}}
+                     {{^isimage}}
+                        <span class="ph-emoji" aria-hidden="true">{{content}}</span>
+                     {{/isimage}}
+                </div>
+            {{/items}}
+            {{^items}}
+                <span class="small text-muted align-self-center">
+                    {{#str}} items, filter_playerhud {{/str}} {{#str}} empty, filter_playerhud {{/str}}
+                </span>
+            {{/items}}
+        </div>
+    </div>
+
+    {{! Right: Actions }}
+    <div class="ph-widget-right">
+        <a href="{{url_backpack}}" 
+           class="btn btn-primary btn-sm ph-widget-btn shadow-sm" 
+           data-bs-toggle="tooltip" 
+           data-bs-placement="left" 
+           title="{{#str}} openbackpack, filter_playerhud {{/str}}"
+           aria-label="{{#str}} openbackpack, filter_playerhud {{/str}}">
+            <span class="ph-widget-btn-icon" aria-hidden="true">🎒</span>
+        </a>
+        
+        <a href="{{url_story}}" 
+           class="btn btn-outline-secondary btn-sm ph-widget-btn shadow-sm bg-white" 
+           data-bs-toggle="tooltip" 
+           data-bs-placement="left" 
+           title="{{#str}} story_shortcut, filter_playerhud {{/str}}"
+           aria-label="{{#str}} story_shortcut, filter_playerhud {{/str}}">
+            <span class="ph-widget-btn-icon" aria-hidden="true">📖</span>
+        </a>
+    </div>
+</div>
+{{#js}}
+require(["jquery", "theme_boost/tooltip"], function($, Tooltip) {
+    $("[data-bs-toggle='tooltip']").tooltip();
+});
+{{/js}}
