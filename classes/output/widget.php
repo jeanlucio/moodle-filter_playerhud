@@ -101,6 +101,16 @@ class widget implements renderable, templatable {
             ];
         }
 
+        // --- NOVO: URLs para os botões adicionais ---
+        $url_base = new moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id]);
+        
+        $actions = [
+            'url_backpack' => $url_base->out(false), // Tab padrão é items
+            'url_story'    => (new moodle_url($url_base, ['tab' => 'chapters']))->out(false),
+            'url_shop'     => (new moodle_url($url_base, ['tab' => 'trades']))->out(false),
+            'url_quests'   => (new moodle_url($url_base, ['tab' => 'quests']))->out(false),
+        ];
+
         return [
             'is_active' => true,
             'userpicture' => $output->user_picture($USER, ['size' => 75]),
@@ -110,10 +120,9 @@ class widget implements renderable, templatable {
             'xp_display' => $xp_display,
             'progress' => $stats['progress'],
             'items' => $recentitems,
-            'ranking' => $rank_data, // Dados do botão
-            'url_backpack' => $url_backpack->out(false),
-            'url_story' => (new moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id, 'tab' => 'chapters']))->out(false)
-        ];
+            'ranking' => $rank_data,
+            // Fusiona o array de ações novo com o retorno principal
+            ] + $actions; 
     }
 
     public function render() {
