@@ -6,6 +6,7 @@ defined('MOODLE_INTERNAL') || die();
 use renderable;
 use templatable;
 use renderer_base;
+use moodle_url;
 
 class widget implements renderable, templatable {
     protected $instance;
@@ -28,20 +29,18 @@ class widget implements renderable, templatable {
             'userid' => $USER->id
         ]);
 
-        $url_backpack = new \moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id]);
+        $url_backpack = new moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id]);
         
-        // Opt-in check (simples: se não existir ou desativado, retorna nulo ou link de ativação)
-        // Nota: O template deve lidar se não houver dados, ou retornamos um template diferente para optin.
-        // Aqui assumimos que o filtro só mostra se ativo, ou mostra botão de ativação.
+        // Opt-in check
         if (!$player || !$player->enable_gamification) {
             return [
                 'is_active' => false,
-                'optin_url' => $url_backpack->out(),
+                'optin_url' => $url_backpack->out(false),
                 'optin_text' => get_string('click_to_enable', 'filter_playerhud')
             ];
         }
 
-        // 2. Stats
+        // 2. Load Config & Stats
         $config = unserialize(base64_decode($this->instance->configdata));
         if (!$config) $config = new \stdClass();
 
@@ -56,7 +55,7 @@ class widget implements renderable, templatable {
             $xp_display .= ' 🏆';
         }
 
-        // 3. Items
+        // 3. Items Logic
         $recentitems = [];
         $rawinventory = \block_playerhud\game::get_inventory($USER->id, $this->instance->id);
         $count = 0;
@@ -64,30 +63,42 @@ class widget implements renderable, templatable {
         $context = \context_block::instance($this->instance->id);
 
         foreach ($rawinventory as $invitem) {
-            if ($count >= 6) break; // Limite visual
+            if ($count >= 6) break;
             if (in_array($invitem->id, $seen)) continue;
             $seen[] = $invitem->id;
 
             $media = \block_playerhud\utils::get_item_display_data($invitem, $context);
-            
-            // CORREÇÃO: 'image' deve conter o payload (URL ou Emoji) para o data-attribute do JS
             $image_payload = $media['is_image'] ? $media['url'] : strip_tags($media['content']);
 
             $recentitems[] = [
                 'name' => format_string($invitem->name),
                 'xp' => '+' . $invitem->xp . ' XP',
-                
-                // Variáveis para o JS (Data Attributes)
                 'image' => $image_payload, 
-                'isimage' => $media['is_image'] ? 1 : 0, // Força 1 ou 0 para o JS entender
-                
-                // Variável para exibição visual no template
+                'isimage' => $media['is_image'] ? 1 : 0,
                 'content' => $image_payload, 
-                
                 'description' => !empty($invitem->description) ? format_text($invitem->description, FORMAT_HTML) : '',
                 'date' => userdate($invitem->collecteddate, get_string('strftimedatefullshort', 'langconfig'))
             ];
             $count++;
+        }
+
+        // 4. Ranking Logic (O Botão)
+        $rank_data = null;
+        $enable_ranking = isset($config->enable_ranking) ? $config->enable_ranking : 1;
+        
+        if ($enable_ranking) {
+            $rank = \block_playerhud\game::get_user_rank($this->instance->id, $USER->id, $player->currentxp);
+            $url_ranking = new moodle_url('/blocks/playerhud/view.php', [
+                'id' => $this->courseid, 
+                'instanceid' => $this->instance->id, 
+                'tab' => 'ranking'
+            ]);
+            
+            $rank_data = [
+                'rank' => $rank,
+                'url' => $url_ranking->out(false),
+                'label' => get_string('view_ranking', 'block_playerhud')
+            ];
         }
 
         return [
@@ -99,23 +110,17 @@ class widget implements renderable, templatable {
             'xp_display' => $xp_display,
             'progress' => $stats['progress'],
             'items' => $recentitems,
-            // CORREÇÃO: Usar out(false) para evitar duplo escape no Mustache
+            'ranking' => $rank_data, // Dados do botão
             'url_backpack' => $url_backpack->out(false),
-            'url_story' => (new \moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id, 'tab' => 'chapters']))->out(false)
+            'url_story' => (new moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id, 'tab' => 'chapters']))->out(false)
         ];
     }
 
-    /**
-     * Legacy render method called by text_filter.
-     * Delegates to template rendering.
-     */
     public function render() {
-        global $PAGE, $OUTPUT;
+        global $OUTPUT;
         $data = $this->export_for_template($OUTPUT);
         
-        // Se não ativo, podemos renderizar um HTML simples de botão aqui ou um template separado.
         if (empty($data['is_active'])) {
-            // Fallback simples para o botão de ativar
             if (isset($data['optin_url'])) {
                 return \html_writer::tag('div', 
                     \html_writer::link($data['optin_url'], $data['optin_text'], ['class' => 'btn btn-primary']),

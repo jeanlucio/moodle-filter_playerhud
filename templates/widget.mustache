@@ -25,7 +25,7 @@
 
         <div class="ph-progress-container">
             <div class="progress-bar ph-progress-bar {{level_class}}" role="progressbar" 
-                 style="width: {{progress}}%;" 
+                 style="width: {{progress}}%;"
                  aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100">
                  <span class="visually-hidden">{{progress}}% {{#str}} completed, core {{/str}}</span>
             </div>
@@ -64,6 +64,20 @@
 
     {{! Right: Actions }}
     <div class="ph-widget-right">
+        
+        {{! --- NOVO: Botão de Ranking --- }}
+        {{#ranking}}
+        <a href="{{url}}" 
+           class="btn btn-warning btn-sm ph-widget-btn shadow-sm text-dark fw-bold mb-1" 
+           data-bs-toggle="tooltip" 
+           data-bs-placement="left" 
+           title="#{{rank}} - {{label}}"
+           aria-label="{{label}}">
+            <span class="ph-widget-btn-icon" aria-hidden="true">🏆</span>
+            <span class="visually-hidden">{{label}}</span>
+        </a>
+        {{/ranking}}
+
         <a href="{{url_backpack}}" 
            class="btn btn-primary btn-sm ph-widget-btn shadow-sm" 
            data-bs-toggle="tooltip" 
