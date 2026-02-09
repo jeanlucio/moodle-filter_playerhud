@@ -16,7 +16,6 @@ class text_filter extends \moodle_text_filter {
     protected static $blockcache = [];
 
     public function filter($text, array $options = []) {
-        // CORREÇÃO AQUI: Adicionado $PAGE na lista de globais
         global $USER, $DB, $COURSE, $CFG, $PAGE;
 
         // 1. Quick fail check.
@@ -26,7 +25,6 @@ class text_filter extends \moodle_text_filter {
 
         // 2. Validate Context & Login.
         if (!isloggedin() || isguestuser() || $COURSE->id == SITEID) {
-            // Remove tags if user cannot see them
             $text = str_replace('[PLAYERHUD_WIDGET]', '', $text);
             $text = preg_replace('/\[PLAYERHUD_DROP\s+[^\]]+\]/', '', $text);
             $text = preg_replace('/\[PLAYERHUD_TRADE\s+[^\]]+\]/', '', $text);
@@ -36,7 +34,6 @@ class text_filter extends \moodle_text_filter {
         // 3. Find Block Instance for this Course.
         if (!isset(self::$blockcache[$COURSE->id])) {
             $context = \context_course::instance($COURSE->id);
-            // Procura qualquer instância do bloco playerhud neste contexto
             $sql = "SELECT bi.id, bi.configdata 
                       FROM {block_instances} bi
                      WHERE bi.blockname = 'playerhud' 
@@ -48,7 +45,6 @@ class text_filter extends \moodle_text_filter {
         
         $blockinstance = self::$blockcache[$COURSE->id];
 
-        // Se não houver bloco neste curso, remove os shortcodes.
         if (!$blockinstance) {
             $text = str_replace('[PLAYERHUD_WIDGET]', '', $text);
             $text = preg_replace('/\[PLAYERHUD_DROP\s+[^\]]+\]/', '', $text);
@@ -61,7 +57,6 @@ class text_filter extends \moodle_text_filter {
 
         // A. WIDGET
         if (strpos($text, '[PLAYERHUD_WIDGET]') !== false) {
-            // Verifica se a classe existe antes de instanciar (segurança durante migração)
             if (class_exists('\filter_playerhud\output\widget')) {
                 $widgetRenderer = new \filter_playerhud\output\widget($blockinstance, $COURSE->id);
                 $html = $widgetRenderer->render();
@@ -90,16 +85,15 @@ class text_filter extends \moodle_text_filter {
             }
         }
 
-// 5. Inject Global Assets (JS via AMD / Modais) only once.
+        // 5. Inject Global Assets (JS via AMD / Modais) only once.
         if ($needs_assets && !self::$assetsinjected) {
             
-            // Injeta HTML estático (Modais)
             if (class_exists('\filter_playerhud\output\assets')) {
                 $assets = new \filter_playerhud\output\assets();
                 $text .= $assets->get_modals_html();
             }
 
-            // A. JS de Timers (Contagem regressiva)
+            // A. JS de Timers
             $jsTimerStrings = [
                 'ready' => get_string('ready', 'block_playerhud'),
                 'take'  => get_string('take', 'block_playerhud'),
@@ -109,13 +103,14 @@ class text_filter extends \moodle_text_filter {
                 $PAGE->requires->js_call_amd('block_playerhud/timers', 'init', [$jsTimerStrings]);
             }
 
-            // B. NOVO: JS de Coleta AJAX (Resolve o problema do foco/reload)
+            // B. JS de Coleta AJAX [ATUALIZADO AQUI]
             $jsCollectStrings = [
-                'collected' => get_string('collected', 'block_playerhud'), // "Coletado"
-                'error' => get_string('error_connection', 'block_playerhud')
+                'collected' => get_string('collected', 'block_playerhud'),
+                'error' => get_string('error_connection', 'block_playerhud'),
+                // Adicionando a string que faltava:
+                'last_collected' => get_string('last_collected', 'block_playerhud') 
             ];
             if (isset($PAGE) && $PAGE->requires) {
-                // Aqui chamamos o novo arquivo que criamos
                 $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', [$jsCollectStrings]);
             }
 

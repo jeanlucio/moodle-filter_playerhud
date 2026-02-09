@@ -52,7 +52,21 @@
     line-height: 1;
 }
 
+.ph-modal-img-container {
+    min-width: 80px;
+    font-size: 4rem;
+    line-height: 1;
+    /* Centraliza o conteúdo (imagem ou emoji) */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .ph-modal-img-container img {
-    max-width: 100%;
+    /* Restringe o tamanho para não estourar */
+    max-width: 120px !important;
+    max-height: 120px !important;
+    width: auto !important;
     height: auto;
+    object-fit: contain;
 }

@@ -49,3 +49,4 @@ $string['yours'] = 'Tens: {$a}';
 $string['items_owned'] = 'Itens possuídos';
 $string['loading'] = 'Carregando...';
 $string['mysteryitem_desc'] = 'Este item está oculto até que você o encontre.';
+$string['last_collected'] = 'Last collected:';

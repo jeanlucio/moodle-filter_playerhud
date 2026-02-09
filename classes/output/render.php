@@ -70,6 +70,7 @@ class render {
         }
 
         // 4. Secret & Display Logic
+        $timestamp_val = 0;
         $is_secret_masked = ($data->secret == 1 && $count == 0);
         $xp_val = isset($data->xp) ? $data->xp : 0; // Pega o XP do objeto de dados
 
@@ -87,6 +88,7 @@ class render {
             // CORREÇÃO: Data formatada para o modal
             $date_display = '';
             if ($lastcollected) {
+                $timestamp_val = $lastcollected->timecreated;
                 $date_display = userdate($lastcollected->timecreated, get_string('strftimedatefullshort', 'langconfig'));
             }
             
@@ -113,7 +115,8 @@ class render {
                           'data-image="' . s($rawImageForJs) . '" ' .
                           'data-isimage="' . ($media['is_image'] ? 1 : 0) . '" ' .
                           'data-xp="' . s($xp_display) . '" ' .
-                          'data-unique="' . ($is_unique ? 1 : 0) . '"';
+                          'data-unique="' . ($is_unique ? 1 : 0) . '"'.
+                          'data-timestamp="' . $timestamp_val . '"';
 
         $btnText = !empty($attrs['button_text']) ? $attrs['button_text'] : get_string('take', 'filter_playerhud');
         $btnEmoji = isset($attrs['button_emoji']) ? $attrs['button_emoji'] : '🖐';

@@ -73,7 +73,7 @@ class widget implements renderable, templatable {
 
             $recentitems[] = [
                 'name' => format_string($invitem->name),
-                'xp' => '+' . $invitem->xp . ' ' . $str_xp,
+                'xp' => $invitem->xp . ' ' . $str_xp,
                 'image' => $image_payload, 
                 'isimage' => $media['is_image'] ? 1 : 0,
                 'content' => $image_payload, 
