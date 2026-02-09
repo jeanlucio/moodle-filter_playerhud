@@ -1,0 +1,58 @@
+/**
+ * CSS styles for filter_playerhud
+ *
+ * @package    filter_playerhud
+ * @copyright  2026 Jean Lúcio
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+/* ==============================================================================================
+   1. Drop & Cards
+   ============================================================================================== */
+
+/* Aumenta o tamanho do emoji/ícone dentro do Drop
+   Nota: Removemos o prefixo .filter_playerhud pois filtros não têm wrapper padrão */
+.ph-drop-icon-wrapper .ph-icon-large {
+    font-size: 3rem; /* Aumentei para 3rem para garantir destaque */
+    line-height: 1.2;
+    display: block; /* Garante que o line-height funcione bem */
+    margin-bottom: 0.5rem;
+}
+
+/* Texto truncado do nome do item */
+.ph-drop-trigger-area .ph-text-small {
+    font-size: 0.85rem;
+    color: var(--dark); /* Garante cor legível */
+}
+
+/* Estado de Cooldown/Espera */
+.ph-text-dimmed {
+    color: #6c757d; /* Bootstrap gray-600 */
+}
+
+/* Card Container - Ajustes finos para o Card */
+.ph-drop-card-container {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid rgba(0,0,0,.125);
+}
+
+.ph-drop-card-container:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+}
+
+/* ==============================================================================================
+   2. Modals
+   ============================================================================================== */
+
+/* Container da imagem no modal */
+.ph-modal-img-container {
+    min-width: 80px;
+    font-size: 4rem; /* Se for emoji no modal, fica bem grande */
+    line-height: 1;
+}
+
+.ph-modal-img-container img {
+    max-width: 100%;
+    height: auto;
+}

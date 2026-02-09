@@ -1,7 +1,6 @@
 {{!
     @template filter_playerhud/drop
     Renders a drop collection trigger (Card, Text, or Image mode).
-    COMPLIANCE: No inline styles.
 }}
 
 {{! --- MODE: TEXT --- }}
@@ -10,17 +9,22 @@
         <span class="ph-item-details-trigger text-success fw-bold ph-cursor-help" 
               tabindex="0" 
               role="button" 
+              aria-label="{{#str}} collected, filter_playerhud {{/str}}: {{label}}"
               {{{data_attributes}}}>
             <i class="fa fa-check" aria-hidden="true"></i> {{label}}
         </span>
     {{/limit_reached}}
     {{^limit_reached}}
         {{#is_cooldown}}
-            <span class="ph-item-details-trigger text-muted ph-cursor-wait" 
+            <span class="ph-item-details-trigger ph-text-dimmed ph-cursor-wait" 
                   tabindex="0" 
-                  role="button" 
+                  role="button"
+                  aria-label="{{#str}} wait, filter_playerhud {{/str}} {{label}}" 
                   {{{data_attributes}}}>
-                ⏳ {{label}} <small class="ph-timer" data-deadline="{{readytime}}">...</small>
+                <span aria-hidden="true">⏳</span> {{label}} 
+                <small class="ph-timer" data-deadline="{{readytime}}">
+                    {{#str}} loading, filter_playerhud {{/str}}
+                </small>
             </span>
         {{/is_cooldown}}
         {{^is_cooldown}}
@@ -36,11 +40,11 @@
 
 {{! --- MODE: IMAGE --- }}
 {{#is_image_mode}}
-    <div class="ph-drop-image-container" 
-         {{! ... atributos do container ... }}
+    <div class="ph-drop-image-container 
+                {{#limit_reached}}ph-item-details-trigger ph-cursor-help{{/limit_reached}}" 
+         {{#limit_reached}}role="button" tabindex="0" aria-label="{{#str}} details, block_playerhud {{/str}}: {{safe_name}}"{{/limit_reached}}
          {{{data_attributes}}}>
 
-        {{! Content Wrapper ... }}
         <div class="{{#limit_reached}}ph-state-grayscale{{/limit_reached}} {{#is_cooldown}}ph-state-dimmed{{/is_cooldown}}">
             {{#is_image_media}}
                 <img src="{{media_url}}" class="ph-drop-img-lg" alt="{{safe_name}}">
@@ -50,25 +54,25 @@
             {{/is_image_media}}
         </div>
 
-        {{! Badges ... }}
         {{#limit_reached}}
             <span class="badge bg-success rounded-circle ph-badge-bottom-right">
                 <i class="fa fa-check" aria-hidden="true"></i>
+                <span class="visually-hidden">{{#str}} collected, filter_playerhud {{/str}}</span>
             </span>
         {{/limit_reached}}
         
         {{#is_cooldown}}
-            {{! MUDANÇA AQUI: Adicionado data-no-label="1" para remover o texto longo }}
             <div class="ph-timer badge bg-light text-dark border shadow-sm ph-badge-bottom-center" 
                  data-deadline="{{readytime}}"
-                 data-no-label="1">...</div>
+                 data-no-label="1">
+                 {{#str}} loading, filter_playerhud {{/str}}
+            </div>
         {{/is_cooldown}}
 
-        {{! Action Link ... }}
         {{^limit_reached}}{{^is_cooldown}}
             <a href="{{collect_url}}" 
                class="ph-action-collect ph-hover-scale ph-link-overlay" 
-               aria-label="{{#str}} take, block_playerhud {{/str}}: {{safe_name}}"
+               aria-label="{{#str}} take, filter_playerhud {{/str}}: {{safe_name}}"
                data-mode="image" 
                {{{data_attributes}}}>
             </a>
@@ -78,15 +82,16 @@
 
 {{! --- MODE: CARD (Default) --- }}
 {{#is_card}}
-    {{! Container Class: ph-drop-card-container replaces inline width/margin }}
     <div class="playerhud-item-card ph-card-compact card p-2 ph-drop-card-container {{#limit_reached}}ph-owned{{/limit_reached}}" 
          {{{data_attributes}}}>
         
-        {{! Badge Count }}
-{{! MUDANÇA: Usamos a classe d-none condicionalmente em vez de style inline }}
-<span class="badge bg-info text-dark rounded-pill ph-badge-top-right ph-badge-count {{^count}}d-none{{/count}}">
-              x{{count}}
-        </span>
+{{! Badge Count: Usamos show_count em vez de apenas count }}
+        {{#show_count}}
+            <span class="badge bg-info text-dark rounded-pill ph-badge-top-right ph-badge-count">
+                  x{{count}}
+                  <span class="visually-hidden">{{#str}} items_owned, filter_playerhud {{/str}}</span>
+            </span>
+        {{/show_count}}
 
         {{! Icon/Trigger Area }}
         <div class="ph-item-details-trigger ph-drop-trigger-area" 
@@ -99,25 +104,26 @@
                     <img src="{{media_url}}" alt="">
                  {{/is_image_media}}
                  {{^is_image_media}}
-                    <div style="font-size:2.5em; line-height:1;" aria-hidden="true">{{{media_content}}}</div>
+                    <div class="ph-icon-large" aria-hidden="true">{{{media_content}}}</div>
                  {{/is_image_media}}
              </div>
 
-             <strong class="text-center d-block text-truncate w-100 ph-text-truncate-100" style="font-size: 0.9rem;" aria-hidden="true">
+             <strong class="text-center d-block text-truncate w-100 ph-text-small" aria-hidden="true">
                 {{display_name}}
              </strong>
         </div>
         
         {{! Button State }}
         {{#limit_reached}}
-            <button disabled class="btn btn-light btn-sm w-100 text-success border-success">
-                <i class="fa fa-check" aria-hidden="true"></i> {{#str}} collected, block_playerhud {{/str}}
+            <button disabled class="btn btn-light btn-sm w-100 text-success border-success" aria-label="{{#str}} collected, filter_playerhud {{/str}}">
+                <i class="fa fa-check" aria-hidden="true"></i> {{#str}} collected, filter_playerhud {{/str}}
             </button>
         {{/limit_reached}}
         {{^limit_reached}}
             {{#is_cooldown}}
-                <button disabled class="btn btn-light btn-sm w-100 text-muted">
-                    ⏳ <span class="ph-timer" data-deadline="{{readytime}}">...</span>
+                <button disabled class="btn btn-light btn-sm w-100 ph-text-dimmed">
+                    <span aria-hidden="true">⏳</span> 
+                    <span class="ph-timer" data-deadline="{{readytime}}">{{#str}} loading, filter_playerhud {{/str}}</span>
                 </button>
             {{/is_cooldown}}
             {{^is_cooldown}}

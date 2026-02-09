@@ -2,18 +2,31 @@
 <div class="modal fade ph-z-index-high" id="phItemModalFilter" tabindex="-1" aria-labelledby="phModalTitleF" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="phModalTitleF">{{str_details}}</h5>
+            <div class="modal-header border-0 pb-0">
                 <button type="button" class="btn-close ph-modal-close-f" data-bs-dismiss="modal" aria-label="{{str_close}}"></button>
             </div>
-            <div class="modal-body">
-                <div class="d-flex align-items-start">
-                    <div id="phModalImageContainerF" class="me-3 text-center" style="min-width: 80px;"></div>
-                    <div>
-                        <h4 id="phModalNameF" class="m-0 fw-bold"></h4>
-                        <div id="phModalDescF" class="text-muted mt-2"></div>
+            <div class="modal-body pt-0">
+                <div class="d-flex align-items-start mb-3">
+                    <div id="phModalImageContainerF" class="me-3 text-center ph-modal-img-container"></div>
+                    
+                    <div class="flex-grow-1">
+                        <h4 id="phModalNameF" class="m-0 fw-bold mb-1"></h4>
+                        <span id="phModalXpF" class="badge bg-teal text-white border shadow-sm" style="background-color: #20c997;"></span>
                     </div>
                 </div>
+
+                <div id="phModalDescF" class="ph-text-dimmed mb-3"></div>
+
+                <div id="phModalDateContainerF" class="border-top pt-2 mt-3 d-none">
+                    <small class="text-muted fw-bold">
+                        <i class="fa fa-calendar-check-o me-1" aria-hidden="true"></i> 
+                        <span id="phModalDateF"></span>
+                    </small>
+                </div>
+            </div>
+            
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{str_close}}</button>
             </div>
         </div>
     </div>

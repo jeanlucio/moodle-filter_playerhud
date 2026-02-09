@@ -7,6 +7,8 @@ use renderable;
 use templatable;
 use renderer_base;
 use moodle_url;
+use context_block;
+use html_writer;
 
 class widget implements renderable, templatable {
     protected $instance;
@@ -17,9 +19,6 @@ class widget implements renderable, templatable {
         $this->courseid = $courseid;
     }
 
-    /**
-     * Export data for the Mustache template.
-     */
     public function export_for_template(renderer_base $output) {
         global $USER, $DB, $CFG;
 
@@ -31,7 +30,6 @@ class widget implements renderable, templatable {
 
         $url_backpack = new moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id]);
         
-        // Opt-in check
         if (!$player || !$player->enable_gamification) {
             return [
                 'is_active' => false,
@@ -50,7 +48,10 @@ class widget implements renderable, templatable {
         $stats = \block_playerhud\game::get_game_stats($config, $this->instance->id, $player->currentxp);
         $xp_total_game = isset($stats['total_game_xp']) ? $stats['total_game_xp'] : 0;
         
-        $xp_display = $player->currentxp . ' / ' . $xp_total_game . ' XP';
+        // Internationalization for XP display
+        $str_xp = get_string('currentxp', 'filter_playerhud'); // Ensure this string is "XP" or similar
+        $xp_display = $player->currentxp . ' / ' . $xp_total_game . ' ' . $str_xp;
+        
         if ($player->currentxp >= $xp_total_game && $xp_total_game > 0) {
             $xp_display .= ' 🏆';
         }
@@ -60,7 +61,7 @@ class widget implements renderable, templatable {
         $rawinventory = \block_playerhud\game::get_inventory($USER->id, $this->instance->id);
         $count = 0;
         $seen = [];
-        $context = \context_block::instance($this->instance->id);
+        $context = context_block::instance($this->instance->id);
 
         foreach ($rawinventory as $invitem) {
             if ($count >= 6) break;
@@ -72,7 +73,7 @@ class widget implements renderable, templatable {
 
             $recentitems[] = [
                 'name' => format_string($invitem->name),
-                'xp' => '+' . $invitem->xp . ' XP',
+                'xp' => '+' . $invitem->xp . ' ' . $str_xp,
                 'image' => $image_payload, 
                 'isimage' => $media['is_image'] ? 1 : 0,
                 'content' => $image_payload, 
@@ -82,7 +83,7 @@ class widget implements renderable, templatable {
             $count++;
         }
 
-        // 4. Ranking Logic (O Botão)
+        // 4. Ranking Logic
         $rank_data = null;
         $enable_ranking = isset($config->enable_ranking) ? $config->enable_ranking : 1;
         
@@ -97,15 +98,15 @@ class widget implements renderable, templatable {
             $rank_data = [
                 'rank' => $rank,
                 'url' => $url_ranking->out(false),
-                'label' => get_string('view_ranking', 'block_playerhud')
+                'label' => get_string('view_ranking', 'filter_playerhud')
             ];
         }
 
-        // --- NOVO: URLs para os botões adicionais ---
+        // 5. Actions & URLs
         $url_base = new moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id]);
         
         $actions = [
-            'url_backpack' => $url_base->out(false), // Tab padrão é items
+            'url_backpack' => $url_base->out(false),
             'url_story'    => (new moodle_url($url_base, ['tab' => 'chapters']))->out(false),
             'url_shop'     => (new moodle_url($url_base, ['tab' => 'trades']))->out(false),
             'url_quests'   => (new moodle_url($url_base, ['tab' => 'quests']))->out(false),
@@ -121,8 +122,7 @@ class widget implements renderable, templatable {
             'progress' => $stats['progress'],
             'items' => $recentitems,
             'ranking' => $rank_data,
-            // Fusiona o array de ações novo com o retorno principal
-            ] + $actions; 
+        ] + $actions; 
     }
 
     public function render() {
@@ -131,8 +131,8 @@ class widget implements renderable, templatable {
         
         if (empty($data['is_active'])) {
             if (isset($data['optin_url'])) {
-                return \html_writer::tag('div', 
-                    \html_writer::link($data['optin_url'], $data['optin_text'], ['class' => 'btn btn-primary']),
+                return html_writer::tag('div', 
+                    html_writer::link($data['optin_url'], $data['optin_text'], ['class' => 'btn btn-primary']),
                     ['class' => 'text-center my-3']
                 );
             }

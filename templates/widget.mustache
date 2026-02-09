@@ -107,7 +107,13 @@
     </div>
 </div>
 {{#js}}
-require(["jquery", "theme_boost/tooltip"], function($, Tooltip) {
-    $("[data-bs-toggle='tooltip']").tooltip({ boundary: 'window' });
+require(['jquery', 'core/tooltip'], function($, Tooltip) {
+    // Moodle 4.x (Bootstrap 5) usa data-bs-toggle.
+    // A biblioteca core/tooltip garante compatibilidade.
+    $('[data-bs-toggle="tooltip"]').each(function() {
+        if (!$(this).data('bs.tooltip')) {
+            new Tooltip(this);
+        }
+    });
 });
 {{/js}}

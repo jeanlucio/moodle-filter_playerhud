@@ -5,19 +5,15 @@ use moodle_url;
 use renderable;
 use templatable;
 use renderer_base;
+use context_block;
 
 defined('MOODLE_INTERNAL') || die();
 
 class render {
 
-    /**
-     * Renderiza o botão de Drop (Shortcode) usando Templates Mustache.
-     * Suporta: [PLAYERHUD_DROP code=... mode=... text=... button_text=... button_emoji=...]
-     */
     public static function render_drop($attributes_str, $blockinstanceid) {
         global $DB, $USER, $CFG, $COURSE, $OUTPUT;
         
-        // Inclui bibliotecas necessárias
         require_once($CFG->dirroot . '/blocks/playerhud/lib.php');
         require_once($CFG->dirroot . '/blocks/playerhud/classes/utils.php');
 
@@ -40,7 +36,6 @@ class render {
             $data = block_playerhud_get_drop_details_for_filter((int)$attrs['id']);
         }
 
-        // Validação de segurança: Drop deve existir e pertencer a este bloco
         if (!$data || $data->blockinstanceid != $blockinstanceid) {
             return '';
         }
@@ -49,7 +44,7 @@ class render {
         $mode = $attrs['mode'] ?? 'card';
         $customtext = $attrs['text'] ?? null;
 
-        // 3. Game Logic (Inventory & Cooldown)
+        // 3. Game Logic
         $inventory = $DB->get_records('block_playerhud_inventory', [
             'userid' => $USER->id, 
             'dropid' => $dropid
@@ -57,6 +52,12 @@ class render {
         
         $count = count($inventory);
         $lastcollected = $inventory ? reset($inventory) : null;
+        
+        // NOVO: Lógica inteligente para esconder contador se item for único
+        // Se maxusage for 1, nunca mostramos "x1". Se for > 1 ou 0 (infinito), mostramos se count > 0.
+        $is_unique = ($data->maxusage == 1);
+        $show_count = ($count > 0 && !$is_unique);
+
         $limitreached = ($data->maxusage > 0 && $count >= $data->maxusage);
         
         $readytime = 0;
@@ -68,23 +69,28 @@ class render {
             }
         }
 
-        // 4. Secret Item Logic
+        // 4. Secret & Display Logic
         $is_secret_masked = ($data->secret == 1 && $count == 0);
+        $xp_val = isset($data->xp) ? $data->xp : 0; // Pega o XP do objeto de dados
 
         if ($is_secret_masked) {
-            $display_name = get_string('secret_name', 'block_playerhud');
-            $display_desc = get_string('secret_desc', 'block_playerhud');
-            $media = [
-                'is_image' => false,
-                'content' => '❓',
-                'url' => ''
-            ];
+            $display_name = get_string('mysteryitem', 'filter_playerhud');
+            $display_desc = get_string('mysteryitem_desc', 'filter_playerhud');
+            $media = ['is_image' => false, 'content' => '❓', 'url' => ''];
+            $xp_display = '???';
+            $date_display = ''; // Sem data se é segredo/não coletado
         } else {
             $display_name = format_string($data->itemname);
             $display_desc = $data->description;
+            $xp_display = $xp_val . ' ' . get_string('currentxp', 'filter_playerhud');
+
+            // CORREÇÃO: Data formatada para o modal
+            $date_display = '';
+            if ($lastcollected) {
+                $date_display = userdate($lastcollected->timecreated, get_string('strftimedatefullshort', 'langconfig'));
+            }
             
-            // Fetch real media
-            $context = \context_block::instance($blockinstanceid);
+            $context = context_block::instance($blockinstanceid);
             $fakeitem = (object)['id' => $data->itemid, 'image' => $data->image];
             $media = \block_playerhud\utils::get_item_display_data($fakeitem, $context);
         }
@@ -97,54 +103,46 @@ class render {
             'sesskey' => sesskey()
         ]);
 
-        // Prepara atributos de dados comuns para o JS (View Modal e AJAX Collect)
         $safeName = s($display_name);
         $htmlDesc = base64_encode($display_desc);
         $rawImageForJs = $media['is_image'] ? $media['url'] : strip_tags($media['content']);
 
+        // NOVO: Adicionado data-xp
         $dataAttributes = 'data-name="' . $safeName . '" ' .
                           'data-desc-b64="' . $htmlDesc . '" ' .
                           'data-image="' . s($rawImageForJs) . '" ' .
-                          'data-isimage="' . ($media['is_image'] ? 1 : 0) . '"';
+                          'data-isimage="' . ($media['is_image'] ? 1 : 0) . '" ' .
+                          'data-xp="' . s($xp_display) . '" ' .
+                          'data-unique="' . ($is_unique ? 1 : 0) . '"';
 
-        // Configuração de Botão (Card Mode)
-        $btnText = !empty($attrs['button_text']) ? $attrs['button_text'] : get_string('take', 'block_playerhud');
+        $btnText = !empty($attrs['button_text']) ? $attrs['button_text'] : get_string('take', 'filter_playerhud');
         $btnEmoji = isset($attrs['button_emoji']) ? $attrs['button_emoji'] : '🖐';
         
         if ($is_secret_masked && empty($attrs['button_text'])) {
-            $btnText = get_string('secret_name', 'block_playerhud');
+            $btnText = get_string('mysteryitem', 'filter_playerhud');
             $btnEmoji = '🕵️';
         }
-        $emojiHtml = !empty($btnEmoji) ? '<span aria-hidden="true" class="me-1">' . s($btnEmoji) . '</span> ' : '';
 
-        // Label para Text Mode
+        $emojiHtml = !empty($btnEmoji) ? '<span aria-hidden="true" class="me-1">' . s($btnEmoji) . '</span> ' : '';
         $textLabel = ($is_secret_masked) ? $display_name : ($customtext ?: $display_name);
 
         $templateData = [
-            // Flags de Modo
             'is_card' => ($mode === 'card'),
             'is_text' => ($mode === 'text'),
-            'is_image_mode' => ($mode === 'image'), // Renomeado para evitar conflito com is_image da media
-
-            // Estado
+            'is_image_mode' => ($mode === 'image'),
             'limit_reached' => $limitreached,
             'is_cooldown' => $iscooldown,
             'readytime' => $readytime,
             'count' => $count,
-
-            // Dados Visuais
+            'show_count' => $show_count, // Usaremos isso no mustache
             'safe_name' => $safeName,
             'display_name' => $display_name,
-            'label' => $textLabel, // Usado no modo texto
+            'label' => $textLabel,
             'is_image_media' => $media['is_image'],
             'media_url' => $media['url'],
             'media_content' => $media['content'],
-            
-            // Botão Card
             'btn_text' => $btnText,
-            'emoji_html' => $emojiHtml,
-
-            // Técnico
+            'emoji_html' => $emojiHtml, 
             'collect_url' => $collecturl->out(false),
             'data_attributes' => $dataAttributes
         ];
@@ -152,11 +150,5 @@ class render {
         return $OUTPUT->render_from_template('filter_playerhud/drop', $templateData);
     }
 
-    /**
-     * Renderiza Trades (Ainda não migrado, mas mantemos o placeholder se necessário)
-     */
-    public static function render_trade($id, $blockinstanceid) {
-        // Implementar no futuro (Etapa 6/7)
-        return '';
-    }
+    public static function render_trade($id, $blockinstanceid) { return ''; }
 }
