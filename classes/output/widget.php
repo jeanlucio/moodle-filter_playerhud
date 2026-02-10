@@ -78,7 +78,8 @@ class widget implements renderable, templatable {
                 'isimage' => $media['is_image'] ? 1 : 0,
                 'content' => $image_payload, 
                 'description' => !empty($invitem->description) ? format_text($invitem->description, FORMAT_HTML) : '',
-                'date' => userdate($invitem->collecteddate, get_string('strftimedatefullshort', 'langconfig'))
+                'date' => userdate($invitem->collecteddate, get_string('strftimedatefullshort', 'langconfig')),
+                'timestamp' => $invitem->collecteddate
             ];
             $count++;
         }
