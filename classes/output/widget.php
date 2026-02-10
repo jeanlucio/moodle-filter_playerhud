@@ -104,16 +104,26 @@ public function export_for_template(renderer_base $output) {
         $enable_ranking = isset($config->enable_ranking) ? $config->enable_ranking : 1;
         
         if ($enable_ranking) {
-            $rank = \block_playerhud\game::get_user_rank($this->instance->id, $USER->id, $player->currentxp);
             $url_ranking = new moodle_url('/blocks/playerhud/view.php', [
                 'id' => $this->courseid, 
                 'instanceid' => $this->instance->id, 
                 'tab' => 'ranking'
             ]);
+
+            // [LÓGICA CORRIGIDA]
+            if ($player->ranking_visibility == 1 && $player->enable_gamification == 1) {
+                $rank = \block_playerhud\game::get_user_rank($this->instance->id, $USER->id, $player->currentxp);
+                $rank_display = $rank;
+                $rank_tooltip = "#{$rank} - " . get_string('view_ranking', 'filter_playerhud');
+            } else {
+                $rank_display = '-';
+                $rank_tooltip = get_string('enable_ranking', 'filter_playerhud'); // "Clique para ativar..."
+            }
             
             $rank_data = [
-                'rank' => $rank,
+                'rank' => $rank_display,
                 'url' => $url_ranking->out(false),
+                'tooltip' => $rank_tooltip, // Nova variável
                 'label' => get_string('view_ranking', 'filter_playerhud')
             ];
         }

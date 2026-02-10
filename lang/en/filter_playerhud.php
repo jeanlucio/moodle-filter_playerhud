@@ -30,6 +30,7 @@ $string['collected'] = 'Collected!';
 $string['coursegoal'] = 'Course Goal';
 $string['currentxp'] = 'XP';
 $string['empty'] = '- Empty -';
+$string['enable_ranking'] = 'Enable Leaderboard';
 $string['filtername'] = 'PlayerHUD Widget';
 $string['infinite'] = 'Infinite';
 $string['items'] = 'Items:';

@@ -30,6 +30,7 @@ $string['collected'] = 'Coletado!';
 $string['coursegoal'] = 'Meta do Curso';
 $string['currentxp'] = 'XP';
 $string['empty'] = '- Vazio -';
+$string['enable_ranking'] = 'Ativar Ranking';
 $string['filtername'] = 'Widget PlayerHUD';
 $string['infinite'] = 'Infinito';
 $string['items'] = 'Itens:';
@@ -50,3 +51,4 @@ $string['items_owned'] = 'Itens possuídos';
 $string['loading'] = 'Carregando...';
 $string['mysteryitem_desc'] = 'Este item está oculto até que você o encontre.';
 $string['last_collected'] = 'Last collected:';
+
