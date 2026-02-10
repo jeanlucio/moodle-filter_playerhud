@@ -108,7 +108,10 @@ class text_filter extends \moodle_text_filter {
                 'collected' => get_string('collected', 'block_playerhud'),
                 'error' => get_string('error_connection', 'block_playerhud'),
                 // Adicionando a string que faltava:
-                'last_collected' => get_string('last_collected', 'block_playerhud') 
+                'last_collected' => get_string('last_collected', 'block_playerhud'),
+                'confirm_title' => get_string('confirmation', 'admin'),
+                'yes' => get_string('yes'),
+                'cancel' => get_string('cancel') 
             ];
             if (isset($PAGE) && $PAGE->requires) {
                 $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', [$jsCollectStrings]);

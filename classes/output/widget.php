@@ -19,8 +19,8 @@ class widget implements renderable, templatable {
         $this->courseid = $courseid;
     }
 
-    public function export_for_template(renderer_base $output) {
-        global $USER, $DB, $CFG;
+public function export_for_template(renderer_base $output) {
+        global $USER, $DB, $CFG, $PAGE; // Adicionado $PAGE
 
         // 1. Get Player Data
         $player = $DB->get_record('block_playerhud_user', [
@@ -28,12 +28,27 @@ class widget implements renderable, templatable {
             'userid' => $USER->id
         ]);
 
+        // URL base da mochila
         $url_backpack = new moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id]);
         
         if (!$player || !$player->enable_gamification) {
+            // LÓGICA DE REACTIVAÇÃO IMEDIATA
+            // Criamos uma URL que já executa a ação de ativar e retorna para a página atual.
+            
+            $returnurl = $PAGE->url->out_as_local_url(false);
+            
+            $url_immediate_activate = new moodle_url('/blocks/playerhud/view.php', [
+                'id' => $this->courseid,
+                'instanceid' => $this->instance->id,
+                'action' => 'toggle_hud',
+                'state' => 1,
+                'sesskey' => sesskey(),
+                'returnurl' => $returnurl
+            ]);
+
             return [
                 'is_active' => false,
-                'optin_url' => $url_backpack->out(false),
+                'optin_url' => $url_immediate_activate->out(false),
                 'optin_text' => get_string('click_to_enable', 'filter_playerhud')
             ];
         }
@@ -113,6 +128,16 @@ class widget implements renderable, templatable {
             'url_quests'   => (new moodle_url($url_base, ['tab' => 'quests']))->out(false),
         ];
 
+        // NOVO: URL de Desativação com retorno para o curso
+        $url_disable = new moodle_url('/blocks/playerhud/view.php', [
+            'id' => $this->courseid,
+            'instanceid' => $this->instance->id,
+            'action' => 'toggle_hud',
+            'state' => 0,
+            'sesskey' => sesskey(),
+            'returnurl' => '/course/view.php?id=' . $this->courseid // Retorna para o curso
+        ]);
+
         return [
             'is_active' => true,
             'userpicture' => $output->user_picture($USER, ['size' => 75]),
@@ -123,6 +148,10 @@ class widget implements renderable, templatable {
             'progress' => $stats['progress'],
             'items' => $recentitems,
             'ranking' => $rank_data,
+            // NOVOS DADOS PARA O BOTÃO SAIR
+            'url_disable' => $url_disable->out(false),
+            'str_disable_gamification' => get_string('disable_exit', 'block_playerhud'),
+            'str_confirm_msg' => get_string('confirm_disable', 'block_playerhud'),
         ] + $actions; 
     }
 

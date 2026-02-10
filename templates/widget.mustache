@@ -102,7 +102,17 @@
             </a>
             {{/ranking}}
             
-            {{! Célula vazia (Opcional, para completar o grid se necessário) }}
+            {{! 6. Sair / Desativar }}
+            <a href="{{url_disable}}" 
+               class="btn btn-ph-level-border shadow-sm js-disable-hud" 
+               data-bs-toggle="tooltip" data-bs-placement="bottom" 
+               data-confirm-msg="{{str_confirm_msg}}"
+               title="{{str_disable_gamification}}"
+               aria-label="{{str_disable_gamification}}">
+                <span aria-hidden="true" class="text-danger">
+                    <i class="fa fa-power-off"></i>
+                </span>
+            </a>
             
         </div>
     </div>
