@@ -13,6 +13,19 @@ class render {
 
     public static function render_drop($attributes_str, $blockinstanceid) {
         global $DB, $USER, $CFG, $COURSE, $OUTPUT;
+
+        // --- INÍCIO DA CORREÇÃO ---
+        // 0. Verificar se o usuário está participando da gamificação
+        // Se não estiver, retorna string vazia (remove o drop da tela)
+        $player = $DB->get_record('block_playerhud_user', [
+            'blockinstanceid' => $blockinstanceid, 
+            'userid' => $USER->id
+        ]);
+
+        if (!$player || !$player->enable_gamification) {
+            return '';
+        }
+        // --- FIM DA CORREÇÃO ---
         
         require_once($CFG->dirroot . '/blocks/playerhud/lib.php');
         require_once($CFG->dirroot . '/blocks/playerhud/classes/utils.php');
