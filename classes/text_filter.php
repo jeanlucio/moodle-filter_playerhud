@@ -132,9 +132,13 @@ class text_filter extends \moodle_text_filter {
                 'confirm_title' => get_string('confirmation', 'admin'),
                 'yes' => get_string('yes'),
                 'cancel' => get_string('cancel'),
+                'level' => get_string('level', 'block_playerhud'),
             ];
+            
+            $jsconfig = ['strings' => $jscollectstrings];
+
             if (isset($PAGE) && $PAGE->requires) {
-                $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', [$jscollectstrings]);
+                $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', [$jsconfig]);
             }
 
             self::$assetsinjected = true;
