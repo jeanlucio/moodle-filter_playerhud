@@ -70,3 +70,15 @@
     height: auto;
     object-fit: contain;
 }
+/* ==============================================================================================
+   ATUALIZAÇÃO: Classes utilitárias para o Filtro (Modal e Drops)
+   ============================================================================================== */
+
+/* Substitui o style inline "background-color: #20c997" no templates/modals.mustache */
+.ph-bg-teal {
+    background-color: #20c997 !important;
+}
+
+/* Garante compatibilidade RTL para margens em modais do filtro */
+.me-1 { margin-inline-end: 0.25rem !important; }
+.ms-1 { margin-inline-start: 0.25rem !important; }
