@@ -1,4 +1,24 @@
-{{! @template block_playerhud/modal_item }}
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template filter_playerhud/modals
+
+    Modal structure for displaying item details in the filter.
+}}
 <div class="modal fade ph-z-index-high" id="phItemModalFilter" tabindex="-1" aria-labelledby="phModalTitleF" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -6,27 +26,26 @@
                 <button type="button" class="btn-close ph-modal-close-f" data-bs-dismiss="modal" aria-label="{{str_close}}"></button>
             </div>
             <div class="modal-body pt-0">
-             
+
                 <div class="d-flex align-items-start mb-3">
                     <div id="phModalImageContainerF" class="me-3 text-center ph-modal-img-container"></div>
-                    
+
                     <div class="flex-grow-1">
                         <h4 id="phModalNameF" class="m-0 fw-bold mb-1"></h4>
-                        {{! Regra 11: CSS Inline removido. Usando classe utilitária definida no styles.css }}
                         <span id="phModalXpF" class="badge ph-bg-teal text-white border shadow-sm"></span>
                     </div>
                 </div>
 
                 <div id="phModalDescF" class="ph-text-dimmed mb-3"></div>
 
-               <div id="phModalDateContainerF" class="border-top pt-2 mt-3 d-none">
+                <div id="phModalDateContainerF" class="border-top pt-2 mt-3 d-none">
                     <small class="text-muted fw-bold">
-                        <i class="fa fa-calendar-check-o me-1" aria-hidden="true"></i> 
+                        <i class="fa fa-calendar-check-o me-1" aria-hidden="true"></i>
                         <span id="phModalDateF"></span>
                     </small>
                 </div>
             </div>
-            
+
             <div class="modal-footer border-0 pt-0">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{str_close}}</button>
             </div>

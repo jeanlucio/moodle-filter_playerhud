@@ -1,17 +1,45 @@
 {{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
     @template filter_playerhud/widget
+
     Widget displayed by the [PLAYERHUD_WIDGET] shortcode.
+
+    Example context (json):
+    {
+        "fullname": "John Doe",
+        "userpicture": "<img src='...'>",
+        "level_class": "ph-level-1",
+        "level_display": "1/10",
+        "xp_display": "100 / 1000 XP",
+        "progress": 10,
+        "items": []
+    }
 }}
 <div class="playerhud-widget-container {{level_class}}">
-    
-    {{! Left: Avatar (Mantido igual) }}
+
+    {{! Left: Avatar }}
     <div class="ph-widget-left">
         <div class="ph-widget-avatar">
             {{{userpicture}}}
         </div>
     </div>
 
-    {{! Center: Stats & Stash (Mantido igual) }}
+    {{! Center: Stats & Stash }}
     <div class="ph-widget-center">
         <div class="d-flex justify-content-between align-items-center mb-1">
             <div class="d-flex align-items-center">
@@ -24,7 +52,7 @@
         </div>
 
         <div class="ph-progress-container">
-            <div class="progress-bar ph-progress-bar {{level_class}}" role="progressbar" 
+            <div class="progress-bar ph-progress-bar {{level_class}}" role="progressbar"
                  style="width: {{progress}}%;"
                  aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100">
                  <span class="visually-hidden">{{progress}}% {{#str}} completed, core {{/str}}</span>
@@ -39,6 +67,7 @@
                      data-isimage="{{isimage}}" data-date="{{date}}"
                      data-timestamp="{{timestamp}}">
                      <div class="d-none ph-item-description-content">{{description}}</div>
+
                      {{#isimage}}<img src="{{image}}" alt="">{{/isimage}}
                      {{^isimage}}<span class="ph-emoji" aria-hidden="true">{{content}}</span>{{/isimage}}
                 </div>
@@ -51,14 +80,14 @@
         </div>
     </div>
 
-{{! Right: Actions Grid }}
-   <div class="ph-widget-right">
+    {{! Right: Actions Grid }}
+    <div class="ph-widget-right">
         <div class="ph-widget-actions-grid">
-            
+
             {{! 1. Mochila }}
-            <a href="{{url_backpack}}" 
-               class="btn btn-ph-level-border shadow-sm" 
-               data-bs-toggle="tooltip" data-bs-placement="top" 
+            <a href="{{url_backpack}}"
+               class="btn btn-ph-level-border shadow-sm"
+               data-bs-toggle="tooltip" data-bs-placement="top"
                title="{{#str}} openbackpack, filter_playerhud {{/str}}"
                aria-label="{{#str}} openbackpack, filter_playerhud {{/str}}">
                  <span aria-hidden="true">🎒</span>
@@ -66,19 +95,19 @@
 
             {{! 5. Ranking }}
             {{#ranking}}
-            <a href="{{url}}" 
-               class="btn btn-ph-level-border shadow-sm" 
-               data-bs-toggle="tooltip" data-bs-placement="bottom" 
+            <a href="{{url}}"
+               class="btn btn-ph-level-border shadow-sm"
+               data-bs-toggle="tooltip" data-bs-placement="bottom"
                title="{{tooltip}}" aria-label="{{label}}">
                 <span aria-hidden="true">🏆</span>
-                 <span class="visually-hidden">{{label}}</span>
+                <span class="visually-hidden">{{label}}</span>
             </a>
             {{/ranking}}
-            
+
             {{! 6. Sair / Desativar }}
-            <a href="{{url_disable}}" 
-               class="btn btn-ph-level-border shadow-sm js-disable-hud" 
-               data-bs-toggle="tooltip" data-bs-placement="bottom" 
+            <a href="{{url_disable}}"
+               class="btn btn-ph-level-border shadow-sm js-disable-hud"
+               data-bs-toggle="tooltip" data-bs-placement="bottom"
                data-confirm-msg="{{str_confirm_msg}}"
                title="{{str_disable_gamification}}"
                aria-label="{{str_disable_gamification}}">
@@ -86,14 +115,12 @@
                     <i class="fa fa-power-off"></i>
                 </span>
             </a>
-            
+
         </div>
     </div>
 </div>
 {{#js}}
 require(['jquery', 'core/tooltip'], function($, Tooltip) {
-    // Moodle 4.x (Bootstrap 5) usa data-bs-toggle.
-    // A biblioteca core/tooltip garante compatibilidade.
     $('[data-bs-toggle="tooltip"]').each(function() {
         if (!$(this).data('bs.tooltip')) {
             new Tooltip(this);

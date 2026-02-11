@@ -1,84 +1,103 @@
 /**
- * CSS styles for filter_playerhud
+ * This file is part of Moodle - http://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * CSS styles for filter_playerhud.
  *
  * @package    filter_playerhud
- * @copyright  2026 Jean Lúcio
+ * @copyright  2026 Jean Lúcio <jeanlucio@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/* ==============================================================================================
-   1. Drop & Cards
-   ============================================================================================== */
+/* Drop & Cards */
 
-/* Aumenta o tamanho do emoji/ícone dentro do Drop
-   Nota: Removemos o prefixo .filter_playerhud pois filtros não têm wrapper padrão */
 .ph-drop-icon-wrapper .ph-icon-large {
-    font-size: 3rem; /* Aumentei para 3rem para garantir destaque */
+    font-size: 3rem;
     line-height: 1.2;
-    display: block; /* Garante que o line-height funcione bem */
+    display: block;
     margin-bottom: 0.5rem;
 }
 
-/* Texto truncado do nome do item */
 .ph-drop-trigger-area .ph-text-small {
     font-size: 0.85rem;
-    color: var(--dark); /* Garante cor legível */
+    color: var(--body-color);
 }
 
-/* Estado de Cooldown/Espera */
 .ph-text-dimmed {
-    color: #6c757d; /* Bootstrap gray-600 */
+    color: var(--gray-600);
 }
 
-/* Card Container - Ajustes finos para o Card */
 .ph-drop-card-container {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 1px solid rgba(0,0,0,.125);
+    border: 1px solid var(--border-color, rgba(0, 0, 0, .125));
+    background-color: var(--card-bg, var(--body-bg));
 }
 
 .ph-drop-card-container:hover {
     transform: translateY(-2px);
-    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    box-shadow: 0 0.5rem 1rem var(--gray-900-30, rgba(0, 0, 0, .15)) !important;
 }
 
-/* ==============================================================================================
-   2. Modals
-   ============================================================================================== */
-
-/* Container da imagem no modal */
-.ph-modal-img-container {
-    min-width: 80px;
-    font-size: 4rem; /* Se for emoji no modal, fica bem grande */
-    line-height: 1;
-}
+/* Modals */
 
 .ph-modal-img-container {
     min-width: 80px;
     font-size: 4rem;
     line-height: 1;
-    /* Centraliza o conteúdo (imagem ou emoji) */
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .ph-modal-img-container img {
-    /* Restringe o tamanho para não estourar */
     max-width: 120px !important;
     max-height: 120px !important;
     width: auto !important;
     height: auto;
     object-fit: contain;
 }
-/* ==============================================================================================
-   ATUALIZAÇÃO: Classes utilitárias para o Filtro (Modal e Drops)
-   ============================================================================================== */
 
-/* Substitui o style inline "background-color: #20c997" no templates/modals.mustache */
+/* Utility Classes */
+
 .ph-bg-teal {
-    background-color: #20c997 !important;
+    background-color: var(--success) !important;
 }
 
-/* Garante compatibilidade RTL para margens em modais do filtro */
-.me-1 { margin-inline-end: 0.25rem !important; }
-.ms-1 { margin-inline-start: 0.25rem !important; }
+.ph-me-1 {
+    margin-inline-end: 0.25rem !important;
+}
+
+.ph-ms-1 {
+    margin-inline-start: 0.25rem !important;
+}
+
+.ph-state-grayscale {
+    filter: grayscale(100%);
+    opacity: 0.7;
+}
+
+.ph-state-dimmed {
+    opacity: 0.5;
+}
+
+.ph-cursor-help {
+    cursor: help;
+}
+
+.ph-cursor-wait {
+    cursor: wait;
+}

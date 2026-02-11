@@ -17,7 +17,7 @@
 namespace filter_playerhud;
 
 /**
- * Text filter for PlayerHUD (Block Version).
+ * Text filter for PlayerHUD.
  * Delegates rendering to specialized output classes.
  *
  * @package    filter_playerhud
@@ -25,14 +25,14 @@ namespace filter_playerhud;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class text_filter extends \moodle_text_filter {
-    /** @var bool Flag to ensure assets are injected only once. */
+    /** @var bool Flag to ensure assets are injected only once per page. */
     protected static $assetsinjected = false;
 
-    /** @var array Cache for block instances in courses. */
+    /** @var array Cache for block instances in courses to avoid redundant queries. */
     protected static $blockcache = [];
 
     /**
-     * Filter the text.
+     * Filter the text to replace PlayerHUD shortcodes.
      *
      * @param string $text The text to filter.
      * @param array $options Filter options.
@@ -41,12 +41,12 @@ class text_filter extends \moodle_text_filter {
     public function filter($text, array $options = []) {
         global $DB, $COURSE, $PAGE;
 
-        // Quick fail check.
+        // Quick check for shortcode presence.
         if (strpos($text, '[PLAYERHUD_') === false) {
             return $text;
         }
 
-        // Validate Context & Login.
+        // Validate context and login requirements.
         if (!isloggedin() || isguestuser() || $COURSE->id == SITEID) {
             $text = str_replace('[PLAYERHUD_WIDGET]', '', $text);
             $text = preg_replace('/\[PLAYERHUD_DROP\s+[^\]]+\]/', '', $text);
@@ -54,7 +54,7 @@ class text_filter extends \moodle_text_filter {
             return $text;
         }
 
-        // Find Block Instance for this Course.
+        // Retrieve block instance associated with the course.
         if (!isset(self::$blockcache[$COURSE->id])) {
             $context = \context_course::instance($COURSE->id);
             $sql = "SELECT bi.id, bi.configdata
@@ -75,10 +75,9 @@ class text_filter extends \moodle_text_filter {
             return $text;
         }
 
-        // Load Logic Classes.
         $needsassets = false;
 
-        // Widget Processing.
+        // Process PlayerHUD Widget.
         if (strpos($text, '[PLAYERHUD_WIDGET]') !== false) {
             if (class_exists('\filter_playerhud\output\widget')) {
                 $widgetrenderer = new \filter_playerhud\output\widget($blockinstance, $COURSE->id);
@@ -88,7 +87,7 @@ class text_filter extends \moodle_text_filter {
             }
         }
 
-        // Drops Processing.
+        // Process PlayerHUD Drops.
         if (strpos($text, '[PLAYERHUD_DROP') !== false) {
             if (method_exists('\filter_playerhud\output\render', 'render_drop')) {
                 $text = preg_replace_callback('/\[PLAYERHUD_DROP\s+([^\]]+)\]/i', function ($matches) use ($blockinstance) {
@@ -98,7 +97,7 @@ class text_filter extends \moodle_text_filter {
             }
         }
 
-        // Trades Processing.
+        // Process PlayerHUD Trades.
         if (strpos($text, '[PLAYERHUD_TRADE') !== false) {
             if (method_exists('\filter_playerhud\output\render', 'render_trade')) {
                 $text = preg_replace_callback('/\[PLAYERHUD_TRADE\s+id=(\d+)\]/i', function ($matches) use ($blockinstance) {
@@ -108,14 +107,14 @@ class text_filter extends \moodle_text_filter {
             }
         }
 
-        // Inject Global Assets (JS via AMD / Modals) only once.
+        // Inject global assets (Modals and JS) if needed.
         if ($needsassets && !self::$assetsinjected) {
             if (class_exists('\filter_playerhud\output\assets')) {
                 $assets = new \filter_playerhud\output\assets();
                 $text .= $assets->get_modals_html();
             }
 
-            // Timers JS.
+            // Load Timer JS strings and call AMD module.
             $jstimerstrings = [
                 'ready' => get_string('ready', 'block_playerhud'),
                 'take'  => get_string('take', 'block_playerhud'),
@@ -125,7 +124,7 @@ class text_filter extends \moodle_text_filter {
                 $PAGE->requires->js_call_amd('block_playerhud/timers', 'init', [$jstimerstrings]);
             }
 
-            // Collect AJAX JS.
+            // Load Collection AJAX strings and call AMD module.
             $jscollectstrings = [
                 'collected' => get_string('collected', 'block_playerhud'),
                 'error' => get_string('error_connection', 'block_playerhud'),
