@@ -51,44 +51,17 @@
         </div>
     </div>
 
-{{! Right: Actions Grid (Ordem Padronizada) }}
-    <div class="ph-widget-right">
+{{! Right: Actions Grid }}
+   <div class="ph-widget-right">
         <div class="ph-widget-actions-grid">
             
-            {{! 1. Mochila (Coleção) }}
+            {{! 1. Mochila }}
             <a href="{{url_backpack}}" 
                class="btn btn-ph-level-border shadow-sm" 
                data-bs-toggle="tooltip" data-bs-placement="top" 
                title="{{#str}} openbackpack, filter_playerhud {{/str}}"
                aria-label="{{#str}} openbackpack, filter_playerhud {{/str}}">
-                <span aria-hidden="true">🎒</span>
-            </a>
-
-            {{! 2. Loja }}
-            <a href="{{url_shop}}" 
-               class="btn btn-ph-level-border shadow-sm" 
-               data-bs-toggle="tooltip" data-bs-placement="top" 
-               title="{{#str}} tab_trades, block_playerhud {{/str}}"
-               aria-label="{{#str}} tab_trades, block_playerhud {{/str}}">
-                <span aria-hidden="true">⚖️</span>
-            </a>
-
-            {{! 3. Missões }}
-            <a href="{{url_quests}}" 
-               class="btn btn-ph-level-border shadow-sm" 
-               data-bs-toggle="tooltip" data-bs-placement="top" 
-               title="{{#str}} tab_quests, block_playerhud {{/str}}"
-               aria-label="{{#str}} tab_quests, block_playerhud {{/str}}">
-                <span aria-hidden="true">📜</span>
-            </a>
-            
-            {{! 4. História }}
-            <a href="{{url_story}}" 
-               class="btn btn-ph-level-border shadow-sm" 
-               data-bs-toggle="tooltip" data-bs-placement="bottom" 
-               title="{{#str}} story_shortcut, filter_playerhud {{/str}}"
-               aria-label="{{#str}} story_shortcut, filter_playerhud {{/str}}">
-                <span aria-hidden="true">📖</span>
+                 <span aria-hidden="true">🎒</span>
             </a>
 
             {{! 5. Ranking }}
@@ -98,7 +71,7 @@
                data-bs-toggle="tooltip" data-bs-placement="bottom" 
                title="{{tooltip}}" aria-label="{{label}}">
                 <span aria-hidden="true">🏆</span>
-                <span class="visually-hidden">{{label}}</span>
+                 <span class="visually-hidden">{{label}}</span>
             </a>
             {{/ranking}}
             
