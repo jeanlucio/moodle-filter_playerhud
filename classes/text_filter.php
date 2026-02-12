@@ -134,7 +134,7 @@ class text_filter extends \moodle_text_filter {
                 'cancel' => get_string('cancel'),
                 'level' => get_string('level', 'block_playerhud'),
             ];
-            
+
             $jsconfig = ['strings' => $jscollectstrings];
 
             if (isset($PAGE) && $PAGE->requires) {
