@@ -144,7 +144,9 @@ class widget implements renderable, templatable {
                 'tab' => 'ranking',
             ]);
 
-            if ($player->ranking_visibility == 1 && $player->enable_gamification == 1) {
+            $isteacher = has_capability('block/playerhud:manage', $context);
+
+            if (!$isteacher && $player->ranking_visibility == 1 && $player->enable_gamification == 1) {
                 $rank = \block_playerhud\game::get_user_rank($this->instance->id, $USER->id, $player->currentxp);
                 $rankdisplay = $rank;
                 $ranktooltip = "#{$rank} - " . get_string('view_ranking', 'filter_playerhud');

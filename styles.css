@@ -101,3 +101,214 @@
 .ph-cursor-wait {
     cursor: wait;
 }
+/**
+ * CSS styles for filter_playerhud.
+ * Includes Widget styles to ensure standalone rendering.
+ */
+
+/* --- WIDGET CONTAINER & LAYOUT --- */
+.playerhud-widget-container {
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075);
+    overflow: hidden;
+    display: flex;
+    align-items: stretch;
+    position: relative;
+    background-color: var(--card-bg, #fff);
+    border: 1px solid rgba(0, 0, 0, .125);
+    min-height: 100px;
+    border-inline-start: 5px solid var(--secondary, #6c757d);
+    transition: border-color 0.3s ease;
+}
+
+.ph-widget-left {
+    min-width: 110px;
+    width: 110px;
+    background-color: var(--gray-100, #f8f9fa);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-inline-end: 1px solid var(--gray-300, #dee2e6);
+    padding: 1rem;
+}
+
+.ph-widget-avatar img {
+    border-radius: 50%;
+    border: 3px solid var(--light, #fff);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    width: 75px;
+    height: 75px;
+}
+
+.ph-widget-center {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1rem 1.5rem;
+    min-width: 0;
+}
+
+.ph-widget-right {
+    min-width: 180px;
+    width: 180px;
+    background-color: var(--gray-100, #f8f9fa);
+    border-inline-start: 1px solid var(--gray-300, #dee2e6);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+}
+
+/* Actions Grid (Fixes Distortion) */
+.ph-widget-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    width: 100%;
+}
+
+.ph-widget-actions-grid .btn {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    padding-block: 0.5rem;
+}
+
+/* --- BUTTON STYLES --- */
+.btn-ph-level-border {
+    background-color: var(--card-bg, #fff);
+    border: 1px solid var(--gray-300, #dee2e6);
+    color: var(--gray-700, #495057);
+    font-weight: 700;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-ph-level-border:hover {
+    background-color: var(--gray-200, #e9ecef);
+}
+
+/* --- TIER COLORS (Widget Context) --- */
+.playerhud-widget-container.ph-lvl-tier-1 { border-inline-start-color: var(--secondary, #6c757d); }
+.playerhud-widget-container.ph-lvl-tier-2 { border-inline-start-color: var(--success, #208337); }
+.playerhud-widget-container.ph-lvl-tier-3 { border-inline-start-color: var(--primary, #0b55c4); }
+.playerhud-widget-container.ph-lvl-tier-4 { border-inline-start-color: var(--purple, #6f42c1); }
+.playerhud-widget-container.ph-lvl-tier-5 { border-inline-start-color: var(--primary, #0d6efd); }
+
+.ph-lvl-tier-1.progress-bar { background-color: var(--secondary); }
+.ph-lvl-tier-2.progress-bar { background-color: var(--success); }
+.ph-lvl-tier-3.progress-bar { background-color: var(--primary); }
+.ph-lvl-tier-4.progress-bar { background-color: var(--purple); }
+.ph-lvl-tier-5.progress-bar { background: linear-gradient(45deg, var(--primary), var(--purple)); }
+
+/* --- STASH --- */
+.ph-widget-stash {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px;
+    min-height: 34px;
+    margin-top: 0.5rem;
+}
+
+.ph-mini-item {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--gray-300, #dee2e6);
+    border-radius: 6px !important;
+    padding: 0 !important;
+    overflow: hidden;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+}
+
+.ph-mini-item-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* --- DROPS & UTILS --- */
+.ph-drop-icon-wrapper .ph-icon-large {
+    font-size: 3rem;
+    line-height: 1.2;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.ph-drop-trigger-area .ph-text-small {
+    font-size: 0.85rem;
+    color: var(--body-color);
+}
+
+.ph-text-dimmed { color: var(--gray-600); }
+
+.ph-drop-card-container {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--border-color, rgba(0, 0, 0, .125));
+    background-color: var(--card-bg, var(--body-bg));
+}
+
+.ph-drop-card-container:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem var(--gray-900-30, rgba(0, 0, 0, .15)) !important;
+}
+
+.ph-modal-img-container {
+    min-width: 80px;
+    font-size: 4rem;
+    line-height: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.ph-modal-img-container img {
+    max-width: 120px !important;
+    max-height: 120px !important;
+    width: auto !important;
+    height: auto;
+    object-fit: contain;
+}
+
+.ph-bg-teal { background-color: var(--success) !important; }
+.ph-me-1 { margin-inline-end: 0.25rem !important; }
+.ph-ms-1 { margin-inline-start: 0.25rem !important; }
+.ph-state-grayscale { filter: grayscale(100%); opacity: 0.7; }
+.ph-state-dimmed { opacity: 0.5; }
+.ph-cursor-help { cursor: help; }
+.ph-cursor-wait { cursor: wait; }
+
+/* --- ACESSIBILIDADE & FIXES VISUAIS --- */
+
+/* Garante que o texto 'Ver Ranking' não quebre o layout do botão */
+.playerhud-widget-container .visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* Ajuste fino para os botões do widget ficarem alinhados */
+.ph-widget-actions-grid .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px; /* Altura mínima consistente */
+    padding: 0.375rem 0.75rem;
+}
