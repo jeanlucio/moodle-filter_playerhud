@@ -18,6 +18,7 @@
     @template filter_playerhud/widget
 
     Widget displayed by the [PLAYERHUD_WIDGET] shortcode.
+    Supports Web (Responsive) and App (Simplified Card).
 
     @package    block_playerhud
     @copyright  2026 Jean Lúcio <jeanlucio@gmail.com>
@@ -34,95 +35,117 @@
         "items": []
     }
 }}
-<div class="playerhud-widget-container {{level_class}}">
-
-    {{! Left: Avatar }}
-    <div class="ph-widget-left">
-        <div class="ph-widget-avatar">
-            {{{userpicture}}}
+{{#is_app}}
+    {{! --- VIEW 1: MOODLE APP (AVISO DE LIMITAÇÃO) --- }}
+    <div class="alert alert-info shadow-sm mb-3" style="border-left: 5px solid #0dcaf0;">
+        <div class="d-flex">
+            <div class="me-3">
+                <i class="fa fa-gamepad fa-2x" aria-hidden="true"></i>
+            </div>
+            <div>
+                <h4 class="alert-heading h5 fw-bold">{{#str}} mobile_warning_title, filter_playerhud {{/str}}</h4>
+                <p class="mb-2 small">{{#str}} mobile_warning_desc, filter_playerhud {{/str}}</p>
+                <a href="{{url_redirect}}" target="_blank" class="btn btn-sm btn-dark w-100">
+                    <i class="fa fa-external-link me-1" aria-hidden="true"></i> {{#str}} open_in_browser, filter_playerhud {{/str}}
+                </a>
+            </div>
         </div>
     </div>
+{{/is_app}}
 
-    {{! Center: Stats & Stash }}
-    <div class="ph-widget-center">
-        <div class="d-flex justify-content-between align-items-center mb-1">
-            <div class="d-flex align-items-center">
-                <h4 class="m-0 me-2 fw-bold text-dark">{{fullname}}</h4>
+{{^is_app}}
+    {{! --- VIEW 2: WEB (DESKTOP E MOBILE WEB) --- }}
+    <div class="playerhud-widget-container {{level_class}}">
+
+        {{! Left: Avatar }}
+        <div class="ph-widget-left">
+            <div class="ph-widget-avatar">
+                {{{userpicture}}}
+            </div>
+        </div>
+
+        {{! Center: Stats & Stash }}
+        <div class="ph-widget-center">
+            
+            {{! 1. NOME (Linha Própria) }}
+            {{! No Desktop: Alinhado à esquerda | No Mobile: Centralizado (via CSS) }}
+            <h4 class="m-0 fw-bold text-dark text-truncate ph-widget-name" title="{{fullname}}">
+                {{fullname}}
+            </h4>
+
+            {{! 2. LINHA DE STATUS (Nível esq | XP dir) }}
+            <div class="d-flex justify-content-between align-items-center mb-1 w-100 mt-1">
+                
+                {{! Lado Esquerdo: Nível }}
                 <span class="badge {{level_class}} border shadow-sm px-2">
                     {{#str}} level, filter_playerhud {{/str}} {{level_display}}
                 </span>
-            </div>
-            <div class="small text-muted fw-bold">{{xp_display}}</div>
-        </div>
-
-        <div class="progress ph-progress-container">
-            <div class="progress-bar ph-progress-bar {{level_class}}" role="progressbar"
-                 style="width: {{progress}}%;"
-                 aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100">
-                 <span class="ph-progress-text">{{progress}}%</span>
-            </div>
-        </div>
-
-        <div class="ph-widget-stash">
-            {{#items}}
-                <div class="ph-mini-item ph-item-trigger" role="button" tabindex="0"
-                     title="{{name}}" aria-label="{{name}}"
-                     data-name="{{name}}" data-xp="{{xp}}" data-image="{{image}}"
-                     data-isimage="{{isimage}}" data-date="{{date}}"
-                     data-timestamp="{{timestamp}}">
-                     <div class="d-none ph-item-description-content">{{description}}</div>
-
-                     {{#isimage}}<img src="{{image}}" alt="">{{/isimage}}
-                     {{^isimage}}<span class="ph-emoji" aria-hidden="true">{{content}}</span>{{/isimage}}
+                
+                {{! Lado Direito: XP + Ajuda }}
+                <div class="d-flex align-items-center gap-2">
+                    <div class="small text-muted fw-bold text-nowrap">{{xp_display}}</div>
+                    
+                    <a href="{{url_backpack}}&tab=rules" class="ph-help-trigger" 
+                       title="{{#str}} help_btn, filter_playerhud {{/str}}" 
+                       aria-label="{{#str}} help_btn, filter_playerhud {{/str}}">
+                        <i class="fa fa-question-circle" aria-hidden="true"></i>
+                    </a>
                 </div>
-            {{/items}}
-            {{^items}}
-                <span class="small text-muted align-self-center">
-                    {{#str}} items, filter_playerhud {{/str}} {{#str}} empty, filter_playerhud {{/str}}
-                </span>
-            {{/items}}
+            </div>
+
+            {{! 3. Barra de Progresso }}
+            <div class="progress ph-progress-container">
+                <div class="progress-bar ph-progress-bar {{level_class}}" role="progressbar"
+                     style="width: {{progress}}%;"
+                     aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100">
+                     <span class="ph-progress-text">{{progress}}%</span>
+                </div>
+            </div>
+
+            {{! 4. Stash }}
+            <div class="ph-widget-stash">
+                {{#items}}
+                    <div class="ph-mini-item ph-item-trigger" role="button" tabindex="0"
+                         title="{{name}}" aria-label="{{name}}"
+                         data-name="{{name}}" data-xp="{{xp}}" data-image="{{image}}"
+                         data-isimage="{{isimage}}" data-date="{{date}}"
+                         data-timestamp="{{timestamp}}">
+                         <div class="d-none ph-item-description-content">{{description}}</div>
+                         {{#isimage}}<img src="{{image}}" alt="" class="ph-mini-item-img">{{/isimage}}
+                         {{^isimage}}<span class="ph-emoji" aria-hidden="true">{{content}}</span>{{/isimage}}
+                    </div>
+                {{/items}}
+                {{^items}}
+                    <span class="small text-muted align-self-center">
+                        {{#str}} items, filter_playerhud {{/str}} {{#str}} empty, filter_playerhud {{/str}}
+                    </span>
+                {{/items}}
+            </div>
+        </div>
+
+        {{! Right: Actions Grid }}
+        <div class="ph-widget-right">
+            <div class="ph-widget-actions-grid">
+                <a href="{{url_backpack}}" class="btn btn-ph-level-border shadow-sm"
+                   title="{{#str}} openbackpack, filter_playerhud {{/str}}">
+                    <span aria-hidden="true">🎒</span>
+                </a>
+                {{#ranking}}
+                <a href="{{url}}" class="btn btn-ph-level-border shadow-sm"
+                   title="{{tooltip}}">
+                    <span aria-hidden="true">🏆</span>
+                </a>
+                {{/ranking}}
+                <a href="{{url_disable}}" class="btn btn-ph-level-border shadow-sm js-disable-hud"
+                   data-confirm-msg="{{str_confirm_msg}}" title="{{str_disable_gamification}}">
+                    <span aria-hidden="true" class="text-danger"><i class="fa fa-power-off"></i></span>
+                </a>
+            </div>
         </div>
     </div>
+{{/is_app}}
 
-    {{! Right: Actions Grid }}
-    <div class="ph-widget-right">
-        <div class="ph-widget-actions-grid">
-
-            {{! 1. Mochila }}
-            <a href="{{url_backpack}}"
-               class="btn btn-ph-level-border shadow-sm"
-               data-bs-toggle="tooltip" data-bs-placement="top"
-               title="{{#str}} openbackpack, filter_playerhud {{/str}}"
-               aria-label="{{#str}} openbackpack, filter_playerhud {{/str}}">
-                 <span aria-hidden="true">🎒</span>
-            </a>
-
-            {{! 5. Ranking }}
-            {{#ranking}}
-            <a href="{{url}}"
-               class="btn btn-ph-level-border shadow-sm"
-               data-bs-toggle="tooltip" data-bs-placement="bottom"
-               title="{{tooltip}}" aria-label="{{label}}">
-                <span aria-hidden="true">🏆</span>
-                <span class="visually-hidden">{{label}}</span>
-            </a>
-            {{/ranking}}
-
-            {{! 6. Sair / Desativar }}
-            <a href="{{url_disable}}"
-               class="btn btn-ph-level-border shadow-sm js-disable-hud"
-               data-bs-toggle="tooltip" data-bs-placement="bottom"
-               data-confirm-msg="{{str_confirm_msg}}"
-               title="{{str_disable_gamification}}"
-               aria-label="{{str_disable_gamification}}">
-                <span aria-hidden="true" class="text-danger">
-                    <i class="fa fa-power-off"></i>
-                </span>
-            </a>
-
-        </div>
-    </div>
-</div>
+{{! Scripts JS apenas para Web (Tooltips) }}
 {{#js}}
 require(['jquery', 'core/tooltip'], function($, Tooltip) {
     $('[data-bs-toggle="tooltip"]').each(function() {

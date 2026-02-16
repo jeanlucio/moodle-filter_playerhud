@@ -32,6 +32,7 @@ $string['currentxp'] = 'XP';
 $string['empty'] = '- Vazio -';
 $string['enable_ranking'] = 'Ativar Ranking';
 $string['filtername'] = 'Widget PlayerHUD';
+$string['help_btn'] = 'Ajuda';
 $string['infinite'] = 'Infinito';
 $string['items'] = 'Itens:';
 $string['items_owned'] = 'Itens possuídos';
@@ -51,3 +52,7 @@ $string['take'] = 'Pegar';
 $string['view_ranking'] = 'Ver Ranking';
 $string['wait'] = 'Aguarde:';
 $string['yours'] = 'Tens: {$a}';
+// Adicione ao final:
+$string['mobile_warning_title'] = 'Modo Web Recomendado';
+$string['mobile_warning_desc'] = 'A gamificação deste curso (Itens, Drops e Ranking) funciona apenas no navegador.';
+$string['open_in_browser'] = 'Abrir Versão Web';

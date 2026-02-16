@@ -32,6 +32,7 @@ $string['currentxp'] = 'XP';
 $string['empty'] = '- Empty -';
 $string['enable_ranking'] = 'Enable Leaderboard';
 $string['filtername'] = 'PlayerHUD Widget';
+$string['help_btn'] = 'Help';
 $string['infinite'] = 'Infinite';
 $string['items'] = 'Items:';
 $string['items_owned'] = 'Items owned';
@@ -51,3 +52,7 @@ $string['take'] = 'Take';
 $string['view_ranking'] = 'View Leaderboard';
 $string['wait'] = 'Wait:';
 $string['yours'] = 'Owned: {$a}';
+// Adicione ao final:
+$string['mobile_warning_title'] = 'Web Mode Recommended';
+$string['mobile_warning_desc'] = 'The gamification of this course (Items, Drops, and Ranking) only works in the browser.';
+$string['open_in_browser'] = 'Open Web Version';

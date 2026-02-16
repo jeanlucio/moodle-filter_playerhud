@@ -37,6 +37,10 @@ class render {
     public static function render_drop($attributesstr, $blockinstanceid) {
         global $DB, $USER, $CFG, $COURSE, $OUTPUT;
 
+        if (\core_useragent::is_moodle_app()) {
+            return ''; 
+        }
+
         // Check if gamification is enabled for the user.
         $player = $DB->get_record('block_playerhud_user', [
             'blockinstanceid' => $blockinstanceid,
