@@ -3,6 +3,8 @@
 ![Moodle](https://img.shields.io/badge/Moodle-4.5%2B-orange?style=flat-square&logo=moodle&logoColor=white)
 ![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Stable-green?style=flat-square)
+[![PlayerHUD Ecosystem](https://img.shields.io/badge/PlayerHUD-Ecosystem-6f42c1?style=flat-square&logo=gamepad&logoColor=white)](https://github.com/jeanlucio/moodle-block_playerhud)
+![Role](https://img.shields.io/badge/Role-Content_Integration-0d6efd?style=flat-square)
 
 [English](#english) | [Português](#português)
 
@@ -86,6 +88,14 @@ Optional extension:
 
 ---
 
+## 📄 License / Licença
+
+This project is licensed under the **GNU General Public License v3 (GPLv3)**.
+
+**Copyright:** 2026 Jean Lúcio
+
+---
+
 ## Português
 
 O **Filtro PlayerHUD** é um plugin complementar obrigatório do Bloco PlayerHUD. Ele permite inserir drops de itens colecionáveis diretamente no conteúdo do curso Moodle por meio de shortcodes.
@@ -164,8 +174,8 @@ Extensão opcional:
 
 ---
 
-## 📄 License / Licença
+## 📄 Licença
 
-This project is licensed under the **GNU General Public License v3 (GPLv3)**.
+Este projeto é licenciado sob a **GNU General Public License v3 (GPLv3)**.
 
 **Copyright:** 2026 Jean Lúcio

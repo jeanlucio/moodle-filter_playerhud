@@ -23,8 +23,18 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/* Drop & Cards */
+/**
+ * PlayerHUD Filter Styles.
+ *
+ * Structure:
+ * 1.  Drop Cards & Triggers
+ * 2.  Widget Styles (Duplicated from Block for standalone usage)
+ * 3.  Gamification Tiers (Colors)
+ * 4.  Modals (Standalone)
+ * 5.  Utilities
+ */
 
+/* --- 1. DROP CARDS & TRIGGERS --- */
 .ph-drop-icon-wrapper .ph-icon-large {
     font-size: 3rem;
     line-height: 1.2;
@@ -42,6 +52,16 @@
 }
 
 .ph-drop-card-container {
+    width: 160px;
+    display: inline-flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    vertical-align: top;
+    margin: 5px;
+    position: relative;
+    padding: 0.75rem !important;
+    height: auto !important;
+    min-height: 0 !important;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: 1px solid var(--border-color, rgba(0, 0, 0, .125));
     background-color: var(--card-bg, var(--body-bg));
@@ -52,37 +72,83 @@
     box-shadow: 0 0.5rem 1rem var(--gray-900-30, rgba(0, 0, 0, .15)) !important;
 }
 
-/* Modals */
-
-.ph-modal-img-container {
-    min-width: 80px;
-    font-size: 4rem;
-    line-height: 1;
+.ph-drop-trigger-area {
+    cursor: pointer;
+    min-height: 0 !important;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
+    justify-content: flex-start !important;
+    flex-grow: 0 !important;
+    margin-bottom: 1rem !important;
 }
 
-.ph-modal-img-container img {
-    max-width: 120px !important;
-    max-height: 120px !important;
-    width: auto !important;
+.ph-drop-icon-wrapper {
+    height: auto !important;
+    min-height: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 1rem !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+}
+
+/* Ensure images in drop cards fit correctly */
+.playerhud-item-card img {
+    border-radius: 0 !important;
+    max-width: 100%;
+    max-height: 80px;
+    width: auto;
     height: auto;
     object-fit: contain;
+    display: block;
 }
 
-/* Utility Classes */
-
-.ph-bg-teal {
-    background-color: var(--success) !important;
+.ph-drop-trigger-area strong {
+    white-space: normal !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2 !important;
+    font-size: 0.9rem;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    height: auto !important;
+    flex-grow: 0 !important;
 }
 
-.ph-me-1 {
-    margin-inline-end: 0.25rem !important;
+.ph-drop-card-container .btn {
+    margin-top: 0 !important;
+    flex-shrink: 0 !important;
 }
 
-.ph-ms-1 {
-    margin-inline-start: 0.25rem !important;
+.ph-drop-image-container {
+    display: inline-block;
+    position: relative;
+    text-align: center;
+    vertical-align: top;
+    margin-bottom: 14px;
+    margin-inline-end: 5px;
+}
+
+.ph-drop-img-lg {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 0 !important;
+    transition: transform 0.2s ease;
+}
+
+.ph-drop-emoji-lg {
+    font-size: 60px;
+    line-height: 1;
+    display: inline-block;
+    transition: transform 0.2s ease;
 }
 
 .ph-state-grayscale {
@@ -94,19 +160,41 @@
     opacity: 0.5;
 }
 
-.ph-cursor-help {
-    cursor: help;
+/* Badges for Drops */
+.ph-badge-bottom-right {
+    position: absolute;
+    bottom: -5px;
+    inset-inline-end: -5px;
+    font-size: 0.6rem;
+    z-index: 5;
 }
 
-.ph-cursor-wait {
-    cursor: wait;
+.ph-badge-bottom-center {
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--gray-300, #dee2e6);
 }
-/**
- * CSS styles for filter_playerhud.
- * Includes Widget styles to ensure standalone rendering.
- */
 
-/* --- WIDGET CONTAINER & LAYOUT --- */
+.ph-badge-top-right {
+    position: absolute;
+    top: 5px;
+    inset-inline-end: 5px;
+    font-size: 0.7rem;
+    z-index: 5;
+}
+
+.ph-link-overlay {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%; z-index: 10;
+}
+
+/* --- 2. WIDGET STYLES (Duplicated for standalone support) --- */
 .playerhud-widget-container {
     border-radius: 12px;
     margin-bottom: 1.5rem;
@@ -163,7 +251,6 @@
     padding: 0.5rem;
 }
 
-/* Actions Grid (Fixes Distortion) */
 .ph-widget-actions-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -180,33 +267,7 @@
     padding-block: 0.5rem;
 }
 
-/* --- BUTTON STYLES --- */
-.btn-ph-level-border {
-    background-color: var(--card-bg, #fff);
-    border: 1px solid var(--gray-300, #dee2e6);
-    color: var(--gray-700, #495057);
-    font-weight: 700;
-    transition: all 0.2s ease-in-out;
-}
-
-.btn-ph-level-border:hover {
-    background-color: var(--gray-200, #e9ecef);
-}
-
-/* --- TIER COLORS (Widget Context) --- */
-.playerhud-widget-container.ph-lvl-tier-1 { border-inline-start-color: var(--secondary, #6c757d); }
-.playerhud-widget-container.ph-lvl-tier-2 { border-inline-start-color: var(--success, #208337); }
-.playerhud-widget-container.ph-lvl-tier-3 { border-inline-start-color: var(--primary, #0b55c4); }
-.playerhud-widget-container.ph-lvl-tier-4 { border-inline-start-color: var(--purple, #6f42c1); }
-.playerhud-widget-container.ph-lvl-tier-5 { border-inline-start-color: var(--primary, #0d6efd); }
-
-.ph-lvl-tier-1.progress-bar { background-color: var(--secondary); }
-.ph-lvl-tier-2.progress-bar { background-color: var(--success); }
-.ph-lvl-tier-3.progress-bar { background-color: var(--primary); }
-.ph-lvl-tier-4.progress-bar { background-color: var(--purple); }
-.ph-lvl-tier-5.progress-bar { background: linear-gradient(45deg, var(--primary), var(--purple)); }
-
-/* --- STASH --- */
+/* Stash / Mini Items (Widget Context) */
 .ph-widget-stash {
     display: flex !important;
     flex-wrap: wrap !important;
@@ -238,32 +299,32 @@
     object-fit: cover;
 }
 
-/* --- DROPS & UTILS --- */
-.ph-drop-icon-wrapper .ph-icon-large {
-    font-size: 3rem;
-    line-height: 1.2;
-    display: block;
-    margin-bottom: 0.5rem;
+/* --- 3. GAMIFICATION TIERS (Colors - Standalone) --- */
+.btn-ph-level-border {
+    background-color: var(--card-bg, #fff);
+    border: 1px solid var(--gray-300, #dee2e6);
+    color: var(--gray-700, #495057);
+    font-weight: 700;
+    transition: all 0.2s ease-in-out;
 }
 
-.ph-drop-trigger-area .ph-text-small {
-    font-size: 0.85rem;
-    color: var(--body-color);
+.btn-ph-level-border:hover {
+    background-color: var(--gray-200, #e9ecef);
 }
 
-.ph-text-dimmed { color: var(--gray-600); }
+.playerhud-widget-container.ph-lvl-tier-1 { border-inline-start-color: var(--secondary, #6c757d); }
+.playerhud-widget-container.ph-lvl-tier-2 { border-inline-start-color: var(--success, #208337); }
+.playerhud-widget-container.ph-lvl-tier-3 { border-inline-start-color: var(--primary, #0b55c4); }
+.playerhud-widget-container.ph-lvl-tier-4 { border-inline-start-color: var(--purple, #6f42c1); }
+.playerhud-widget-container.ph-lvl-tier-5 { border-inline-start-color: var(--primary, #0d6efd); }
 
-.ph-drop-card-container {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 1px solid var(--border-color, rgba(0, 0, 0, .125));
-    background-color: var(--card-bg, var(--body-bg));
-}
+.ph-lvl-tier-1.progress-bar { background-color: var(--secondary); }
+.ph-lvl-tier-2.progress-bar { background-color: var(--success); }
+.ph-lvl-tier-3.progress-bar { background-color: var(--primary); }
+.ph-lvl-tier-4.progress-bar { background-color: var(--purple); }
+.ph-lvl-tier-5.progress-bar { background: linear-gradient(45deg, var(--primary), var(--purple)); }
 
-.ph-drop-card-container:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0.5rem 1rem var(--gray-900-30, rgba(0, 0, 0, .15)) !important;
-}
-
+/* --- 4. MODALS & UTILITIES --- */
 .ph-modal-img-container {
     min-width: 80px;
     font-size: 4rem;
@@ -284,14 +345,10 @@
 .ph-bg-teal { background-color: var(--success) !important; }
 .ph-me-1 { margin-inline-end: 0.25rem !important; }
 .ph-ms-1 { margin-inline-start: 0.25rem !important; }
-.ph-state-grayscale { filter: grayscale(100%); opacity: 0.7; }
-.ph-state-dimmed { opacity: 0.5; }
 .ph-cursor-help { cursor: help; }
 .ph-cursor-wait { cursor: wait; }
 
-/* --- ACESSIBILIDADE & FIXES VISUAIS --- */
-
-/* Garante que o texto 'Ver Ranking' não quebre o layout do botão */
+/* Accessibility & Visual Fixes */
 .playerhud-widget-container .visually-hidden {
     position: absolute !important;
     width: 1px !important;
@@ -304,11 +361,37 @@
     border: 0 !important;
 }
 
-/* Ajuste fino para os botões do widget ficarem alinhados */
-.ph-widget-actions-grid .btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 38px; /* Altura mínima consistente */
-    padding: 0.375rem 0.75rem;
+/* Responsiveness for standalone widget */
+@media (max-width: 767.98px) {
+    .playerhud-widget-container {
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: auto !important;
+        border-inline-start: 1px solid rgba(0, 0, 0, .125) !important;
+        border-top: 5px solid var(--secondary, #6c757d);
+    }
+
+    .playerhud-widget-container.ph-lvl-tier-1 { border-top-color: var(--secondary, #6c757d); }
+    .playerhud-widget-container.ph-lvl-tier-2 { border-top-color: var(--success, #208337); }
+    .playerhud-widget-container.ph-lvl-tier-3 { border-top-color: var(--primary, #0b55c4); }
+    .playerhud-widget-container.ph-lvl-tier-4 { border-top-color: var(--purple, #6f42c1); }
+    .playerhud-widget-container.ph-lvl-tier-5 { border-top-color: var(--primary, #0d6efd); }
+
+    .ph-widget-left, .ph-widget-center, .ph-widget-right {
+        width: 100% !important;
+        min-width: 100% !important;
+        border-inline-end: none !important;
+        border-inline-start: none !important;
+        border-bottom: 1px solid var(--gray-300, #dee2e6);
+        padding: 1rem !important;
+    }
+
+    .ph-widget-center .ph-widget-name {
+        text-align: center !important;
+        margin-bottom: 0.75rem !important;
+    }
+
+    .ph-widget-right { border-bottom: none !important; }
+    .ph-widget-actions-grid { grid-template-columns: repeat(2, 1fr); }
+    .ph-widget-stash { justify-content: center; }
 }
