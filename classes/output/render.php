@@ -38,7 +38,7 @@ class render {
         global $DB, $USER, $CFG, $COURSE, $OUTPUT;
 
         if (\core_useragent::is_moodle_app()) {
-            return ''; 
+            return '';
         }
 
         // Check if gamification is enabled for the user.

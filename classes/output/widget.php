@@ -48,43 +48,43 @@ class widget implements renderable, templatable {
         $this->courseid = $courseid;
     }
 
-/**
+    /**
      * Export data for template.
      *
      * @param renderer_base $output The renderer.
      * @return array Template data.
      */
-public function export_for_template(renderer_base $output) {
+    public function export_for_template(renderer_base $output) {
         global $USER, $DB, $CFG, $PAGE;
 
-        // 1. Detectar Moodle App
+        // 1. Detect Moodle App.
         $isapp = \core_useragent::is_moodle_app();
 
-        // --- LÓGICA APP (AVISO SIMPLES) ---
+        // App Logic (Simple Notice).
         if ($isapp) {
-            // FIX: Redirecionar para o VIEW.PHP do plugin (Backpack), e não para o curso.
-            // Isso restaura a experiência do código antigo de levar direto ao painel.
+            // Fix: Redirect to plugin VIEW.PHP (Backpack), and not to the course.
+            // This restores the old experience of going straight to the dashboard.
             $urlbackpack = new moodle_url('/blocks/playerhud/view.php', [
-                'id' => $this->courseid, 
-                'instanceid' => $this->instance->id
+                'id' => $this->courseid,
+                'instanceid' => $this->instance->id,
             ]);
-            
+
             return [
                 'is_active' => true,
                 'is_app' => true,
-                'url_redirect' => $urlbackpack->out(false), // URL absoluta
+                'url_redirect' => $urlbackpack->out(false), // Absolute URL.
             ];
         }
 
-        // --- LÓGICA WEB (CARREGA TUDO) ---
-        
-        // Get Player Data
+        // Web Logic (Load Everything).
+
+        // Get Player Data.
         $player = $DB->get_record('block_playerhud_user', [
             'blockinstanceid' => $this->instance->id,
             'userid' => $USER->id,
         ]);
 
-        // Immediate Reactivation Logic (Web Only)
+        // Immediate Reactivation Logic (Web Only).
         if (!$player || !$player->enable_gamification) {
             $returnurl = $PAGE->url->out_as_local_url(false);
             $urlactivate = new moodle_url('/blocks/playerhud/view.php', [
@@ -99,11 +99,11 @@ public function export_for_template(renderer_base $output) {
                 'is_active' => false,
                 'optin_url' => $urlactivate->out(false),
                 'optin_text' => get_string('click_to_enable', 'filter_playerhud'),
-                'is_app' => false
+                'is_app' => false,
             ];
         }
 
-        // Load Config & Stats
+        // Load Config & Stats.
         $config = unserialize(base64_decode($this->instance->configdata));
         if (!$config) {
             $config = new \stdClass();
@@ -122,7 +122,7 @@ public function export_for_template(renderer_base $output) {
             $xpdisplay .= ' 🏆';
         }
 
-        // Recent Items Logic
+        // Recent Items Logic.
         $recentitems = [];
         $rawinventory = \block_playerhud\game::get_inventory($USER->id, $this->instance->id);
         $count = 0;
@@ -154,7 +154,7 @@ public function export_for_template(renderer_base $output) {
             $count++;
         }
 
-        // Ranking Logic
+        // Ranking Logic.
         $rankdata = null;
         $enableranking = isset($config->enable_ranking) ? $config->enable_ranking : 1;
 
@@ -183,7 +183,7 @@ public function export_for_template(renderer_base $output) {
             ];
         }
 
-        // Actions & URLs
+        // Actions & URLs.
         $urlbase = new moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id]);
         $actions = [
             'url_backpack' => $urlbase->out(false),
@@ -192,7 +192,7 @@ public function export_for_template(renderer_base $output) {
             'url_quests'   => (new moodle_url($urlbase, ['tab' => 'quests']))->out(false),
         ];
 
-        // Disable URL
+        // Disable URL.
         $urldisable = new moodle_url('/blocks/playerhud/view.php', [
             'id' => $this->courseid,
             'instanceid' => $this->instance->id,
