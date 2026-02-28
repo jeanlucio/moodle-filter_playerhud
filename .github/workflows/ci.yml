@@ -1,0 +1,67 @@
+name: Plugin CI (Moodle Full Suite)
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    env:
+      COMPOSER_IGNORE_PLATFORM_REQS: 1
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3']
+        moodle-branch: ['MOODLE_405_STABLE', 'MOODLE_501_STABLE', 'master']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          path: plugin
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, mysqli, gd, xml, dom, json, zip, bcmath, intl
+          ini-values: max_execution_time=600, memory_limit=1G
+
+      - name: Start MySQL
+        run: |
+          sudo systemctl start mysql
+          mysql -uroot -proot -e "SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));"
+
+      - name: Install Moodle Plugin CI (Direct Install)
+        run: |
+          git clone --depth 1 https://github.com/moodlehq/moodle-plugin-ci.git ~/moodle-plugin-ci
+          cd ~/moodle-plugin-ci
+          composer install --no-dev --no-interaction --ignore-platform-reqs
+          echo "$HOME/moodle-plugin-ci/bin" >> $GITHUB_PATH
+          echo "$HOME/moodle-plugin-ci/vendor/bin" >> $GITHUB_PATH
+
+      - name: Initialize CI
+        run: |
+          moodle-plugin-ci install --plugin ./plugin --moodle ${{ matrix.moodle-branch }} --branch main --db-type mysqli --db-user root --db-pass root
+          
+      # --- AQUI COMEÇAM AS VALIDAÇÕES ---
+
+      - name: PHP Syntax Check (PHPLint)
+        run: moodle-plugin-ci phplint
+
+      - name: Validate Plugin (version.php, db/install.xml, etc.)
+        run: moodle-plugin-ci validate
+
+      - name: Run PHPCS (Code Style)
+        run: moodle-plugin-ci phpcs -vvv
+
+      - name: Check Mustache Templates
+        run: moodle-plugin-ci mustache
+
+      - name: Run JS/CSS Lint (Grunt)
+        run: moodle-plugin-ci grunt
+
+      - name: Run PHPUnit (Logic Tests)
+        run: moodle-plugin-ci phpunit
+        

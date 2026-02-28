@@ -1,0 +1,157 @@
+// Widget Styles (Standalone mode embedded in course content).
+
+.playerhud-widget-container {
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    overflow: hidden;
+    display: flex;
+    align-items: stretch;
+    position: relative;
+    background-color: var(--card-bg, #fff);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    min-height: 100px;
+    border-inline-start: 5px solid var(--secondary, #6c757d);
+    transition: border-color 0.3s ease;
+
+    @media (max-width: 767.98px) {
+        flex-direction: column;
+        height: auto;
+        min-height: auto;
+        border-inline-start: 1px solid rgba(0, 0, 0, 0.125);
+        border-top: 5px solid var(--secondary, #6c757d);
+    }
+}
+
+.ph-widget-left {
+    min-width: 110px;
+    width: 110px;
+    background-color: var(--gray-100, #f8f9fa);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-inline-end: 1px solid var(--gray-300, #dee2e6);
+    padding: 1rem;
+
+    @media (max-width: 767.98px) {
+        width: 100%;
+        min-width: 100%;
+        border-inline-end: none;
+        border-inline-start: none;
+        border-bottom: 1px solid var(--gray-300, #dee2e6);
+    }
+}
+
+.ph-widget-avatar img {
+    border-radius: 50%;
+    border: 3px solid var(--light, #fff);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    width: 75px;
+    height: 75px;
+}
+
+.ph-widget-center {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1rem 1.5rem;
+    min-width: 0;
+
+    .ph-widget-name {
+        text-align: left;
+        margin-bottom: 0.25rem;
+
+        @media (max-width: 767.98px) {
+            text-align: center;
+            margin-bottom: 0.75rem;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        width: 100%;
+        min-width: 100%;
+        border-inline-end: none;
+        border-inline-start: none;
+        border-bottom: 1px solid var(--gray-300, #dee2e6);
+        padding: 1rem;
+    }
+}
+
+.ph-widget-right {
+    min-width: 180px;
+    width: 180px;
+    background-color: var(--gray-100, #f8f9fa);
+    border-inline-start: 1px solid var(--gray-300, #dee2e6);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+
+    @media (max-width: 767.98px) {
+        width: 100%;
+        min-width: 100%;
+        border-inline-end: none;
+        border-inline-start: none;
+        background-color: var(--light, #f8f9fa);
+        border-bottom: none;
+    }
+}
+
+.ph-widget-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    width: 100%;
+
+    .btn {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.2rem;
+        padding-block: 0.5rem;
+    }
+
+    @media (max-width: 767.98px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+// Stash / Mini Items (Widget Context).
+.ph-widget-stash {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 34px;
+    margin-top: 0.5rem;
+
+    @media (max-width: 767.98px) {
+        justify-content: center;
+    }
+}
+
+.ph-mini-item {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--gray-300, #dee2e6);
+    border-radius: 6px;
+    padding: 0;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+}
+
+.ph-mini-item-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
