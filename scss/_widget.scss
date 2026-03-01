@@ -11,7 +11,7 @@
     background-color: var(--card-bg, #fff);
     border: 1px solid rgba(0, 0, 0, 0.125);
     min-height: 100px;
-    border-inline-start: 5px solid var(--secondary, #6c757d);
+    border-inline-start: 5px solid var(--gray-600, #6c757d);
     transition: border-color 0.3s ease;
 
     @media (max-width: 767.98px) {
@@ -19,7 +19,7 @@
         height: auto;
         min-height: auto;
         border-inline-start: 1px solid rgba(0, 0, 0, 0.125);
-        border-top: 5px solid var(--secondary, #6c757d);
+        border-top: 5px solid var(--gray-600, #6c757d);
     }
 }
 
