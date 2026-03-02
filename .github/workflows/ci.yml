@@ -6,7 +6,6 @@ jobs:
   test:
     runs-on: ubuntu-22.04
 
-    # Usa containers oficiais para testar em múltiplos bancos de dados
     services:
       postgres:
         image: postgres:15
@@ -28,13 +27,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Matriz exata recomendada pelo Moodle HQ cruzando PHP e Bancos de Dados
         include:
           - {moodle-branch: 'MOODLE_405_STABLE', php: '8.2', database: 'pgsql'}
           - {moodle-branch: 'MOODLE_405_STABLE', php: '8.2', database: 'mariadb'}
+          # Mantive as linhas do 5.1 que você pediu, mas leia a observação abaixo!
           - {moodle-branch: 'MOODLE_501_STABLE', php: '8.3', database: 'pgsql'}
           - {moodle-branch: 'MOODLE_501_STABLE', php: '8.3', database: 'mariadb'}
-          - {moodle-branch: 'main', php: '8.3', database: 'pgsql'} # Mudado de 'master' para 'main'
+          - {moodle-branch: 'main', php: '8.3', database: 'pgsql'}
 
     steps:
       - name: Check out repository code
@@ -65,35 +64,33 @@ jobs:
           DB: ${{ matrix.database }}
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
 
-      # --- AQUI COMEÇAM AS VALIDAÇÕES (Caminho ./plugin adicionado explicitamente) ---
-
       - name: PHP Lint
         if: ${{ ! cancelled() }}
-        run: moodle-plugin-ci phplint ./plugin
+        run: moodle-plugin-ci phplint
 
       - name: PHP Mess Detector
         if: ${{ ! cancelled() }}
-        run: moodle-plugin-ci phpmd ./plugin
+        run: moodle-plugin-ci phpmd
 
       - name: Moodle Code Checker
         if: ${{ ! cancelled() }}
-        run: moodle-plugin-ci phpcs --max-warnings 0 ./plugin
+        run: moodle-plugin-ci phpcs --max-warnings 0
 
       - name: Validate Plugin
         if: ${{ ! cancelled() }}
-        run: moodle-plugin-ci validate ./plugin
+        run: moodle-plugin-ci validate
 
       - name: Check Mustache Templates
         if: ${{ ! cancelled() }}
-        run: moodle-plugin-ci mustache ./plugin
+        run: moodle-plugin-ci mustache
 
       - name: Grunt tasks
         if: ${{ ! cancelled() }}
-        run: moodle-plugin-ci grunt --max-lint-warnings 0 ./plugin
+        run: moodle-plugin-ci grunt --max-lint-warnings 0
 
       - name: PHPUnit tests
         if: ${{ ! cancelled() }}
-        run: moodle-plugin-ci phpunit ./plugin
+        run: moodle-plugin-ci phpunit
 
       - name: Mark cancelled jobs as failed
         if: ${{ cancelled() }}
