@@ -52,7 +52,6 @@ class render {
         }
 
         require_once($CFG->dirroot . '/blocks/playerhud/lib.php');
-        require_once($CFG->dirroot . '/blocks/playerhud/classes/utils.php');
 
         // Parse Attributes.
         $attrs = [];

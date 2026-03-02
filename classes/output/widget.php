@@ -109,9 +109,6 @@ class widget implements renderable, templatable {
             $config = new \stdClass();
         }
 
-        require_once($CFG->dirroot . '/blocks/playerhud/classes/game.php');
-        require_once($CFG->dirroot . '/blocks/playerhud/classes/utils.php');
-
         $stats = \block_playerhud\game::get_game_stats($config, $this->instance->id, $player->currentxp);
         $xptotalgame = isset($stats['total_game_xp']) ? $stats['total_game_xp'] : 0;
 
