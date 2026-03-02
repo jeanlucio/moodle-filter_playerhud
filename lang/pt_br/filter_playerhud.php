@@ -48,6 +48,7 @@ $string['not_collected'] = '(Não coletado)';
 $string['novice_class'] = 'Novato';
 $string['open_in_browser'] = 'Abrir Versão Web';
 $string['openbackpack'] = 'Abrir Mochila';
+$string['pluginname'] = 'Filtro PlayerHUD';
 $string['privacy:metadata'] = 'O Filtro PlayerHUD apenas exibe dados e não armazena informações pessoais diretamente.';
 $string['ready'] = 'Pronto!';
 $string['story_shortcut'] = 'História';
