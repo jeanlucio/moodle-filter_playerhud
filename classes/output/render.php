@@ -97,7 +97,6 @@ class render {
         $lastcollected = $inventory ? reset($inventory) : null;
 
         $isunique = ($data->maxusage == 1);
-        $showcount = ($count > 0 && !$isunique);
         $limitreached = ($data->maxusage > 0 && $count >= $data->maxusage);
 
         $readytime = 0;
@@ -172,7 +171,6 @@ class render {
             'is_cooldown' => $iscooldown,
             'readytime' => $readytime,
             'count' => $count,
-            'show_count' => $showcount,
             'safe_name' => $safename,
             'display_name' => $displayname,
             'label' => $textlabel,

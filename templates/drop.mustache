@@ -78,7 +78,7 @@
 
         <div class="{{#limit_reached}}ph-state-grayscale{{/limit_reached}} {{#is_cooldown}}ph-state-dimmed{{/is_cooldown}}">
             {{#is_image_media}}
-                <img src="{{media_url}}" class="ph-drop-img-lg" alt="{{safe_name}}">
+                <img src="{{media_url}}" class="ph-drop-img-lg rounded-0" alt="{{safe_name}}">
             {{/is_image_media}}
             {{^is_image_media}}
                 <span class="ph-drop-emoji-lg" aria-hidden="true">{{{media_content}}}</span>
@@ -86,9 +86,8 @@
         </div>
 
         {{#limit_reached}}
-            <span class="badge bg-success rounded-circle ph-badge-bottom-right">
-                <i class="fa fa-check" aria-hidden="true"></i>
-                <span class="visually-hidden">{{#str}} collected, filter_playerhud {{/str}}</span>
+            <span class="badge bg-success rounded-circle ph-badge-bottom-right" title="{{#str}} collected, filter_playerhud {{/str}}">
+                <i class="fa fa-check" aria-label="{{#str}} collected, filter_playerhud {{/str}}"></i>
             </span>
         {{/limit_reached}}
 
@@ -116,14 +115,6 @@
     <div class="playerhud-item-card ph-card-compact card p-2 ph-drop-card-container d-inline-flex {{#limit_reached}}ph-owned{{/limit_reached}}"
          {{{data_attributes}}}>
 
-        {{! Badge Count }}
-        {{#show_count}}
-            <span class="badge bg-info text-dark rounded-pill ph-badge-top-right ph-badge-count">
-                  x{{count}}
-                  <span class="visually-hidden">{{#str}} items_owned, filter_playerhud {{/str}}</span>
-            </span>
-        {{/show_count}}
-
         {{! Icon/Trigger Area }}
         <div class="ph-item-details-trigger ph-drop-trigger-area"
              tabindex="0"
@@ -132,7 +123,7 @@
 
              <div class="ph-drop-icon-wrapper">
                  {{#is_image_media}}
-                    <img src="{{media_url}}" alt="">
+                     <img src="{{media_url}}" alt="" class="rounded-0">
                  {{/is_image_media}}
                  {{^is_image_media}}
                     <div class="ph-icon-large" aria-hidden="true">{{{media_content}}}</div>
