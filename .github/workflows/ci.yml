@@ -34,7 +34,7 @@ jobs:
           - {moodle-branch: 'MOODLE_405_STABLE', php: '8.2', database: 'mariadb'}
           - {moodle-branch: 'MOODLE_501_STABLE', php: '8.3', database: 'pgsql'}
           - {moodle-branch: 'MOODLE_501_STABLE', php: '8.3', database: 'mariadb'}
-          - {moodle-branch: 'master', php: '8.3', database: 'pgsql'}
+          - {moodle-branch: 'main', php: '8.3', database: 'pgsql'} # Mudado de 'master' para 'main'
 
     steps:
       - name: Check out repository code
@@ -65,36 +65,37 @@ jobs:
           DB: ${{ matrix.database }}
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
 
-      # --- AQUI COMEÇAM AS VALIDAÇÕES (Com a tag de segurança do Moodle) ---
+      # --- AQUI COMEÇAM AS VALIDAÇÕES (Caminho ./plugin adicionado explicitamente) ---
 
       - name: PHP Lint
         if: ${{ ! cancelled() }}
-        run: moodle-plugin-ci phplint
+        run: moodle-plugin-ci phplint ./plugin
 
       - name: PHP Mess Detector
         if: ${{ ! cancelled() }}
-        run: moodle-plugin-ci phpmd
+        run: moodle-plugin-ci phpmd ./plugin
 
       - name: Moodle Code Checker
         if: ${{ ! cancelled() }}
-        run: moodle-plugin-ci phpcs --max-warnings 0
+        run: moodle-plugin-ci phpcs --max-warnings 0 ./plugin
 
       - name: Validate Plugin
         if: ${{ ! cancelled() }}
-        run: moodle-plugin-ci validate
+        run: moodle-plugin-ci validate ./plugin
 
       - name: Check Mustache Templates
         if: ${{ ! cancelled() }}
-        run: moodle-plugin-ci mustache
+        run: moodle-plugin-ci mustache ./plugin
 
       - name: Grunt tasks
         if: ${{ ! cancelled() }}
-        run: moodle-plugin-ci grunt --max-lint-warnings 0
+        run: moodle-plugin-ci grunt --max-lint-warnings 0 ./plugin
 
       - name: PHPUnit tests
         if: ${{ ! cancelled() }}
-        run: moodle-plugin-ci phpunit
+        run: moodle-plugin-ci phpunit ./plugin
 
       - name: Mark cancelled jobs as failed
         if: ${{ cancelled() }}
         run: exit 1
+        
