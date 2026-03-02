@@ -37,7 +37,7 @@
 {{! --- MODE: TEXT --- }}
 {{#is_text}}
     {{#limit_reached}}
-        <span class="ph-item-details-trigger text-success fw-bold ph-cursor-help"
+        <span class="ph-item-details-trigger text-success fw-bold ph-cursor-help d-inline-flex align-items-center gap-1"
               tabindex="0"
               role="button"
               aria-label="{{#str}} collected, filter_playerhud {{/str}}: {{label}}"
@@ -47,7 +47,7 @@
     {{/limit_reached}}
     {{^limit_reached}}
         {{#is_cooldown}}
-            <span class="ph-item-details-trigger ph-text-dimmed ph-cursor-wait"
+            <span class="ph-item-details-trigger ph-text-dimmed ph-cursor-wait d-inline-flex align-items-center gap-1"
                   tabindex="0"
                   role="button"
                   aria-label="{{#str}} wait, filter_playerhud {{/str}} {{label}}"
@@ -60,7 +60,7 @@
         {{/is_cooldown}}
         {{^is_cooldown}}
             <a href="{{collect_url}}"
-               class="ph-action-collect fw-bold"
+               class="ph-action-collect fw-bold d-inline-flex align-items-center gap-1"
                data-mode="text"
                {{{data_attributes}}}>
                {{label}}
@@ -113,7 +113,7 @@
 
 {{! --- MODE: CARD (Default) --- }}
 {{#is_card}}
-    <div class="playerhud-item-card ph-card-compact card p-2 ph-drop-card-container {{#limit_reached}}ph-owned{{/limit_reached}}"
+    <div class="playerhud-item-card ph-card-compact card p-2 ph-drop-card-container d-inline-flex {{#limit_reached}}ph-owned{{/limit_reached}}"
          {{{data_attributes}}}>
 
         {{! Badge Count }}

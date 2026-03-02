@@ -38,7 +38,7 @@
     color: var(--gray-600, #6c757d);
 }
 
-.ph-drop-card-container {
+.card.ph-drop-card-container {
     width: 160px;
     display: inline-flex;
     flex-direction: column;
@@ -55,16 +55,16 @@
 }
 
 @media (prefers-color-scheme: dark) {
-    .ph-drop-card-container {
+    .card.ph-drop-card-container {
         background-color: #1a1a1a;
         border-color: #444;
     }
 }
-.ph-drop-card-container:hover {
+.card.ph-drop-card-container:hover {
     transform: translateY(-2px);
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
-.ph-drop-card-container .btn {
+.card.ph-drop-card-container .btn {
     margin-top: 0;
     flex-shrink: 0;
 }
@@ -126,6 +126,26 @@
     vertical-align: top;
     margin-bottom: 14px;
     margin-inline-end: 5px;
+    margin-inline-start: 4px;
+}
+.ph-drop-image-container:focus-visible {
+    outline: 3px solid var(--primary, #0d6efd);
+    outline-offset: 4px;
+    border-radius: 8px;
+}
+
+.ph-item-details-trigger[data-mode=text],
+.ph-action-collect[data-mode=text] {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.ph-item-details-trigger:focus-visible,
+.ph-action-collect:focus-visible {
+    outline: 2px solid var(--primary, #0d6efd);
+    outline-offset: 2px;
+    border-radius: 4px;
 }
 
 .ph-drop-img-lg {

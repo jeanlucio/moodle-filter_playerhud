@@ -133,6 +133,7 @@ class text_filter extends \moodle_text_filter {
                 'yes' => get_string('yes'),
                 'cancel' => get_string('cancel'),
                 'level' => get_string('level', 'block_playerhud'),
+                'xp' => get_string('xp', 'block_playerhud'),
             ];
 
             $jsconfig = ['strings' => $jscollectstrings];
