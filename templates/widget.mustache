@@ -36,7 +36,7 @@
     }
 }}
 {{#is_app}}
-    {{! --- VIEW 1: MOODLE APP (AVISO DE LIMITAÇÃO) --- }}
+    {{! --- VIEW 1: MOODLE APP (LIMITATION NOTICE) --- }}
     <div class="alert alert-info shadow-sm mb-3" style="border-left: 5px solid #0dcaf0;">
         <div class="d-flex">
             <div class="me-3">
@@ -54,7 +54,7 @@
 {{/is_app}}
 
 {{^is_app}}
-    {{! --- VIEW 2: WEB (DESKTOP E MOBILE WEB) --- }}
+    {{! --- VIEW 2: WEB (DESKTOP AND MOBILE WEB) --- }}
     <div class="playerhud-widget-container {{level_class}}">
 
         {{! Left: Avatar }}
@@ -67,21 +67,21 @@
         {{! Center: Stats & Stash }}
         <div class="ph-widget-center">
             
-            {{! 1. NOME (Linha Própria) }}
-            {{! No Desktop: Alinhado à esquerda | No Mobile: Centralizado (via CSS) }}
+            {{! 1. NAME (Own Line) }}
+            {{! On Desktop: Left-aligned | On Mobile: Centered (via CSS) }}
             <h4 class="m-0 fw-bold text-dark text-truncate ph-widget-name" title="{{fullname}}">
                 {{fullname}}
             </h4>
 
-            {{! 2. LINHA DE STATUS (Nível esq | XP dir) }}
+            {{! 2. STATUS LINE (Level left | XP right) }}
             <div class="d-flex justify-content-between align-items-center mb-1 w-100 mt-1">
                 
-                {{! Lado Esquerdo: Nível }}
+                {{! Left Side: Level }}
                 <span class="badge {{level_class}} border shadow-sm px-2">
                     {{#str}} level, filter_playerhud {{/str}} {{level_display}}
                 </span>
                 
-                {{! Lado Direito: XP + Ajuda }}
+                {{! Right Side: XP + Help }}
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge rounded-pill {{level_class}} text-nowrap">{{xp_display}}</span>
                     
@@ -93,7 +93,7 @@
                 </div>
             </div>
 
-            {{! 3. Barra de Progresso }}
+            {{! 3. Progress Bar }}
             <div class="progress ph-progress-container">
                 <div class="progress-bar ph-progress-bar {{level_class}}" role="progressbar"
                      style="width: {{progress}}%;"
@@ -145,7 +145,7 @@
     </div>
 {{/is_app}}
 
-{{! Scripts JS apenas para Web (Tooltips) }}
+{{! JS Scripts for Web only (Tooltips) }}
 {{#js}}
 require(['jquery', 'core/tooltip'], function($, Tooltip) {
     $('[data-bs-toggle="tooltip"]').each(function() {
