@@ -389,6 +389,7 @@
     background-color: var(--gray-200, #e9ecef);
 }
 
+/* stylelint-disable csstree/validator */
 .ph-lvl-tier-1.progress-bar {
     background-color: var(--gray-600, #6c757d);
 }
@@ -417,8 +418,11 @@
     border-inline-start-color: var(--purple, #6f42c1);
 }
 
+/* stylelint-enable csstree/validator */
 .ph-lvl-tier-5.progress-bar {
+    /* stylelint-disable csstree/validator */
     background: linear-gradient(45deg, var(--primary, #0d6efd), var(--purple, #6f42c1));
+    /* stylelint-enable csstree/validator */
 }
 .ph-lvl-tier-5.playerhud-widget-container {
     border-inline-start-color: var(--primary, #0d6efd);

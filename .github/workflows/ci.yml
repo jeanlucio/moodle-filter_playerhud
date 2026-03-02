@@ -88,6 +88,10 @@ jobs:
         if: ${{ ! cancelled() }}
         run: moodle-plugin-ci grunt --max-lint-warnings 0
 
+      - name: Strict SCSS Linting
+        if: ${{ ! cancelled() }}
+        run: npx stylelint "plugin/scss/**/*.scss"
+
       - name: PHPUnit tests
         if: ${{ ! cancelled() }}
         run: moodle-plugin-ci phpunit
