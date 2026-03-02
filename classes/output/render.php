@@ -56,9 +56,6 @@ class render {
 
         // Parse Attributes.
         $attrs = [];
-        if (preg_match('/id=(\d+)/i', $attributesstr, $m)) {
-            $attrs['id'] = $m[1];
-        }
         if (preg_match('/code=([a-zA-Z0-9]+)/i', $attributesstr, $m)) {
             $attrs['code'] = $m[1];
         }
@@ -81,8 +78,6 @@ class render {
             if (function_exists('block_playerhud_get_drop_details_by_code')) {
                 $data = block_playerhud_get_drop_details_by_code($attrs['code'], $blockinstanceid);
             }
-        } else if (!empty($attrs['id'])) {
-            $data = block_playerhud_get_drop_details_for_filter((int)$attrs['id']);
         }
 
         if (!$data || $data->blockinstanceid != $blockinstanceid) {
