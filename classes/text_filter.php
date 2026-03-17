@@ -41,7 +41,7 @@ class text_filter extends \moodle_text_filter {
     public function filter($text, array $options = []) {
         global $DB, $COURSE, $PAGE;
 
-        // Quick check for shortcode presence.
+        // Quick check for shortcode presence to save performance.
         if (strpos($text, '[PLAYERHUD_') === false) {
             return $text;
         }
@@ -120,6 +120,7 @@ class text_filter extends \moodle_text_filter {
                 'take'  => get_string('take', 'block_playerhud'),
                 'label' => get_string('next_collection_in', 'block_playerhud'),
             ];
+
             if (isset($PAGE) && $PAGE->requires) {
                 $PAGE->requires->js_call_amd('block_playerhud/timers', 'init', [$jstimerstrings]);
             }

@@ -21,7 +21,6 @@ use context_block;
 
 /**
  * Render output class for PlayerHUD filter.
- *
  * @package    filter_playerhud
  * @copyright  2026 Jean Lúcio <jeanlucio@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -187,13 +186,87 @@ class render {
     }
 
     /**
-     * Renders a trade trigger (Placeholder).
+     * Renders a trade trigger inline widget.
      *
      * @param int $id The trade ID.
      * @param int $blockinstanceid The block instance ID.
-     * @return string Empty string.
+     * @return string HTML content of the trade card.
      */
     public static function render_trade($id, $blockinstanceid) {
-        return '';
+        global $DB, $USER, $COURSE, $OUTPUT;
+
+        if (\core_useragent::is_moodle_app()) {
+            return '';
+        }
+
+        // Check gamification status.
+        $player = $DB->get_record('block_playerhud_user', [
+            'blockinstanceid' => $blockinstanceid,
+            'userid' => $USER->id,
+        ]);
+
+        if (!$player || !$player->enable_gamification) {
+            return '';
+        }
+
+        // Fetch Trade.
+        $trade = $DB->get_record('block_playerhud_trades', ['id' => $id, 'blockinstanceid' => $blockinstanceid]);
+        if (!$trade) {
+            return '';
+        }
+
+        $context = context_block::instance($blockinstanceid);
+
+        // Helper function to format items with images/emojis.
+        $formatitems = function ($records) use ($context) {
+            $formatted = [];
+            foreach ($records as $r) {
+                $fakeitem = (object)['id' => $r->itemid, 'image' => $r->image];
+                $media = \block_playerhud\utils::get_item_display_data($fakeitem, $context);
+
+                $formatted[] = [
+                    'qty' => $r->qty,
+                    'name' => format_string($r->name),
+                    'is_image' => $media['is_image'],
+                    'url' => $media['url'],
+                    'content' => $media['content'],
+                ];
+            }
+            return $formatted;
+        };
+
+        // Fetch Requirements (Student Pays).
+        $sqlreqs = "SELECT req.itemid, req.qty, i.name, i.image
+                      FROM {block_playerhud_trade_reqs} req
+                      JOIN {block_playerhud_items} i ON req.itemid = i.id
+                     WHERE req.tradeid = :tradeid";
+        $reqs = $DB->get_records_sql($sqlreqs, ['tradeid' => $id]);
+
+        // Fetch Rewards (Student Receives).
+        $sqlrewards = "SELECT rew.itemid, rew.qty, i.name, i.image
+                         FROM {block_playerhud_trade_rewards} rew
+                         JOIN {block_playerhud_items} i ON rew.itemid = i.id
+                        WHERE rew.tradeid = :tradeid";
+        $rewards = $DB->get_records_sql($sqlrewards, ['tradeid' => $id]);
+
+        // Action URL to process the trade.
+        $tradeurl = new moodle_url('/blocks/playerhud/process_trade.php', [
+            'id' => $COURSE->id,
+            'instanceid' => $blockinstanceid,
+            'tradeid' => $id,
+            'sesskey' => sesskey(),
+        ]);
+
+        $templatedata = [
+            'trade_name' => format_string($trade->name),
+            'reqs' => $formatitems($reqs),
+            'rewards' => $formatitems($rewards),
+            'trade_url' => $tradeurl->out(false),
+            'str_trade_btn' => get_string('trade_perform', 'block_playerhud'),
+            'str_you_pay' => get_string('shop_pay', 'block_playerhud'),
+            'str_you_receive' => get_string('shop_receive', 'block_playerhud'),
+        ];
+
+        return $OUTPUT->render_from_template('filter_playerhud/trade', $templatedata);
     }
 }
