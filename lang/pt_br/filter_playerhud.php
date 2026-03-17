@@ -52,6 +52,7 @@ $string['pluginname'] = 'Filtro PlayerHUD';
 $string['privacy:metadata'] = 'O Filtro PlayerHUD apenas exibe dados e não armazena informações pessoais diretamente.';
 $string['ready'] = 'Pronto!';
 $string['story_shortcut'] = 'História';
+$string['tab_shop'] = 'Loja';
 $string['take'] = 'Pegar';
 $string['view_ranking'] = 'Ver Ranking';
 $string['wait'] = 'Aguarde:';

@@ -52,6 +52,7 @@ $string['pluginname'] = 'PlayerHUD Filter';
 $string['privacy:metadata'] = 'The PlayerHUD Filter only displays data and does not store personal information directly.';
 $string['ready'] = 'Ready!';
 $string['story_shortcut'] = 'Story';
+$string['tab_shop'] = 'Shop';
 $string['take'] = 'Take';
 $string['view_ranking'] = 'View Leaderboard';
 $string['wait'] = 'Wait:';
