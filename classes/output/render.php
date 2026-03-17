@@ -40,11 +40,17 @@ class render {
             return '';
         }
 
-        // Check if gamification is enabled for the user.
-        $player = $DB->get_record('block_playerhud_user', [
-            'blockinstanceid' => $blockinstanceid,
-            'userid' => $USER->id,
-        ]);
+        static $playercache = [];
+        $cachekey = $blockinstanceid . '_' . $USER->id;
+
+        if (!isset($playercache[$cachekey])) {
+            $playercache[$cachekey] = $DB->get_record('block_playerhud_user', [
+                'blockinstanceid' => $blockinstanceid,
+                'userid' => $USER->id,
+            ]);
+        }
+
+        $player = $playercache[$cachekey];
 
         if (!$player || !$player->enable_gamification) {
             return '';
@@ -199,11 +205,18 @@ class render {
             return '';
         }
 
-        // Check gamification status.
-        $player = $DB->get_record('block_playerhud_user', [
-            'blockinstanceid' => $blockinstanceid,
-            'userid' => $USER->id,
-        ]);
+        // Static cache to avoid N+1 in filter (Moodle.org Standard).
+        static $playercache = [];
+        $cachekey = $blockinstanceid . '_' . $USER->id;
+
+        if (!isset($playercache[$cachekey])) {
+            $playercache[$cachekey] = $DB->get_record('block_playerhud_user', [
+                'blockinstanceid' => $blockinstanceid,
+                'userid' => $USER->id,
+            ]);
+        }
+
+        $player = $playercache[$cachekey];
 
         if (!$player || !$player->enable_gamification) {
             return '';
@@ -211,6 +224,7 @@ class render {
 
         // Fetch Trade.
         $trade = $DB->get_record('block_playerhud_trades', ['id' => $id, 'blockinstanceid' => $blockinstanceid]);
+
         if (!$trade) {
             return '';
         }

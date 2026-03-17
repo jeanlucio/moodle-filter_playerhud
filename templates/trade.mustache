@@ -19,40 +19,50 @@
 
     PlayerHUD trade widget.
     Renders an inline shop offer for students to interact with.
+    @package    block_playerhud
+    @copyright  2026 Jean Lúcio <jeanlucio@gmail.com>
+    @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
-    Context variables required for this template:
-    * trade_name
-    * reqs (array)
-    * rewards (array)
-    * trade_url
-    * str_trade_btn
-    * str_you_pay
-    * str_you_receive
+    Example context (json):
+    {
+        "trade_name": "Mystic Trade",
+        "reqs": [
+            { "qty": 3, "name": "Wood", "is_image": false, "content": "🪵" }
+        ],
+        "rewards": [
+            { "qty": 1, "name": "Sword", "is_image": false, "content": "🗡️" }
+        ],
+        "trade_url": "#",
+        "str_trade_btn": "Trade",
+        "str_you_pay": "You pay",
+        "str_you_receive": "You receive"
+    }
 }}
-<div class="card ph-trade-widget shadow-sm my-3 mx-auto" style="max-width: 480px; border-radius: 12px; border: 2px solid #e9ecef;">
-    <div class="card-header bg-light border-bottom text-center py-2" style="border-top-left-radius: 10px; border-top-right-radius: 10px;">
-        <h6 class="mb-0 fw-bold text-dark"><i class="fa fa-balance-scale me-1 text-primary" aria-hidden="true"></i> {{trade_name}}</h6>
+<div class="card ph-trade-widget-card shadow-sm my-3 mx-auto">
+    <div class="card-header bg-light border-bottom text-center py-2">
+        <h6 class="mb-0 fw-bold text-dark">
+            <i class="fa fa-balance-scale me-1 text-primary" aria-hidden="true"></i> {{trade_name}}
+        </h6>
     </div>
     <div class="card-body p-3">
 
         <div class="row align-items-center">
-            {{! Lado Esquerdo: O que o aluno paga }}
             <div class="col-5 text-center px-2">
-                <div class="text-danger small fw-bold text-uppercase mb-2" style="font-size: 0.70rem;">
+                <div class="text-danger small fw-bold text-uppercase mb-2 ph-trade-label">
                     <i class="fa fa-minus-circle me-1" aria-hidden="true"></i>{{str_you_pay}}
                 </div>
                 <div class="d-flex flex-column gap-2 align-items-center">
                     {{#reqs}}
                     <div class="badge bg-white text-dark border d-flex align-items-center p-1 pe-2 shadow-sm w-100 text-start" title="{{name}}">
-                        <div class="me-2 flex-shrink-0" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 4px;">
+                        <div class="me-2 flex-shrink-0 ph-trade-item-icon">
                             {{#is_image}}
-                                <img src="{{url}}" alt="{{name}}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                <img src="{{url}}" alt="">
                             {{/is_image}}
                             {{^is_image}}
-                                <span style="font-size: 18px; line-height: 1;" aria-hidden="true">{{{content}}}</span>
+                                <span class="ph-emoji-sm" aria-hidden="true">{{{content}}}</span>
                             {{/is_image}}
                         </div>
-                        <div class="text-truncate" style="min-width: 0;">
+                        <div class="text-truncate ph-min-w-0">
                             <span class="fw-bold fs-6">{{qty}}x</span>
                             <span class="fw-normal">{{name}}</span>
                         </div>
@@ -61,28 +71,26 @@
                 </div>
             </div>
 
-            {{! Centro: Seta Direcional }}
             <div class="col-2 text-center text-muted px-0">
                 <i class="fa fa-arrow-right fs-5" aria-hidden="true"></i>
             </div>
 
-            {{! Lado Direito: O que o aluno recebe }}
             <div class="col-5 text-center px-2">
-                <div class="text-success small fw-bold text-uppercase mb-2" style="font-size: 0.70rem;">
+                <div class="text-success small fw-bold text-uppercase mb-2 ph-trade-label">
                     <i class="fa fa-plus-circle me-1" aria-hidden="true"></i>{{str_you_receive}}
                 </div>
                 <div class="d-flex flex-column gap-2 align-items-center">
                     {{#rewards}}
                     <div class="badge bg-white text-dark border border-success d-flex align-items-center p-1 pe-2 shadow-sm w-100 text-start" title="{{name}}">
-                        <div class="me-2 flex-shrink-0" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; background: #e8f5e9; border-radius: 4px;">
+                        <div class="me-2 flex-shrink-0 ph-trade-item-icon success-bg">
                             {{#is_image}}
-                                <img src="{{url}}" alt="{{name}}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                <img src="{{url}}" alt="">
                             {{/is_image}}
                             {{^is_image}}
-                                <span style="font-size: 18px; line-height: 1;" aria-hidden="true">{{{content}}}</span>
+                                <span class="ph-emoji-sm" aria-hidden="true">{{{content}}}</span>
                             {{/is_image}}
                         </div>
-                        <div class="text-truncate" style="min-width: 0;">
+                        <div class="text-truncate ph-min-w-0">
                             <span class="fw-bold fs-6">{{qty}}x</span>
                             <span class="fw-normal">{{name}}</span>
                         </div>
@@ -92,9 +100,8 @@
             </div>
         </div>
 
-        {{! Botão de Ação }}
         <div class="text-center mt-3 pt-3 border-top">
-            <a href="{{trade_url}}" class="btn btn-primary w-100 fw-bold shadow-sm" style="border-radius: 8px;">
+            <a href="{{trade_url}}" class="btn btn-primary w-100 fw-bold shadow-sm rounded-3">
                 {{str_trade_btn}}
             </a>
         </div>
