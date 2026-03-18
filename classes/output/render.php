@@ -265,7 +265,7 @@ class render {
 
         // Action URL to process the trade.
         $tradeurl = new moodle_url('/blocks/playerhud/process_trade.php', [
-            'id' => $COURSE->id,
+            'courseid' => $COURSE->id,
             'instanceid' => $blockinstanceid,
             'tradeid' => $id,
             'sesskey' => sesskey(),
