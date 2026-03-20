@@ -102,9 +102,16 @@
             </div>
 
             <div class="text-center mt-3 pt-3 border-top">
+                {{#can_afford}}
                 <a href="{{trade_url}}" class="btn btn-success w-100 fw-bold shadow-sm rounded-3">
                     <i class="fa fa-exchange me-1" aria-hidden="true"></i> {{str_trade_btn}}
                 </a>
+                {{/can_afford}}
+                {{^can_afford}}
+                <button class="btn btn-outline-secondary w-100 fw-bold shadow-sm rounded-3" disabled>
+                    <i class="fa fa-lock me-1" aria-hidden="true"></i> {{str_missing_items}}
+                </button>
+                {{/can_afford}}
             </div>
         </div>
     </div>
