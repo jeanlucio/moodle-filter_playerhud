@@ -308,21 +308,21 @@ class render {
                         WHERE rew.tradeid = :tradeid";
         $rewards = $DB->get_records_sql($sqlrewards, ['tradeid' => $id]);
 
-        // 1. Bulk Fetch do Inventário do Usuário (Zero N+1)
+        // 1. Bulk Fetch do inventário do aluno para validar se ele pode pagar a troca.
         $sqlinv = "SELECT itemid, COUNT(id) as qty FROM {block_playerhud_inventory} WHERE userid = :userid GROUP BY itemid";
         $myinventory = $DB->get_records_sql_menu($sqlinv, ['userid' => $USER->id]);
 
-        // 2. Valida se o aluno tem como pagar
-        $can_afford = true;
+        // 2. Valida se o aluno tem como pagar.
+        $canafford = true;
         foreach ($reqs as $req) {
             $myqty = isset($myinventory[$req->itemid]) ? $myinventory[$req->itemid] : 0;
             if ($myqty < $req->qty) {
-                $can_afford = false;
+                $canafford = false;
                 break;
             }
         }
 
-        // 3. Pega a URL exata onde o aluno está agora
+        // 3. Pega a URL exata onde o aluno esta agora.
         global $PAGE;
         $returnurlparam = $PAGE->url->out_as_local_url(false);
 
@@ -332,7 +332,7 @@ class render {
             'instanceid' => $blockinstanceid,
             'tradeid' => $id,
             'sesskey' => sesskey(),
-            'returnurl' => $returnurlparam // <--- Injetamos a URL de retorno aqui!
+            'returnurl' => $returnurlparam,
         ]);
 
         $templatedata = [
@@ -340,9 +340,46 @@ class render {
             'reqs' => $formatitems($reqs),
             'rewards' => $formatitems($rewards),
             'trade_url' => $tradeurl->out(false),
-            'can_afford' => $can_afford, // <--- Enviamos a validação pro layout
+            'can_afford' => $canafford,
             'str_trade_btn' => get_string('trade_perform', 'block_playerhud'),
-            'str_missing_items' => get_string('trade_missing_items', 'block_playerhud'), // <--- Nova string
+            'str_missing_items' => get_string('trade_missing_items', 'block_playerhud'),
+            'str_you_pay' => get_string('shop_pay', 'block_playerhud'),
+            'str_you_receive' => get_string('shop_receive', 'block_playerhud'),
+        ];
+        $sqlinv = "SELECT itemid, COUNT(id) as qty FROM {block_playerhud_inventory} WHERE userid = :userid GROUP BY itemid";
+        $myinventory = $DB->get_records_sql_menu($sqlinv, ['userid' => $USER->id]);
+
+        // 2. Valida se o aluno tem como pagar.
+        $canafford = true;
+        foreach ($reqs as $req) {
+            $myqty = isset($myinventory[$req->itemid]) ? $myinventory[$req->itemid] : 0;
+            if ($myqty < $req->qty) {
+                $canafford = false;
+                break;
+            }
+        }
+
+        // 3. Pega a URL exata onde o aluno esta agora.
+        global $PAGE;
+        $returnurlparam = $PAGE->url->out_as_local_url(false);
+
+        // Action URL to process the trade.
+        $tradeurl = new moodle_url('/blocks/playerhud/process_trade.php', [
+            'courseid' => $COURSE->id,
+            'instanceid' => $blockinstanceid,
+            'tradeid' => $id,
+            'sesskey' => sesskey(),
+            'returnurl' => $returnurlparam,
+        ]);
+
+        $templatedata = [
+            'trade_name' => format_string($trade->name),
+            'reqs' => $formatitems($reqs),
+            'rewards' => $formatitems($rewards),
+            'trade_url' => $tradeurl->out(false),
+            'can_afford' => $canafford,
+            'str_trade_btn' => get_string('trade_perform', 'block_playerhud'),
+            'str_missing_items' => get_string('trade_missing_items', 'block_playerhud'),
             'str_you_pay' => get_string('shop_pay', 'block_playerhud'),
             'str_you_receive' => get_string('shop_receive', 'block_playerhud'),
         ];
