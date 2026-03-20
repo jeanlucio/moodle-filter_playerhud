@@ -192,6 +192,51 @@ class render {
     }
 
     /**
+     * Resolves a secure trade code to its ID and renders it.
+     * Prevents ID Enumeration by requiring the unguessable hash.
+     *
+     * @param string $code The 6-character secure code.
+     * @param int $blockinstanceid The block instance ID.
+     * @return string HTML content of the trade card.
+     */
+    public static function render_trade_by_code($code, $blockinstanceid) {
+        global $DB;
+
+        if (empty($code)) {
+            return '';
+        }
+
+        // Cache estático para evitar N+1 caso haja múltiplos shortcodes na mesma página.
+        static $tradescache = [];
+        if (!isset($tradescache[$blockinstanceid])) {
+            $tradescache[$blockinstanceid] = $DB->get_records(
+                'block_playerhud_trades',
+                ['blockinstanceid' => $blockinstanceid],
+                '',
+                'id, timecreated'
+            );
+        }
+
+        $tradeid = 0;
+        if (!empty($tradescache[$blockinstanceid])) {
+            foreach ($tradescache[$blockinstanceid] as $t) {
+                $expectedcode = strtoupper(substr(md5($t->id . '_' . $t->timecreated), 0, 6));
+                if ($expectedcode === strtoupper($code)) {
+                    $tradeid = $t->id;
+                    break;
+                }
+            }
+        }
+
+        if (!$tradeid) {
+            return ''; // Código inválido ou troca deletada.
+        }
+
+        // Se achou, chama o renderizador original que já estava pronto!
+        return self::render_trade($tradeid, $blockinstanceid);
+    }
+
+    /**
      * Renders a trade trigger inline widget.
      *
      * @param int $id The trade ID.
@@ -249,15 +294,15 @@ class render {
             return $formatted;
         };
 
-        // Fetch Requirements (Student Pays).
-        $sqlreqs = "SELECT req.itemid, req.qty, i.name, i.image
+        // Fetch Requirements (Student Pays). Garante 'req.id' como primeira coluna (Primary Key).
+        $sqlreqs = "SELECT req.id, req.itemid, req.qty, i.name, i.image
                       FROM {block_playerhud_trade_reqs} req
                       JOIN {block_playerhud_items} i ON req.itemid = i.id
                      WHERE req.tradeid = :tradeid";
         $reqs = $DB->get_records_sql($sqlreqs, ['tradeid' => $id]);
 
-        // Fetch Rewards (Student Receives).
-        $sqlrewards = "SELECT rew.itemid, rew.qty, i.name, i.image
+        // Fetch Rewards (Student Receives). Garante 'rew.id' como primeira coluna (Primary Key).
+        $sqlrewards = "SELECT rew.id, rew.itemid, rew.qty, i.name, i.image
                          FROM {block_playerhud_trade_rewards} rew
                          JOIN {block_playerhud_items} i ON rew.itemid = i.id
                         WHERE rew.tradeid = :tradeid";

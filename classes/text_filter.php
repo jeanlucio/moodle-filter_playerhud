@@ -99,10 +99,14 @@ class text_filter extends \moodle_text_filter {
 
         // Process PlayerHUD Trades.
         if (strpos($text, '[PLAYERHUD_TRADE') !== false) {
-            if (method_exists('\filter_playerhud\output\render', 'render_trade')) {
-                $text = preg_replace_callback('/\[PLAYERHUD_TRADE\s+id=(\d+)\]/i', function ($matches) use ($blockinstance) {
-                    return \filter_playerhud\output\render::render_trade($matches[1], $blockinstance->id);
-                }, $text);
+            if (method_exists('\filter_playerhud\output\render', 'render_trade_by_code')) {
+                $text = preg_replace_callback(
+                    '/\[PLAYERHUD_TRADE\s+code=([a-zA-Z0-9]+)\]/i',
+                    function ($matches) use ($blockinstance) {
+                        return \filter_playerhud\output\render::render_trade_by_code($matches[1], $blockinstance->id);
+                    },
+                    $text
+                );
                 $needsassets = true;
             }
         }
