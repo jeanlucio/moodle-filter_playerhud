@@ -26,6 +26,75 @@ use context_block;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class render {
+    /** @var array Preloaded cache for drops. */
+    protected static $dropscache = [];
+
+    /** @var array Preloaded cache for user inventory. */
+    protected static $inventorycache = [];
+
+    /** @var array Preloaded cache for item display data (images/emojis). */
+    protected static $dropmediacache = [];
+
+    /**
+     * Preloads drops, inventory and media in bulk to prevent N+1 queries.
+     *
+     * @param array $dropcodes Array of drop codes found in the text.
+     * @param array $tradecodes Array of trade codes found in the text.
+     * @param int $instanceid The block instance ID.
+     */
+    public static function preload_data(array $dropcodes, array $tradecodes, int $instanceid) {
+        global $DB, $USER;
+
+        $context = \context_block::instance($instanceid);
+
+        if (!empty($dropcodes)) {
+            $uniquecodes = array_unique($dropcodes);
+            [$insql, $inparams] = $DB->get_in_or_equal($uniquecodes, SQL_PARAMS_NAMED, 'dc');
+            $inparams['bi'] = $instanceid;
+
+            $sql = "SELECT d.id as dropid, d.maxusage, d.respawntime, d.blockinstanceid, d.code,
+                           i.id as itemid, i.name as itemname, i.image, i.xp, i.description,
+                           i.secret, i.required_class_id
+                      FROM {block_playerhud_drops} d
+                      JOIN {block_playerhud_items} i ON d.itemid = i.id
+                     WHERE d.code $insql
+                       AND d.blockinstanceid = :bi
+                       AND i.enabled = 1";
+
+            $drops = $DB->get_records_sql($sql, $inparams);
+
+            if ($drops) {
+                $dropids = [];
+                $fakeitems = [];
+
+                foreach ($drops as $drop) {
+                    self::$dropscache[$drop->code] = $drop;
+                    $dropids[] = $drop->dropid;
+                    $fakeitems[$drop->itemid] = (object)['id' => $drop->itemid, 'image' => $drop->image];
+                }
+
+                // Bulk load media.
+                self::$dropmediacache = \block_playerhud\utils::get_items_display_data($fakeitems, $context);
+
+                // Bulk load user inventory for all drops found.
+                [$didsql, $didparams] = $DB->get_in_or_equal($dropids, SQL_PARAMS_NAMED, 'did');
+                $didparams['uid'] = $USER->id;
+
+                $invsql = "SELECT id, dropid, timecreated
+                             FROM {block_playerhud_inventory}
+                            WHERE userid = :uid AND dropid $didsql
+                         ORDER BY timecreated DESC";
+
+                $invs = $DB->get_records_sql($invsql, $didparams);
+                if ($invs) {
+                    foreach ($invs as $inv) {
+                        self::$inventorycache[$inv->dropid][] = $inv;
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Renders the drop collection trigger.
      *
@@ -60,6 +129,7 @@ class render {
 
         // Parse Attributes.
         $attrs = [];
+
         if (preg_match('/code=([a-zA-Z0-9]+)/i', $attributesstr, $m)) {
             $attrs['code'] = $m[1];
         }
@@ -76,9 +146,11 @@ class render {
             $attrs['button_emoji'] = $m[1];
         }
 
-        // Fetch Data.
+        // Fetch Data from cache (or fallback).
         $data = null;
-        if (!empty($attrs['code'])) {
+        if (!empty($attrs['code']) && isset(self::$dropscache[$attrs['code']])) {
+            $data = self::$dropscache[$attrs['code']];
+        } else if (!empty($attrs['code'])) {
             if (function_exists('block_playerhud_get_drop_details_by_code')) {
                 $data = block_playerhud_get_drop_details_by_code($attrs['code'], $blockinstanceid);
             }
@@ -92,22 +164,27 @@ class render {
         $mode = $attrs['mode'] ?? 'card';
         $customtext = $attrs['text'] ?? null;
 
-        // Game Logic (Inventory & Cooldown).
-        $inventory = $DB->get_records('block_playerhud_inventory', [
-            'userid' => $USER->id,
-            'dropid' => $dropid,
-        ], 'timecreated DESC');
+        // Inventory logic using cache.
+        $inventory = self::$inventorycache[$dropid] ?? [];
+        if (empty(self::$inventorycache) && empty($inventory)) {
+            $inventory = $DB->get_records('block_playerhud_inventory', [
+                'userid' => $USER->id,
+                'dropid' => $dropid,
+            ], 'timecreated DESC');
+        }
 
         $count = count($inventory);
-        $lastcollected = $inventory ? reset($inventory) : null;
+        $lastcollected = !empty($inventory) ? reset($inventory) : null;
 
         $isunique = ($data->maxusage == 1);
         $limitreached = ($data->maxusage > 0 && $count >= $data->maxusage);
 
         $readytime = 0;
         $iscooldown = false;
+
         if ($lastcollected && $data->respawntime > 0) {
             $readytime = $lastcollected->timecreated + $data->respawntime;
+
             if (time() < $readytime) {
                 $iscooldown = true;
             }
@@ -132,9 +209,13 @@ class render {
                 $timestamp = $lastcollected->timecreated;
             }
 
-            $context = context_block::instance($blockinstanceid);
-            $fakeitem = (object)['id' => $data->itemid, 'image' => $data->image];
-            $media = \block_playerhud\utils::get_item_display_data($fakeitem, $context);
+            // Fetch media from cache.
+            $media = self::$dropmediacache[$data->itemid] ?? null;
+            if (!$media) {
+                $context = context_block::instance($blockinstanceid);
+                $fakeitem = (object)['id' => $data->itemid, 'image' => $data->image];
+                $media = \block_playerhud\utils::get_item_display_data($fakeitem, $context);
+            }
         }
 
         // Prepare Data for Template.
@@ -206,7 +287,7 @@ class render {
             return '';
         }
 
-        // Cache estático para evitar N+1 caso haja múltiplos shortcodes na mesma página.
+        // Static cache to avoid N+1 if there are multiple shortcodes on the same page.
         static $tradescache = [];
         if (!isset($tradescache[$blockinstanceid])) {
             $tradescache[$blockinstanceid] = $DB->get_records(
@@ -218,6 +299,7 @@ class render {
         }
 
         $tradeid = 0;
+
         if (!empty($tradescache[$blockinstanceid])) {
             foreach ($tradescache[$blockinstanceid] as $t) {
                 $expectedcode = strtoupper(substr(md5($t->id . '_' . $t->timecreated), 0, 6));
@@ -229,10 +311,9 @@ class render {
         }
 
         if (!$tradeid) {
-            return ''; // Código inválido ou troca deletada.
+            return ''; // Invalid code or deleted trade.
         }
 
-        // Se achou, chama o renderizador original que já estava pronto!
         return self::render_trade($tradeid, $blockinstanceid);
     }
 
@@ -244,7 +325,7 @@ class render {
      * @return string HTML content of the trade card.
      */
     public static function render_trade($id, $blockinstanceid) {
-        global $DB, $USER, $COURSE, $OUTPUT;
+        global $DB, $USER, $COURSE, $OUTPUT, $PAGE;
 
         if (\core_useragent::is_moodle_app()) {
             return '';
@@ -269,98 +350,76 @@ class render {
 
         // Fetch Trade.
         $trade = $DB->get_record('block_playerhud_trades', ['id' => $id, 'blockinstanceid' => $blockinstanceid]);
-
         if (!$trade) {
             return '';
         }
 
         $context = context_block::instance($blockinstanceid);
 
-        // Helper function to format items with images/emojis.
-        $formatitems = function ($records) use ($context) {
-            $formatted = [];
-            foreach ($records as $r) {
-                $fakeitem = (object)['id' => $r->itemid, 'image' => $r->image];
-                $media = \block_playerhud\utils::get_item_display_data($fakeitem, $context);
-
-                $formatted[] = [
-                    'qty' => $r->qty,
-                    'name' => format_string($r->name),
-                    'is_image' => $media['is_image'],
-                    'url' => $media['url'],
-                    'content' => $media['content'],
-                ];
-            }
-            return $formatted;
-        };
-
-        // Fetch Requirements (Student Pays). Garante 'req.id' como primeira coluna (Primary Key).
+        // Fetch Requirements.
         $sqlreqs = "SELECT req.id, req.itemid, req.qty, i.name, i.image
                       FROM {block_playerhud_trade_reqs} req
                       JOIN {block_playerhud_items} i ON req.itemid = i.id
                      WHERE req.tradeid = :tradeid";
         $reqs = $DB->get_records_sql($sqlreqs, ['tradeid' => $id]);
 
-        // Fetch Rewards (Student Receives). Garante 'rew.id' como primeira coluna (Primary Key).
+        // Fetch Rewards.
         $sqlrewards = "SELECT rew.id, rew.itemid, rew.qty, i.name, i.image
                          FROM {block_playerhud_trade_rewards} rew
                          JOIN {block_playerhud_items} i ON rew.itemid = i.id
                         WHERE rew.tradeid = :tradeid";
         $rewards = $DB->get_records_sql($sqlrewards, ['tradeid' => $id]);
 
-        // 1. Bulk Fetch do inventário do aluno para validar se ele pode pagar a troca.
-        $sqlinv = "SELECT itemid, COUNT(id) as qty FROM {block_playerhud_inventory} WHERE userid = :userid GROUP BY itemid";
-        $myinventory = $DB->get_records_sql_menu($sqlinv, ['userid' => $USER->id]);
-
-        // 2. Valida se o aluno tem como pagar.
-        $canafford = true;
-        foreach ($reqs as $req) {
-            $myqty = isset($myinventory[$req->itemid]) ? $myinventory[$req->itemid] : 0;
-            if ($myqty < $req->qty) {
-                $canafford = false;
-                break;
+        // 1. BULK FETCH: Group all necessary items for the current trade.
+        $fakeitems = [];
+        if ($reqs) {
+            foreach ($reqs as $req) {
+                $fakeitems[$req->itemid] = (object)['id' => $req->itemid, 'image' => $req->image];
+            }
+        }
+        if ($rewards) {
+            foreach ($rewards as $rew) {
+                $fakeitems[$rew->itemid] = (object)['id' => $rew->itemid, 'image' => $rew->image];
             }
         }
 
-        // 3. Pega a URL exata onde o aluno esta agora.
-        global $PAGE;
-        $returnurlparam = $PAGE->url->out_as_local_url(false);
+        $allmedia = \block_playerhud\utils::get_items_display_data($fakeitems, $context);
 
-        // Action URL to process the trade.
-        $tradeurl = new moodle_url('/blocks/playerhud/process_trade.php', [
-            'courseid' => $COURSE->id,
-            'instanceid' => $blockinstanceid,
-            'tradeid' => $id,
-            'sesskey' => sesskey(),
-            'returnurl' => $returnurlparam,
-        ]);
+        // 2. Helper function to format items with preloaded media cache.
+        $formatitems = function ($records) use ($allmedia) {
+            $formatted = [];
+            if ($records) {
+                foreach ($records as $r) {
+                    $media = $allmedia[$r->itemid];
+                    $formatted[] = [
+                        'qty' => $r->qty,
+                        'name' => format_string($r->name),
+                        'is_image' => $media['is_image'],
+                        'url' => $media['url'],
+                        'content' => $media['content'],
+                    ];
+                }
+            }
+            return $formatted;
+        };
 
-        $templatedata = [
-            'trade_name' => format_string($trade->name),
-            'reqs' => $formatitems($reqs),
-            'rewards' => $formatitems($rewards),
-            'trade_url' => $tradeurl->out(false),
-            'can_afford' => $canafford,
-            'str_trade_btn' => get_string('trade_perform', 'block_playerhud'),
-            'str_missing_items' => get_string('trade_missing_items', 'block_playerhud'),
-            'str_you_pay' => get_string('shop_pay', 'block_playerhud'),
-            'str_you_receive' => get_string('shop_receive', 'block_playerhud'),
-        ];
+        // 3. Bulk fetch user inventory to validate if they can afford the trade.
         $sqlinv = "SELECT itemid, COUNT(id) as qty FROM {block_playerhud_inventory} WHERE userid = :userid GROUP BY itemid";
         $myinventory = $DB->get_records_sql_menu($sqlinv, ['userid' => $USER->id]);
 
-        // 2. Valida se o aluno tem como pagar.
+        // 4. Validate if the user can afford it.
         $canafford = true;
-        foreach ($reqs as $req) {
-            $myqty = isset($myinventory[$req->itemid]) ? $myinventory[$req->itemid] : 0;
-            if ($myqty < $req->qty) {
-                $canafford = false;
-                break;
+        if ($reqs) {
+            foreach ($reqs as $req) {
+                $myqty = isset($myinventory[$req->itemid]) ? $myinventory[$req->itemid] : 0;
+                if ($myqty < $req->qty) {
+                    $canafford = false;
+                    break;
+                }
             }
         }
 
-        // 3. Pega a URL exata onde o aluno esta agora.
-        global $PAGE;
+        // 5. Get the exact URL where the user is now.
         $returnurlparam = $PAGE->url->out_as_local_url(false);
 
         // Action URL to process the trade.

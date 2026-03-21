@@ -41,74 +41,80 @@ class text_filter extends \moodle_text_filter {
     public function filter($text, array $options = []) {
         global $DB, $COURSE, $PAGE;
 
-        // Quick check for shortcode presence to save performance.
         if (strpos($text, '[PLAYERHUD_') === false) {
             return $text;
         }
 
-        // Validate context and login requirements.
         if (!isloggedin() || isguestuser() || $COURSE->id == SITEID) {
             $text = str_replace('[PLAYERHUD_WIDGET]', '', $text);
-            $text = preg_replace('/\[PLAYERHUD_DROP\s+[^\]]+\]/', '', $text);
-            $text = preg_replace('/\[PLAYERHUD_TRADE\s+[^\]]+\]/', '', $text);
+            $text = preg_replace('/\[PLAYERHUD_DROP\s+[^\]]+\]/i', '', $text);
+            $text = preg_replace('/\[PLAYERHUD_TRADE\s+[^\]]+\]/i', '', $text);
             return $text;
         }
 
-        // Retrieve block instance associated with the course.
         if (!isset(self::$blockcache[$COURSE->id])) {
             $context = \context_course::instance($COURSE->id);
             $sql = "SELECT bi.id, bi.configdata
                       FROM {block_instances} bi
                      WHERE bi.blockname = 'playerhud'
                        AND bi.parentcontextid = :ctxid";
-
-            $record = $DB->get_record_sql($sql, ['ctxid' => $context->id], IGNORE_MULTIPLE);
-            self::$blockcache[$COURSE->id] = $record;
+            self::$blockcache[$COURSE->id] = $DB->get_record_sql($sql, ['ctxid' => $context->id], IGNORE_MULTIPLE);
         }
 
         $blockinstance = self::$blockcache[$COURSE->id];
-
         if (!$blockinstance) {
             $text = str_replace('[PLAYERHUD_WIDGET]', '', $text);
-            $text = preg_replace('/\[PLAYERHUD_DROP\s+[^\]]+\]/', '', $text);
-            $text = preg_replace('/\[PLAYERHUD_TRADE\s+[^\]]+\]/', '', $text);
+            $text = preg_replace('/\[PLAYERHUD_DROP\s+[^\]]+\]/i', '', $text);
+            $text = preg_replace('/\[PLAYERHUD_TRADE\s+[^\]]+\]/i', '', $text);
             return $text;
         }
 
         $needsassets = false;
 
-        // Process PlayerHUD Widget.
         if (strpos($text, '[PLAYERHUD_WIDGET]') !== false) {
             if (class_exists('\filter_playerhud\output\widget')) {
                 $widgetrenderer = new \filter_playerhud\output\widget($blockinstance, $COURSE->id);
-                $html = $widgetrenderer->render();
-                $text = str_replace('[PLAYERHUD_WIDGET]', $html, $text);
+                $text = str_replace('[PLAYERHUD_WIDGET]', $widgetrenderer->render(), $text);
                 $needsassets = true;
             }
         }
 
-        // Process PlayerHUD Drops.
-        if (strpos($text, '[PLAYERHUD_DROP') !== false) {
-            if (method_exists('\filter_playerhud\output\render', 'render_drop')) {
-                $text = preg_replace_callback('/\[PLAYERHUD_DROP\s+([^\]]+)\]/i', function ($matches) use ($blockinstance) {
-                    return \filter_playerhud\output\render::render_drop($matches[1], $blockinstance->id);
-                }, $text);
-                $needsassets = true;
+        // Extract shortcode parameters for bulk loading (Zero N+1 Strategy).
+        $dropcodes = [];
+        if (preg_match_all('/\[PLAYERHUD_DROP\s+([^\]]+)\]/i', $text, $matches)) {
+            foreach ($matches[1] as $attrstr) {
+                if (preg_match('/code=([a-zA-Z0-9]+)/i', $attrstr, $code)) {
+                    $dropcodes[] = $code[1];
+                }
             }
         }
 
-        // Process PlayerHUD Trades.
-        if (strpos($text, '[PLAYERHUD_TRADE') !== false) {
-            if (method_exists('\filter_playerhud\output\render', 'render_trade_by_code')) {
-                $text = preg_replace_callback(
-                    '/\[PLAYERHUD_TRADE\s+code=([a-zA-Z0-9]+)\]/i',
-                    function ($matches) use ($blockinstance) {
-                        return \filter_playerhud\output\render::render_trade_by_code($matches[1], $blockinstance->id);
-                    },
-                    $text
-                );
-                $needsassets = true;
-            }
+        $tradecodes = [];
+        if (preg_match_all('/\[PLAYERHUD_TRADE\s+code=([a-zA-Z0-9]+)\]/i', $text, $matches)) {
+            $tradecodes = $matches[1];
+        }
+
+        // Bulk load data in render class to prevent queries inside preg_replace_callback.
+        if ((!empty($dropcodes) || !empty($tradecodes)) && class_exists('\filter_playerhud\output\render')) {
+            \filter_playerhud\output\render::preload_data($dropcodes, $tradecodes, $blockinstance->id);
+        }
+
+        if (!empty($dropcodes)) {
+            $text = preg_replace_callback('/\[PLAYERHUD_DROP\s+([^\]]+)\]/i', function ($matches) use ($blockinstance) {
+                return \filter_playerhud\output\render::render_drop($matches[1], $blockinstance->id);
+            }, $text);
+            $needsassets = true;
+        }
+
+        if (!empty($tradecodes)) {
+            $text = preg_replace_callback(
+                '/\[PLAYERHUD_TRADE\s+code=([a-zA-Z0-9]+)\]/i',
+                function ($matches) use ($blockinstance) {
+                    return \filter_playerhud\output\render::render_trade_by_code($matches[1], $blockinstance->id);
+                },
+                $text
+            );
+            $needsassets = true;
         }
 
         // Inject global assets (Modals and JS) if needed.
@@ -118,7 +124,6 @@ class text_filter extends \moodle_text_filter {
                 $text .= $assets->get_modals_html();
             }
 
-            // Load Timer JS strings and call AMD module.
             $jstimerstrings = [
                 'ready' => get_string('ready', 'block_playerhud'),
                 'take'  => get_string('take', 'block_playerhud'),
@@ -129,7 +134,6 @@ class text_filter extends \moodle_text_filter {
                 $PAGE->requires->js_call_amd('block_playerhud/timers', 'init', [$jstimerstrings]);
             }
 
-            // Load Collection AJAX strings and call AMD module.
             $jscollectstrings = [
                 'collected' => get_string('collected', 'block_playerhud'),
                 'error' => get_string('error_connection', 'block_playerhud'),
@@ -141,10 +145,8 @@ class text_filter extends \moodle_text_filter {
                 'xp' => get_string('xp', 'block_playerhud'),
             ];
 
-            $jsconfig = ['strings' => $jscollectstrings];
-
             if (isset($PAGE) && $PAGE->requires) {
-                $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', [$jsconfig]);
+                $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', ['strings' => $jscollectstrings]);
             }
 
             self::$assetsinjected = true;

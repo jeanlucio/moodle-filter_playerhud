@@ -120,11 +120,11 @@ class widget implements renderable, templatable {
         }
 
         // Recent Items Logic.
-        $recentitems = [];
         $rawinventory = \block_playerhud\game::get_inventory($USER->id, $this->instance->id);
         $count = 0;
         $seen = [];
         $context = context_block::instance($this->instance->id);
+        $itemstodisplay = [];
 
         foreach ($rawinventory as $invitem) {
             if ($count >= 6) {
@@ -134,8 +134,15 @@ class widget implements renderable, templatable {
                 continue;
             }
             $seen[] = $invitem->id;
+            $itemstodisplay[$invitem->id] = $invitem;
+            $count++;
+        }
 
-            $media = \block_playerhud\utils::get_item_display_data($invitem, $context);
+        $allmedia = \block_playerhud\utils::get_items_display_data($itemstodisplay, $context);
+        $recentitems = [];
+
+        foreach ($itemstodisplay as $invitem) {
+            $media = $allmedia[$invitem->id];
             $imagepayload = $media['is_image'] ? $media['url'] : strip_tags($media['content']);
 
             $recentitems[] = [
@@ -148,7 +155,6 @@ class widget implements renderable, templatable {
                 'date' => userdate($invitem->collecteddate, get_string('strftimedatefullshort', 'langconfig')),
                 'timestamp' => $invitem->collecteddate,
             ];
-            $count++;
         }
 
         // Ranking Logic.
