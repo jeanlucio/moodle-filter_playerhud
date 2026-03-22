@@ -63,9 +63,14 @@
                                     <span class="ph-emoji-sm" aria-hidden="true">{{{content}}}</span>
                                 {{/is_image}}
                             </div>
-                            <div class="text-truncate ph-min-w-0">
-                                <span class="fw-bold fs-6">{{qty}}x</span>
-                                <span class="fw-normal">{{name}}</span>
+                            <div class="ph-min-w-0 d-flex flex-column justify-content-center py-1 w-100">
+                                <div class="text-truncate lh-1 mb-1">
+                                    <span class="fw-bold fs-6">{{qty}}x</span>
+                                    <span class="fw-normal">{{name}}</span>
+                                </div>
+                                <small class="fw-bold {{qty_class}} ph-text-xs lh-1 text-wrap w-100">
+                                    {{#str}} trade_you_have, block_playerhud, {{user_qty}} {{/str}}
+                                </small>
                             </div>
                         </div>
                         {{/reqs}}

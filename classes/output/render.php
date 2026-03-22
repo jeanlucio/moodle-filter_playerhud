@@ -385,37 +385,47 @@ class render {
 
         $allmedia = \block_playerhud\utils::get_items_display_data($fakeitems, $context);
 
-        // 2. Helper function to format items with preloaded media cache.
-        $formatitems = function ($records) use ($allmedia) {
-            $formatted = [];
-            if ($records) {
-                foreach ($records as $r) {
-                    $media = $allmedia[$r->itemid];
-                    $formatted[] = [
-                        'qty' => $r->qty,
-                        'name' => format_string($r->name),
-                        'is_image' => $media['is_image'],
-                        'url' => $media['url'],
-                        'content' => $media['content'],
-                    ];
-                }
-            }
-            return $formatted;
-        };
-
-        // 3. Bulk fetch user inventory to validate if they can afford the trade.
+        // 2. Bulk fetch user inventory to validate if they can afford the trade.
         $sqlinv = "SELECT itemid, COUNT(id) as qty FROM {block_playerhud_inventory} WHERE userid = :userid GROUP BY itemid";
         $myinventory = $DB->get_records_sql_menu($sqlinv, ['userid' => $USER->id]);
 
-        // 4. Validate if the user can afford it.
+        // 3. Format Requirements and Check Affordability simultaneously.
+        $reqsdata = [];
         $canafford = true;
         if ($reqs) {
             foreach ($reqs as $req) {
+                $media = $allmedia[$req->itemid];
                 $myqty = isset($myinventory[$req->itemid]) ? $myinventory[$req->itemid] : 0;
-                if ($myqty < $req->qty) {
+                $hasenough = ($myqty >= $req->qty);
+
+                if (!$hasenough) {
                     $canafford = false;
-                    break;
                 }
+
+                $reqsdata[] = [
+                    'qty' => $req->qty,
+                    'name' => format_string($req->name),
+                    'is_image' => $media['is_image'],
+                    'url' => $media['url'],
+                    'content' => $media['content'],
+                    'user_qty' => $myqty,
+                    'qty_class' => $hasenough ? 'text-success' : 'text-danger',
+                ];
+            }
+        }
+
+        // 4. Format Rewards using the bulk-loaded media array.
+        $rewsdata = [];
+        if ($rewards) {
+            foreach ($rewards as $rew) {
+                $media = $allmedia[$rew->itemid];
+                $rewsdata[] = [
+                    'qty' => $rew->qty,
+                    'name' => format_string($rew->name),
+                    'is_image' => $media['is_image'],
+                    'url' => $media['url'],
+                    'content' => $media['content'],
+                ];
             }
         }
 
@@ -433,8 +443,8 @@ class render {
 
         $templatedata = [
             'trade_name' => format_string($trade->name),
-            'reqs' => $formatitems($reqs),
-            'rewards' => $formatitems($rewards),
+            'reqs' => $reqsdata,
+            'rewards' => $rewsdata,
             'trade_url' => $tradeurl->out(false),
             'can_afford' => $canafford,
             'str_trade_btn' => get_string('trade_perform', 'block_playerhud'),
