@@ -39,7 +39,7 @@
     }
 }}
 <div class="filter_playerhud d-inline-block text-start">
-    <div class="card ph-trade-widget-card shadow-sm my-3">
+    <div class="card ph-trade-widget-card shadow-sm my-3" role="group" aria-label="{{trade_name}}">
         <div class="card-header bg-light border-bottom text-center py-2">
             <h6 class="mb-0 fw-bold text-dark">
                 <i class="fa fa-balance-scale me-1 text-primary" aria-hidden="true"></i> {{trade_name}}
@@ -108,12 +108,12 @@
 
             <div class="text-center mt-3 pt-3 border-top">
                 {{#can_afford}}
-                <a href="{{trade_url}}" class="btn btn-success w-100 fw-bold shadow-sm rounded-3">
+                <a href="{{trade_url}}" class="btn btn-success w-100 fw-bold shadow-sm rounded-3" aria-label="{{str_trade_btn}}: {{trade_name}}">
                     <i class="fa fa-exchange me-1" aria-hidden="true"></i> {{str_trade_btn}}
                 </a>
                 {{/can_afford}}
                 {{^can_afford}}
-                <button class="btn btn-outline-secondary w-100 fw-bold shadow-sm rounded-3" disabled>
+                <button class="btn btn-outline-secondary w-100 fw-bold shadow-sm rounded-3" disabled aria-label="{{str_missing_items}}: {{trade_name}}">
                     <i class="fa fa-lock me-1" aria-hidden="true"></i> {{str_missing_items}}
                 </button>
                 {{/can_afford}}

@@ -128,6 +128,8 @@ class text_filter extends \moodle_text_filter {
                 'ready' => get_string('ready', 'block_playerhud'),
                 'take'  => get_string('take', 'block_playerhud'),
                 'label' => get_string('next_collection_in', 'block_playerhud'),
+                'min'   => get_string('time_min', 'block_playerhud'),
+                'sec'   => get_string('time_sec', 'block_playerhud'),
             ];
 
             if (isset($PAGE) && $PAGE->requires) {

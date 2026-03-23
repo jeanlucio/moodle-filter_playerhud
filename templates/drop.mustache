@@ -18,7 +18,6 @@
     @template filter_playerhud/drop
 
     Renders a drop collection trigger (Card, Text, or Image mode).
-
     @package    block_playerhud
     @copyright  2026 Jean Lúcio <jeanlucio@gmail.com>
     @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -40,9 +39,10 @@
         <span class="ph-item-details-trigger text-success fw-bold ph-cursor-help d-inline-flex align-items-center gap-1"
               tabindex="0"
               role="button"
-              aria-label="{{#str}} collected, filter_playerhud {{/str}}: {{label}}"
+              aria-disabled="true"
               {{{data_attributes}}}>
-            <i class="fa fa-check" aria-hidden="true"></i> {{label}}
+            <i class="fa fa-check" aria-hidden="true"></i>
+            <span class="visually-hidden">{{#str}} collected, filter_playerhud {{/str}}: </span>{{label}}
         </span>
     {{/limit_reached}}
     {{^limit_reached}}
@@ -50,10 +50,11 @@
             <span class="ph-item-details-trigger ph-text-dimmed ph-cursor-wait d-inline-flex align-items-center gap-1"
                   tabindex="0"
                   role="button"
-                  aria-label="{{#str}} wait, filter_playerhud {{/str}} {{label}}"
+                  aria-disabled="true"
                   {{{data_attributes}}}>
-                <span aria-hidden="true">⏳</span> {{label}}
-                <small class="ph-timer" data-deadline="{{readytime}}">
+                <span aria-hidden="true">⏳</span>
+                <span class="visually-hidden">{{#str}} wait, filter_playerhud {{/str}}: </span>{{label}}
+                <small class="ph-timer ms-1" data-deadline="{{readytime}}">
                     {{#str}} loading, filter_playerhud {{/str}}
                 </small>
             </span>
@@ -72,13 +73,23 @@
 {{! --- MODE: IMAGE --- }}
 {{#is_image_mode}}
     <div class="ph-drop-image-container
-                {{#limit_reached}}ph-item-details-trigger ph-cursor-help{{/limit_reached}}"
-         {{#limit_reached}}role="button" tabindex="0" aria-label="{{#str}} details, block_playerhud {{/str}}: {{safe_name}}"{{/limit_reached}}
+                {{#limit_reached}}ph-item-details-trigger ph-cursor-help{{/limit_reached}}
+                {{#is_cooldown}}ph-cursor-wait{{/is_cooldown}}"
+         {{#limit_reached}}role="button" tabindex="0" aria-disabled="true"{{/limit_reached}}
+         {{#is_cooldown}}role="button" tabindex="0" aria-disabled="true"{{/is_cooldown}}
          {{{data_attributes}}}>
+
+        {{! Hidden text for screen reader to provide context to the icon }}
+        {{#limit_reached}}
+            <span class="visually-hidden">{{safe_name}} - {{#str}} collected, filter_playerhud {{/str}}</span>
+        {{/limit_reached}}
+        {{#is_cooldown}}
+            <span class="visually-hidden">{{safe_name}} - {{#str}} wait, filter_playerhud {{/str}}: </span>
+        {{/is_cooldown}}
 
         <div class="{{#limit_reached}}ph-state-grayscale{{/limit_reached}} {{#is_cooldown}}ph-state-dimmed{{/is_cooldown}}">
             {{#is_image_media}}
-                <img src="{{media_url}}" class="ph-drop-img-lg rounded-0" alt="{{safe_name}}">
+                <img src="{{media_url}}" class="ph-drop-img-lg rounded-0" alt="">
             {{/is_image_media}}
             {{^is_image_media}}
                 <span class="ph-drop-emoji-lg" aria-hidden="true">{{{media_content}}}</span>
@@ -86,8 +97,8 @@
         </div>
 
         {{#limit_reached}}
-            <span class="badge bg-success rounded-circle ph-badge-bottom-right" title="{{#str}} collected, filter_playerhud {{/str}}">
-                <i class="fa fa-check" aria-label="{{#str}} collected, filter_playerhud {{/str}}"></i>
+            <span class="badge bg-success rounded-circle ph-badge-bottom-right" aria-hidden="true">
+                <i class="fa fa-check"></i>
             </span>
         {{/limit_reached}}
 
@@ -95,7 +106,7 @@
             <div class="ph-timer badge bg-light text-dark border shadow-sm ph-badge-bottom-center"
                  data-deadline="{{readytime}}"
                  data-no-label="1">
-                 {{#str}} loading, filter_playerhud {{/str}}
+                {{#str}} loading, filter_playerhud {{/str}}
             </div>
         {{/is_cooldown}}
 
@@ -137,22 +148,26 @@
 
         {{! Button State }}
         {{#limit_reached}}
-            <button disabled class="btn btn-light btn-sm w-100 text-success border-success" aria-label="{{#str}} collected, filter_playerhud {{/str}}">
-                <i class="fa fa-check" aria-hidden="true"></i> {{#str}} collected, filter_playerhud {{/str}}
+            <button type="button" class="btn btn-light btn-sm w-100 text-success border-success disabled" aria-disabled="true">
+                <i class="fa fa-check" aria-hidden="true"></i>
+                <span class="visually-hidden">{{safe_name}}: </span>{{#str}} collected, filter_playerhud {{/str}}
             </button>
         {{/limit_reached}}
+
         {{^limit_reached}}
             {{#is_cooldown}}
-                <button disabled class="btn btn-light btn-sm w-100 ph-text-dimmed">
+                <button type="button" class="btn btn-light btn-sm w-100 ph-text-dimmed disabled" aria-disabled="true">
                     <span aria-hidden="true">⏳</span>
+                    <span class="visually-hidden">{{#str}} wait, filter_playerhud {{/str}} {{safe_name}}: </span>
                     <span class="ph-timer" data-deadline="{{readytime}}">{{#str}} loading, filter_playerhud {{/str}}</span>
                 </button>
             {{/is_cooldown}}
+
             {{^is_cooldown}}
                 <a href="{{collect_url}}"
                    class="btn btn-primary btn-sm w-100 ph-action-collect shadow-sm mt-2"
                    data-mode="card">
-                   {{{emoji_html}}}{{btn_text}}
+                   {{{emoji_html}}} <span class="visually-hidden">{{safe_name}}: </span>{{btn_text}}
                 </a>
             {{/is_cooldown}}
         {{/limit_reached}}
