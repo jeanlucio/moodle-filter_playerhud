@@ -42,7 +42,7 @@
               aria-disabled="true"
               {{{data_attributes}}}>
             <i class="fa fa-check" aria-hidden="true"></i>
-            <span class="visually-hidden">{{#str}} collected, filter_playerhud {{/str}}: </span>{{label}}
+            <span class="sr-only visually-hidden">{{#str}} collected, filter_playerhud {{/str}}: </span>{{label}}
         </span>
     {{/limit_reached}}
     {{^limit_reached}}
@@ -53,7 +53,7 @@
                   aria-disabled="true"
                   {{{data_attributes}}}>
                 <span aria-hidden="true">⏳</span>
-                <span class="visually-hidden">{{#str}} wait, filter_playerhud {{/str}}: </span>{{label}}
+                <span class="sr-only visually-hidden">{{#str}} wait, filter_playerhud {{/str}}: </span>{{label}}
                 <small class="ph-timer ms-1" data-deadline="{{readytime}}">
                     {{#str}} loading, filter_playerhud {{/str}}
                 </small>
@@ -81,10 +81,10 @@
 
         {{! Hidden text for screen reader to provide context to the icon }}
         {{#limit_reached}}
-            <span class="visually-hidden">{{safe_name}} - {{#str}} collected, filter_playerhud {{/str}}</span>
+            <span class="sr-only visually-hidden">{{safe_name}} - {{#str}} collected, filter_playerhud {{/str}}</span>
         {{/limit_reached}}
         {{#is_cooldown}}
-            <span class="visually-hidden">{{safe_name}} - {{#str}} wait, filter_playerhud {{/str}}: </span>
+            <span class="sr-only visually-hidden">{{safe_name}} - {{#str}} wait, filter_playerhud {{/str}}: </span>
         {{/is_cooldown}}
 
         <div class="{{#limit_reached}}ph-state-grayscale{{/limit_reached}} {{#is_cooldown}}ph-state-dimmed{{/is_cooldown}}">
@@ -150,7 +150,7 @@
         {{#limit_reached}}
             <button type="button" class="btn btn-light btn-sm w-100 text-success border-success disabled" aria-disabled="true">
                 <i class="fa fa-check" aria-hidden="true"></i>
-                <span class="visually-hidden">{{safe_name}}: </span>{{#str}} collected, filter_playerhud {{/str}}
+                <span class="sr-only visually-hidden">{{safe_name}}: </span>{{#str}} collected, filter_playerhud {{/str}}
             </button>
         {{/limit_reached}}
 
@@ -158,7 +158,7 @@
             {{#is_cooldown}}
                 <button type="button" class="btn btn-light btn-sm w-100 ph-text-dimmed disabled" aria-disabled="true">
                     <span aria-hidden="true">⏳</span>
-                    <span class="visually-hidden">{{#str}} wait, filter_playerhud {{/str}} {{safe_name}}: </span>
+                    <span class="sr-only visually-hidden">{{#str}} wait, filter_playerhud {{/str}} {{safe_name}}: </span>
                     <span class="ph-timer" data-deadline="{{readytime}}">{{#str}} loading, filter_playerhud {{/str}}</span>
                 </button>
             {{/is_cooldown}}
@@ -167,7 +167,7 @@
                 <a href="{{collect_url}}"
                    class="btn btn-primary btn-sm w-100 ph-action-collect shadow-sm mt-2"
                    data-mode="card">
-                   {{{emoji_html}}} <span class="visually-hidden">{{safe_name}}: </span>{{btn_text}}
+                   {{{emoji_html}}} <span class="sr-only visually-hidden">{{safe_name}}: </span>{{btn_text}}
                 </a>
             {{/is_cooldown}}
         {{/limit_reached}}

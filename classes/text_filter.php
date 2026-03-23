@@ -148,7 +148,7 @@ class text_filter extends \moodle_text_filter {
             ];
 
             if (isset($PAGE) && $PAGE->requires) {
-                $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', ['strings' => $jscollectstrings]);
+                $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', [['strings' => $jscollectstrings]]);
             }
 
             self::$assetsinjected = true;
