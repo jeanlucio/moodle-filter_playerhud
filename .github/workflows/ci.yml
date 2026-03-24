@@ -62,11 +62,7 @@ jobs:
 
       - name: Install moodle-plugin-ci
         run: |
-          # 1. Puxa o seu bloco principal do GitHub e joga dentro do Moodle do CI
-          # (Substitua SEU_USUARIO pelo seu nome de usuário real no GitHub)
-          moodle-plugin-ci add-plugin jeanlucio/moodle-block_playerhud#feature/shop-trades
-
-          # 2. Instala o filtro (que é o repositório atual)
+          moodle-plugin-ci add-plugin jeanlucio/moodle-block_playerhud --branch feature/shop-trades
           moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
         env:
           DB: ${{ matrix.database }}
