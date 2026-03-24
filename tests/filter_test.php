@@ -17,7 +17,7 @@
 namespace filter_playerhud\tests;
 
 use advanced_testcase;
-use filter_playerhud;
+use filter_playerhud\text_filter;
 
 /**
  * Tests for the PlayerHUD text filter.
@@ -31,15 +31,15 @@ final class filter_test extends advanced_testcase {
     /**
      * Test that shortcodes are properly parsed into HTML.
      *
-     * @covers \filter_playerhud::filter
+     * @covers \filter_playerhud\text_filter::filter
      */
     public function test_filter_parsing(): void {
         $this->resetAfterTest(true);
         $course = $this->getDataGenerator()->create_course();
         $context = \context_course::instance($course->id);
 
-        // Instantiate the filter.
-        $filter = new \filter_playerhud($context, []);
+        // Instantiate the modern filter class.
+        $filter = new text_filter($context, []);
 
         $inputtext = 'Here is a drop: [PLAYERHUD_DROP code=XPTO123] in the middle of the text.';
         $filteredtext = $filter->filter($inputtext);
@@ -52,7 +52,7 @@ final class filter_test extends advanced_testcase {
     /**
      * Test filter performance to ensure Zero N+1 Queries (Bulk Fetching).
      *
-     * @covers \filter_playerhud::filter
+     * @covers \filter_playerhud\text_filter::filter
      */
     public function test_filter_performance_zero_n1(): void {
         global $DB;
@@ -60,7 +60,7 @@ final class filter_test extends advanced_testcase {
         $course = $this->getDataGenerator()->create_course();
         $context = \context_course::instance($course->id);
 
-        $filter = new \filter_playerhud($context, []);
+        $filter = new text_filter($context, []);
 
         // Create a text with 5 different drops.
         $inputtext = '
