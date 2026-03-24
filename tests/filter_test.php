@@ -29,22 +29,92 @@ use filter_playerhud\text_filter;
  */
 final class filter_test extends advanced_testcase {
     /**
+     * Setups a complete Moodle course environment with a logged-in user,
+     * a block instance, and basic item structures to satisfy the filter requirements.
+     *
+     * @return array Array containing the context, instance ID, item ID, and user object.
+     */
+    protected function setup_environment(): array {
+        global $DB, $COURSE;
+
+        // 1. Create Course and Context.
+        $course = $this->getDataGenerator()->create_course();
+        $COURSE = $course; // Force global COURSE to bypass SITEID security check.
+        $coursecontext = \context_course::instance($course->id);
+
+        // 2. Create User and Log in.
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $course->id, 'student');
+        $this->setUser($user);
+
+        // 3. Create a real block instance.
+        $bi = new \stdClass();
+        $bi->blockname = 'playerhud';
+        $bi->parentcontextid = $coursecontext->id;
+        $bi->showinsubcontexts = 0;
+        $bi->pagetypepattern = 'course-view-*';
+        $bi->subpagepattern = null;
+        $bi->defaultregion = 'side-pre';
+        $bi->defaultweight = 0;
+        $bi->configdata = base64_encode(serialize(new \stdClass()));
+        $bi->timecreated = time();
+        $bi->timemodified = time();
+        $instanceid = $DB->insert_record('block_instances', $bi);
+
+        // 4. Create PlayerHUD user profile (Active gamification).
+        $player = new \stdClass();
+        $player->blockinstanceid = $instanceid;
+        $player->userid = $user->id;
+        $player->currentxp = 0;
+        $player->enable_gamification = 1;
+        $player->ranking_visibility = 1;
+        $player->timecreated = time();
+        $player->timemodified = time();
+        $DB->insert_record('block_playerhud_user', $player);
+
+        // 5. Create a Dummy Item.
+        $item = new \stdClass();
+        $item->blockinstanceid = $instanceid;
+        $item->name = 'Test Item';
+        $item->xp = 100;
+        $item->image = '';
+        $item->description = '';
+        $item->enabled = 1;
+        $item->secret = 0;
+        $item->timecreated = time();
+        $item->timemodified = time();
+        $itemid = $DB->insert_record('block_playerhud_items', $item);
+
+        return [$coursecontext, $instanceid, $itemid, $user];
+    }
+
+    /**
      * Test that shortcodes are properly parsed into HTML.
      *
      * @covers \filter_playerhud\text_filter::filter
      */
     public function test_filter_parsing(): void {
+        global $DB;
         $this->resetAfterTest(true);
-        $course = $this->getDataGenerator()->create_course();
-        $context = \context_course::instance($course->id);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
 
-        // Instantiate the modern filter class.
+        // Create a Drop for the shortcode.
+        $drop = new \stdClass();
+        $drop->blockinstanceid = $instanceid;
+        $drop->itemid = $itemid;
+        $drop->name = 'Test Drop';
+        $drop->maxusage = 1;
+        $drop->respawntime = 0;
+        $drop->code = 'XPTO123';
+        $drop->timecreated = time();
+        $drop->timemodified = time();
+        $DB->insert_record('block_playerhud_drops', $drop);
+
         $filter = new text_filter($context, []);
-
-        $inputtext = 'Here is a drop: [PLAYERHUD_DROP code=XPTO123] in the middle of the text.';
+        $inputtext = 'Here is a drop: [PLAYERHUD_DROP code=XPTO123] in the middle.';
         $filteredtext = $filter->filter($inputtext);
 
-        // Assert the shortcode was removed and replaced with the plugin's HTML button/container.
+        // Assert the shortcode was removed and replaced with the plugin's HTML button.
         $this->assertStringNotContainsString('[PLAYERHUD_DROP code=XPTO123]', $filteredtext);
         $this->assertStringContainsString('ph-action-collect', $filteredtext);
     }
@@ -57,12 +127,23 @@ final class filter_test extends advanced_testcase {
     public function test_filter_performance_zero_n1(): void {
         global $DB;
         $this->resetAfterTest(true);
-        $course = $this->getDataGenerator()->create_course();
-        $context = \context_course::instance($course->id);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+
+        $codes = ['CODE1', 'CODE2', 'CODE3', 'CODE4', 'CODE5'];
+        foreach ($codes as $code) {
+            $drop = new \stdClass();
+            $drop->blockinstanceid = $instanceid;
+            $drop->itemid = $itemid;
+            $drop->name = 'Test Drop ' . $code;
+            $drop->maxusage = 1;
+            $drop->respawntime = 0;
+            $drop->code = $code;
+            $drop->timecreated = time();
+            $drop->timemodified = time();
+            $DB->insert_record('block_playerhud_drops', $drop);
+        }
 
         $filter = new text_filter($context, []);
-
-        // Create a text with 5 different drops.
         $inputtext = '
             Drop 1: [PLAYERHUD_DROP code=CODE1]
             Drop 2: [PLAYERHUD_DROP code=CODE2]
@@ -71,23 +152,56 @@ final class filter_test extends advanced_testcase {
             Drop 5: [PLAYERHUD_DROP code=CODE5]
         ';
 
-        // 1. Warm up the cache (optional, but good practice).
+        // Warm up the instance cache.
         $filter->filter('Initial text');
 
-        // 2. Start measuring database reads.
+        // Start measuring database reads.
         $readsbefore = $DB->perf_get_reads();
 
-        // 3. Run the filter with 5 shortcodes.
+        // Run the filter with 5 shortcodes.
         $filter->filter($inputtext);
 
-        // 4. Calculate total reads.
+        // Calculate total reads.
         $readsafter = $DB->perf_get_reads();
         $totalreads = $readsafter - $readsbefore;
 
-        // 5. The core architectural assertion:
-        // Even with 5 shortcodes, it should NOT make 5 separate queries.
-        // It should do 1 bulk query (get_records_list or similar) or hit the cache.
-        // We allow up to 2 reads (one for block instances, one for drops).
+        // Assertion: Even with 5 shortcodes, it should do 1 or 2 bulk queries max.
         $this->assertLessThanOrEqual(2, $totalreads, 'The filter is making too many DB queries! Possible N+1 issue detected.');
+    }
+
+    /**
+     * Test Security: Shortcode must disappear if gamification is paused.
+     *
+     * @covers \filter_playerhud\text_filter::filter
+     */
+    public function test_filter_visibility_paused(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid, $user] = $this->setup_environment();
+
+        $drop = new \stdClass();
+        $drop->blockinstanceid = $instanceid;
+        $drop->itemid = $itemid;
+        $drop->name = 'Test Drop';
+        $drop->maxusage = 1;
+        $drop->respawntime = 0;
+        $drop->code = 'HIDE123';
+        $drop->timecreated = time();
+        $drop->timemodified = time();
+        $DB->insert_record('block_playerhud_drops', $drop);
+
+        // Disable gamification for this specific user.
+        $player = $DB->get_record('block_playerhud_user', ['blockinstanceid' => $instanceid, 'userid' => $user->id]);
+        $player->enable_gamification = 0;
+        $DB->update_record('block_playerhud_user', $player);
+
+        $filter = new text_filter($context, []);
+        $inputtext = 'Here is a drop: [PLAYERHUD_DROP code=HIDE123] hidden.';
+        $filteredtext = $filter->filter($inputtext);
+
+        // Because gamification is paused, it should strip the shortcode and NOT render the button.
+        $this->assertStringNotContainsString('[PLAYERHUD_DROP code=HIDE123]', $filteredtext);
+        $this->assertStringNotContainsString('ph-action-collect', $filteredtext);
+        $this->assertEquals('Here is a drop:  hidden.', $filteredtext);
     }
 }
