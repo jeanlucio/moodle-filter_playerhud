@@ -162,21 +162,31 @@ final class filter_test extends advanced_testcase {
             Drop 5: [PLAYERHUD_DROP code=CODE5]
         ';
 
-        // Warm up the instance cache.
-        $filter->filter('Initial text');
+        // 1. WARM UP (Aquecimento do Moodle)
+        // Força o núcleo do Moodle a ir ao banco buscar e guardar em memória
+        // todas as strings de tradução, templates Mustache e contextos.
+        $filter->filter('Warmup [PLAYERHUD_DROP code=CODE1]');
 
-        // Start measuring database reads.
+        // 2. Limpa APENAS o cache estático do nosso plugin para simular o
+        // início de um novo carregamento de página (mantendo o Moodle aquecido).
+        \filter_playerhud\text_filter::reset_caches();
+        \filter_playerhud\output\render::reset_caches();
+
+        // 3. Inicia o cronômetro do Banco de Dados
         $readsbefore = $DB->perf_get_reads();
 
-        // Run the filter with 5 shortcodes.
+        // 4. Roda o filtro para 5 drops simultâneos!
         $filter->filter($inputtext);
 
-        // Calculate total reads.
+        // 5. Calcula o total de leituras
         $readsafter = $DB->perf_get_reads();
         $totalreads = $readsafter - $readsbefore;
 
-        // Assertion: Even with 5 shortcodes, it should do 1 or 2 bulk queries max.
-        $this->assertLessThanOrEqual(2, $totalreads, 'The filter is making too many DB queries! Possible N+1 issue detected.');
+        // 6. A Asserção Arquitetural:
+        // Uma arquitetura O(1) perfeita faz exatamente 5 consultas base para a página toda:
+        // (1 Bloco + 1 Usuário Filtro + 1 Usuário Render + 1 Lote Drops + 1 Lote Inventário)
+        // Se fossem consultas separadas (N+1), dariam mais de 25 leituras.
+        $this->assertLessThanOrEqual(5, $totalreads, "The filter is making $totalreads DB queries! Possible N+1 issue detected.");
     }
 
     /**
