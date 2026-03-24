@@ -36,6 +36,22 @@ class render {
     protected static $dropmediacache = [];
 
     /**
+     * Tracks which drop IDs were preloaded, even when the inventory result was empty.
+     * This prevents the fallback query from firing for users who simply never collected.
+     *
+     * @var array Keys are drop IDs that have already been through preload_data().
+     */
+    protected static $preloadeddropids = [];
+
+    /**
+     * Cache for player profiles, keyed by "{instanceid}_{userid}".
+     * Moved from static-local to class property so it can be reset between tests.
+     *
+     * @var array
+     */
+    protected static $playercache = [];
+
+    /**
      * Preloads drops, inventory and media in bulk to prevent N+1 queries.
      *
      * @param array $dropcodes Array of drop codes found in the text.
@@ -71,6 +87,9 @@ class render {
                     self::$dropscache[$drop->code] = $drop;
                     $dropids[] = $drop->dropid;
                     $fakeitems[$drop->itemid] = (object)['id' => $drop->itemid, 'image' => $drop->image];
+
+                    // Mark this drop ID as preloaded regardless of inventory result.
+                    self::$preloadeddropids[$drop->dropid] = true;
                 }
 
                 // Bulk load media.
@@ -109,17 +128,16 @@ class render {
             return '';
         }
 
-        static $playercache = [];
         $cachekey = $blockinstanceid . '_' . $USER->id;
 
-        if (!isset($playercache[$cachekey])) {
-            $playercache[$cachekey] = $DB->get_record('block_playerhud_user', [
+        if (!isset(self::$playercache[$cachekey])) {
+            self::$playercache[$cachekey] = $DB->get_record('block_playerhud_user', [
                 'blockinstanceid' => $blockinstanceid,
                 'userid' => $USER->id,
             ]);
         }
 
-        $player = $playercache[$cachekey];
+        $player = self::$playercache[$cachekey];
 
         if (!$player || !$player->enable_gamification) {
             return '';
@@ -165,8 +183,10 @@ class render {
         $customtext = $attrs['text'] ?? null;
 
         // Inventory logic using cache.
+        // FIX: Check whether this drop was preloaded rather than whether the cache array
+        // is empty. This prevents a fallback query for users who simply never collected yet.
         $inventory = self::$inventorycache[$dropid] ?? [];
-        if (empty(self::$inventorycache) && empty($inventory)) {
+        if (!isset(self::$preloadeddropids[$dropid]) && empty($inventory)) {
             $inventory = $DB->get_records('block_playerhud_inventory', [
                 'userid' => $USER->id,
                 'dropid' => $dropid,
@@ -331,18 +351,16 @@ class render {
             return '';
         }
 
-        // Static cache to avoid N+1 in filter (Moodle.org Standard).
-        static $playercache = [];
         $cachekey = $blockinstanceid . '_' . $USER->id;
 
-        if (!isset($playercache[$cachekey])) {
-            $playercache[$cachekey] = $DB->get_record('block_playerhud_user', [
+        if (!isset(self::$playercache[$cachekey])) {
+            self::$playercache[$cachekey] = $DB->get_record('block_playerhud_user', [
                 'blockinstanceid' => $blockinstanceid,
                 'userid' => $USER->id,
             ]);
         }
 
-        $player = $playercache[$cachekey];
+        $player = self::$playercache[$cachekey];
 
         if (!$player || !$player->enable_gamification) {
             return '';
@@ -454,5 +472,19 @@ class render {
         ];
 
         return $OUTPUT->render_from_template('filter_playerhud/trade', $templatedata);
+    }
+
+    /**
+     * Resets all static caches.
+     *
+     * Must be called in PHPUnit tearDown() to prevent cache leaking between test cases,
+     * since PHP does not reset static class properties between tests.
+     */
+    public static function reset_caches(): void {
+        self::$dropscache       = [];
+        self::$inventorycache   = [];
+        self::$dropmediacache   = [];
+        self::$preloadeddropids = [];
+        self::$playercache      = [];
     }
 }

@@ -39,7 +39,7 @@ class text_filter extends \moodle_text_filter {
      * @return string The filtered text.
      */
     public function filter($text, array $options = []) {
-        global $DB, $COURSE, $PAGE;
+        global $DB, $USER, $COURSE, $PAGE;
 
         if (strpos($text, '[PLAYERHUD_') === false) {
             return $text;
@@ -63,6 +63,21 @@ class text_filter extends \moodle_text_filter {
 
         $blockinstance = self::$blockcache[$COURSE->id];
         if (!$blockinstance) {
+            $text = str_replace('[PLAYERHUD_WIDGET]', '', $text);
+            $text = preg_replace('/\[PLAYERHUD_DROP\s+[^\]]+\]/i', '', $text);
+            $text = preg_replace('/\[PLAYERHUD_TRADE\s+[^\]]+\]/i', '', $text);
+            return $text;
+        }
+
+        // FIX: Check gamification status at the filter level before doing any rendering.
+        // This ensures shortcodes are stripped for users with gamification paused,
+        // without relying on render::render_drop() to do it (which the tests verify).
+        $player = $DB->get_record('block_playerhud_user', [
+            'blockinstanceid' => $blockinstance->id,
+            'userid'          => $USER->id,
+        ]);
+
+        if (!$player || empty($player->enable_gamification)) {
             $text = str_replace('[PLAYERHUD_WIDGET]', '', $text);
             $text = preg_replace('/\[PLAYERHUD_DROP\s+[^\]]+\]/i', '', $text);
             $text = preg_replace('/\[PLAYERHUD_TRADE\s+[^\]]+\]/i', '', $text);
@@ -137,14 +152,14 @@ class text_filter extends \moodle_text_filter {
             }
 
             $jscollectstrings = [
-                'collected' => get_string('collected', 'block_playerhud'),
-                'error' => get_string('error_connection', 'block_playerhud'),
+                'collected'     => get_string('collected', 'block_playerhud'),
+                'error'         => get_string('error_connection', 'block_playerhud'),
                 'last_collected' => get_string('last_collected', 'block_playerhud'),
                 'confirm_title' => get_string('confirmation', 'admin'),
-                'yes' => get_string('yes'),
-                'cancel' => get_string('cancel'),
-                'level' => get_string('level', 'block_playerhud'),
-                'xp' => get_string('xp', 'block_playerhud'),
+                'yes'           => get_string('yes'),
+                'cancel'        => get_string('cancel'),
+                'level'         => get_string('level', 'block_playerhud'),
+                'xp'            => get_string('xp', 'block_playerhud'),
             ];
 
             if (isset($PAGE) && $PAGE->requires) {
@@ -155,5 +170,16 @@ class text_filter extends \moodle_text_filter {
         }
 
         return $text;
+    }
+
+    /**
+     * Resets all static caches.
+     *
+     * Must be called in PHPUnit tearDown() to prevent cache leaking between test cases,
+     * since PHP does not reset static class properties between tests.
+     */
+    public static function reset_caches(): void {
+        self::$blockcache     = [];
+        self::$assetsinjected = false;
     }
 }

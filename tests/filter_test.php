@@ -89,6 +89,16 @@ final class filter_test extends advanced_testcase {
     }
 
     /**
+     * Tear down the test environment.
+     * Cleans up static caches to prevent data leaking between tests.
+     */
+    protected function tearDown(): void {
+        \filter_playerhud\output\render::reset_caches();
+        \filter_playerhud\text_filter::reset_caches();
+        parent::tearDown();
+    }
+
+    /**
      * Test that shortcodes are properly parsed into HTML.
      *
      * @covers \filter_playerhud\text_filter::filter
