@@ -192,6 +192,7 @@ class widget implements renderable, templatable {
             'url_backpack' => $urlbase->out(false),
             'url_story'    => (new moodle_url($urlbase, ['tab' => 'chapters']))->out(false),
             'url_shop'     => (new moodle_url($urlbase, ['tab' => 'shop']))->out(false),
+            'url_history'  => (new moodle_url($urlbase, ['tab' => 'history']))->out(false),
             'url_quests'   => (new moodle_url($urlbase, ['tab' => 'quests']))->out(false),
         ];
 
