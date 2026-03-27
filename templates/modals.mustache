@@ -32,40 +32,41 @@
 <div class="modal fade ph-z-index-high" id="phItemModalFilter" tabindex="-1" aria-labelledby="phModalTitleF" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            
+
             <div class="modal-header border-bottom-0 pb-0 d-flex justify-content-between align-items-center">
                 <h2 id="phModalTitleF" class="sr-only visually-hidden m-0">{{str_congrats}}</h2>
-                
+
                 <button type="button" class="close btn-close ph-modal-close-f ms-auto" data-dismiss="modal" data-bs-dismiss="modal" aria-label="{{str_close}}">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            
+
             <div class="modal-body pt-0">
                 <div class="d-flex align-items-start mb-3">
                     <div id="phModalImageContainerF" class="me-3 text-center ph-modal-img-container"></div>
 
                     <div class="flex-grow-1 mt-2">
-                        <h4 id="phModalNameF" class="m-0 fw-bold mb-2">{{item_name_placeholder}}</h4>
-                        
-                        <span id="phModalXPF" class="badge bg-primary text-white border shadow-sm ph-display-none">XP</span>
+                        <div class="d-flex align-items-center flex-wrap mb-2">
+                            <h4 id="phModalNameF" class="m-0 me-2 fw-bold">{{item_name_placeholder}}</h4>
+                            <span id="phModalXPF" class="badge bg-primary text-white border shadow-sm ph-display-none">XP</span>
+                        </div>
+
+                        <div id="phModalDescF" class="text-muted text-break mb-3"></div>
+
+                        <div id="phModalDateContainerF" class="border-top pt-2 mt-3 d-none">
+                            <small class="text-success fw-bold">
+                                <i class="fa fa-calendar-check-o me-1" aria-hidden="true"></i>
+                                <span id="phModalDateF"></span>
+                            </small>
+                        </div>
                     </div>
-                </div>
-
-                <div id="phModalDescF" class="text-muted text-break mb-3"></div>
-
-                <div id="phModalDateContainerF" class="border-top pt-2 mt-3 d-none">
-                    <small class="text-success fw-bold">
-                        <i class="fa fa-calendar-check-o me-1" aria-hidden="true"></i>
-                        <span id="phModalDateF"></span>
-                    </small>
                 </div>
             </div>
 
             <div class="modal-footer border-0 pt-0">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">{{str_close}}</button>
             </div>
-            
+
         </div>
    </div>
 </div>
