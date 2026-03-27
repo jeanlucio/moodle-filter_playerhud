@@ -223,7 +223,12 @@ class render {
         } else {
             $displayname = format_string($data->itemname);
             $displaydesc = $data->description;
-            $xpdisplay = $xpvalue . ' ' . get_string('currentxp', 'filter_playerhud');
+
+            if ((int)$data->maxusage === 0) {
+                $xpdisplay = '0';
+            } else {
+                $xpdisplay = $xpvalue . ' ' . get_string('currentxp', 'filter_playerhud');
+            }
 
             if ($lastcollected) {
                 $timestamp = $lastcollected->timecreated;
