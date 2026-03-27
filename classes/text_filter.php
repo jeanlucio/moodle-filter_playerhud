@@ -152,14 +152,18 @@ class text_filter extends \moodle_text_filter {
             }
 
             $jscollectstrings = [
-                'collected'     => get_string('collected', 'block_playerhud'),
-                'error'         => get_string('error_connection', 'block_playerhud'),
-                'last_collected' => get_string('last_collected', 'block_playerhud'),
-                'confirm_title' => get_string('confirmation', 'admin'),
-                'yes'           => get_string('yes'),
-                'cancel'        => get_string('cancel'),
-                'level'         => get_string('level', 'block_playerhud'),
-                'xp'            => get_string('xp', 'block_playerhud'),
+                'collected'         => get_string('collected', 'block_playerhud'),
+                'respawntime'       => get_string('respawntime', 'block_playerhud'),
+                'infinite'          => get_string('infinite', 'block_playerhud'),
+                'immediate'         => get_string('drops_immediate', 'block_playerhud'),
+                'single_collection' => get_string('single_collection', 'block_playerhud'),
+                'error'             => get_string('error_connection', 'block_playerhud'),
+                'last_collected'    => get_string('last_collected', 'block_playerhud'),
+                'confirm_title'     => get_string('confirmation', 'admin'),
+                'yes'               => get_string('yes'),
+                'cancel'            => get_string('cancel'),
+                'level'             => get_string('level', 'block_playerhud'),
+                'xp'                => get_string('xp', 'block_playerhud'),
             ];
 
             if (isset($PAGE) && $PAGE->requires) {

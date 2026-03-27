@@ -243,6 +243,12 @@ class render {
             }
         }
 
+        // Format respawn time for template.
+        $respawntimestr = '';
+        if ($data->respawntime > 0) {
+            $respawntimestr = format_time($data->respawntime);
+        }
+
         // Prepare Data for Template.
         $collecturl = new moodle_url('/blocks/playerhud/collect.php', [
             'instanceid' => $blockinstanceid,
@@ -250,18 +256,19 @@ class render {
             'courseid' => $COURSE->id,
             'sesskey' => sesskey(),
         ]);
-
         $safename = s($displayname);
         $htmldesc = base64_encode($displaydesc);
         $rawimage = $media['is_image'] ? $media['url'] : strip_tags($media['content']);
-
         $dataattributes = 'data-name="' . $safename . '" ' .
                           'data-desc-b64="' . $htmldesc . '" ' .
                           'data-image="' . s($rawimage) . '" ' .
                           'data-isimage="' . ($media['is_image'] ? 1 : 0) . '" ' .
                           'data-xp="' . s($xpdisplay) . '" ' .
                           'data-unique="' . ($isunique ? 1 : 0) . '" ' .
-                          'data-timestamp="' . $timestamp . '"';
+                          'data-timestamp="' . $timestamp . '" ' .
+                          'data-count="' . $count . '" ' .
+                          'data-maxusage="' . $data->maxusage . '" ' .
+                          'data-respawntime-str="' . s($respawntimestr) . '"';
 
         $btntext = !empty($attrs['button_text']) ? $attrs['button_text'] : get_string('take', 'filter_playerhud');
         $btnemoji = isset($attrs['button_emoji']) ? $attrs['button_emoji'] : '🖐';
