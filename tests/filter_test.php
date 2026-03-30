@@ -162,30 +162,28 @@ final class filter_test extends advanced_testcase {
             Drop 5: [PLAYERHUD_DROP code=CODE5]
         ';
 
-        // 1. WARM UP (Aquecimento do Moodle)
-        // Força o núcleo do Moodle a ir ao banco buscar e guardar em memória
-        // todas as strings de tradução, templates Mustache e contextos.
+        // 1. WARM UP (Moodle Warmup)
+        // Forces Moodle core to fetch and cache all translation strings, Mustache templates, and contexts.
         $filter->filter('Warmup [PLAYERHUD_DROP code=CODE1]');
 
-        // 2. Limpa APENAS o cache estático do nosso plugin para simular o
-        // início de um novo carregamento de página (mantendo o Moodle aquecido).
+        // 2. Clear ONLY our plugin's static cache to simulate a new page load (keeping Moodle warm).
         \filter_playerhud\text_filter::reset_caches();
         \filter_playerhud\output\render::reset_caches();
 
-        // 3. Inicia o cronômetro do Banco de Dados
+        // 3. Start the Database timer
         $readsbefore = $DB->perf_get_reads();
 
-        // 4. Roda o filtro para 5 drops simultâneos!
+        // 4. Run the filter for 5 simultaneous drops!
         $filter->filter($inputtext);
 
-        // 5. Calcula o total de leituras
+        // 5. Calculate total reads
         $readsafter = $DB->perf_get_reads();
         $totalreads = $readsafter - $readsbefore;
 
-        // 6. A Asserção Arquitetural:
-        // Uma arquitetura O(1) perfeita faz exatamente 5 consultas base para a página toda:
-        // (1 Bloco + 1 Usuário Filtro + 1 Usuário Render + 1 Lote Drops + 1 Lote Inventário)
-        // Se fossem consultas separadas (N+1), dariam mais de 25 leituras.
+        // 6. The Architectural Assertion:
+        // A perfect O(1) architecture makes exactly 5 base queries for the entire page:
+        // (1 Block + 1 Filter User + 1 Render User + 1 Drops Batch + 1 Inventory Batch)
+        // If they were separate (N+1) queries, it would result in more than 25 reads.
         $this->assertLessThanOrEqual(5, $totalreads, "The filter is making $totalreads DB queries! Possible N+1 issue detected.");
     }
 
