@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace filter_playerhud\tests;
+namespace filter_playerhud;
 
 use advanced_testcase;
 use filter_playerhud\text_filter;
