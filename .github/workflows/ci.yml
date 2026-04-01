@@ -46,9 +46,7 @@ jobs:
         with:
           path: plugin
 
-      # CRITICAL FOR FILTERS: Fetch the block dependency before Moodle installation.
-      # Moodle will throw a 'missingdependency' exception if block_playerhud is absent.
-      # IMPORTANT: Change 'GITHUB_USER/moodle-block_playerhud' to your real repository name.
+      # IMPORTANTE: Troque GITHUB_USER/moodle-block_playerhud pelo seu repositório real
       - name: Fetch block_playerhud dependency
         uses: actions/checkout@v4
         with:
@@ -72,11 +70,9 @@ jobs:
           echo "NVM_DIR=$HOME/.nvm" >> $GITHUB_ENV
 
       - name: Inject dependencies into Moodle
-        # By manually cloning Moodle into the workspace and moving our block dependency inside it,
-        # moodle-plugin-ci will recognize the existing folder and skip its own Moodle download,
-        # ensuring all required dependencies are present before the DB installation begins.
+        # Correção: Usando https:// em vez de git://
         run: |
-          git clone --depth 1 --branch ${{ matrix.moodle-branch }} git://github.com/moodle/moodle.git moodle
+          git clone --depth 1 --branch ${{ matrix.moodle-branch }} https://github.com/moodle/moodle.git moodle
           cp -r block_dependency moodle/blocks/playerhud
 
       - name: Install moodle-plugin-ci
@@ -87,36 +83,38 @@ jobs:
 
       - name: PHP Lint
         if: ${{ !cancelled() && matrix.runchecks == 'all' }}
-        run: moodle-plugin-ci phplint
+        run: moodle-plugin-ci phplint ./plugin
 
       - name: PHP Mess Detector
         continue-on-error: true
         if: ${{ !cancelled() && matrix.runchecks == 'all' }}
-        run: moodle-plugin-ci phpmd
+        run: moodle-plugin-ci phpmd ./plugin
 
       - name: Moodle Code Checker
         if: ${{ !cancelled() && matrix.runchecks == 'all' }}
-        run: moodle-plugin-ci phpcs --max-warnings 0
+        run: moodle-plugin-ci phpcs --max-warnings 0 ./plugin
 
       - name: Validate Plugin
         if: ${{ !cancelled() && matrix.runchecks == 'all' }}
-        run: moodle-plugin-ci validate
+        run: moodle-plugin-ci validate ./plugin
 
       - name: Mustache Lint
         if: ${{ !cancelled() && matrix.runchecks == 'all' }}
-        run: moodle-plugin-ci mustache
+        run: moodle-plugin-ci mustache ./plugin
 
       - name: Grunt tasks
         if: ${{ !cancelled() && matrix.runchecks == 'all' }}
-        run: moodle-plugin-ci grunt --max-lint-warnings 0
+        run: moodle-plugin-ci grunt --max-lint-warnings 0 ./plugin
 
       - name: PHPUnit tests
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci phpunit
+        # Correção: Adicionado ./plugin no final
+        run: moodle-plugin-ci phpunit ./plugin
 
       - name: Behat tests
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci behat --profile chrome
+        # Correção: Adicionado ./plugin no final
+        run: moodle-plugin-ci behat --profile chrome ./plugin
 
       - name: Mark cancelled jobs as failed
         if: ${{ cancelled() }}
