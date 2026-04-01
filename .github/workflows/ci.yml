@@ -46,6 +46,12 @@ jobs:
         with:
           path: plugin
 
+      - name: Fetch block_playerhud dependency
+        uses: actions/checkout@v4
+        with:
+          repository: jeanlucio/moodle-block_playerhud
+          path: block_dependency
+
       - name: Setup PHP ${{ matrix.php }}
         uses: shivammathur/setup-php@v2
         with:
@@ -63,8 +69,8 @@ jobs:
           echo "NVM_DIR=$HOME/.nvm" >> $GITHUB_ENV
 
       - name: Install moodle-plugin-ci
-        # Aqui está a mágica! Usamos --extra-plugins para o CI baixar o bloco nativamente
-        run: moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1 --extra-plugins="https://github.com/jeanlucio/moodle-block_playerhud.git,main,blocks/playerhud"
+        # Apontamos o extra-plugins para a pasta local clonada no passo 2
+        run: moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1 --extra-plugins ./block_dependency
         env:
           DB: ${{ matrix.database }}
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
