@@ -46,12 +46,16 @@ jobs:
         with:
           path: plugin
 
-      # IMPORTANTE: Troque GITHUB_USER/moodle-block_playerhud pelo seu repositório real
+      - name: Clone Moodle
+        # Clonamos o Moodle primeiro usando https para evitar timeouts
+        run: git clone --depth 1 --branch ${{ matrix.moodle-branch }} https://github.com/moodle/moodle.git moodle
+
       - name: Fetch block_playerhud dependency
+        # Baixamos o bloco diretamente para dentro da pasta do Moodle clonado
         uses: actions/checkout@v4
         with:
-          repository: jeanlucio/moodle-block_playerhud
-          path: block_dependency
+          repository: jeanlucio/moodle-block_playerhud # <-- IMPORTANTE: Coloque o seu usuário/repositório real do bloco aqui
+          path: moodle/blocks/playerhud
 
       - name: Setup PHP ${{ matrix.php }}
         uses: shivammathur/setup-php@v2
@@ -68,12 +72,6 @@ jobs:
           echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
           sudo locale-gen en_AU.UTF-8
           echo "NVM_DIR=$HOME/.nvm" >> $GITHUB_ENV
-
-      - name: Inject dependencies into Moodle
-        # Correção: Usando https:// em vez de git://
-        run: |
-          git clone --depth 1 --branch ${{ matrix.moodle-branch }} https://github.com/moodle/moodle.git moodle
-          cp -r block_dependency moodle/blocks/playerhud
 
       - name: Install moodle-plugin-ci
         run: moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
@@ -108,12 +106,10 @@ jobs:
 
       - name: PHPUnit tests
         if: ${{ !cancelled() }}
-        # Correção: Adicionado ./plugin no final
         run: moodle-plugin-ci phpunit ./plugin
 
       - name: Behat tests
         if: ${{ !cancelled() }}
-        # Correção: Adicionado ./plugin no final
         run: moodle-plugin-ci behat --profile chrome ./plugin
 
       - name: Mark cancelled jobs as failed
