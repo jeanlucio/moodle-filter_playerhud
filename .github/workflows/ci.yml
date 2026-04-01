@@ -57,7 +57,7 @@ jobs:
       - name: Initialise moodle-plugin-ci
         run: |
           composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
-          cd ci && composer require nikic/php-parser:"^5.0" --no-interaction
+          cd ci && composer require "nikic/php-parser:4.19.3" --no-interaction -W
           echo $(cd ci/bin; pwd) >> $GITHUB_PATH
           echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
           sudo locale-gen en_AU.UTF-8
