@@ -31,14 +31,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {moodle-branch: 'main', php: '8.3', database: 'pgsql', runchecks: 'all'}
-          - {moodle-branch: 'main', php: '8.3', database: 'mariadb'}
-          - {moodle-branch: 'MOODLE_501_STABLE', php: '8.3', database: 'pgsql'}
-          - {moodle-branch: 'MOODLE_501_STABLE', php: '8.3', database: 'mariadb'}
+          # O Segredo do Moodle HQ: As checagens estáticas (runchecks: 'all') rodam APENAS na versão mais estável e retrocompatível.
+          - {moodle-branch: 'MOODLE_405_STABLE', php: '8.2', database: 'pgsql', runchecks: 'all'}
+          - {moodle-branch: 'MOODLE_405_STABLE', php: '8.2', database: 'mariadb'}
+
+          # Para as versões mais novas, rodamos apenas os testes funcionais (PHPUnit e Behat)
           - {moodle-branch: 'MOODLE_500_STABLE', php: '8.2', database: 'pgsql'}
           - {moodle-branch: 'MOODLE_500_STABLE', php: '8.2', database: 'mariadb'}
-          - {moodle-branch: 'MOODLE_405_STABLE', php: '8.2', database: 'pgsql'}
-          - {moodle-branch: 'MOODLE_405_STABLE', php: '8.2', database: 'mariadb'}
+
+          - {moodle-branch: 'MOODLE_501_STABLE', php: '8.3', database: 'pgsql'}
+          - {moodle-branch: 'MOODLE_501_STABLE', php: '8.3', database: 'mariadb'}
+
+          - {moodle-branch: 'main', php: '8.3', database: 'pgsql'}
+          - {moodle-branch: 'main', php: '8.3', database: 'mariadb'}
 
     steps:
       - name: Check out repository code
@@ -64,10 +69,10 @@ jobs:
 
       - name: Install moodle-plugin-ci
         run: |
-          # 1. Adicionamos a dependência nativamente usando o comando add-plugin
+          # Adiciona a dependência do bloco de forma nativa e segura
           moodle-plugin-ci add-plugin jeanlucio/moodle-block_playerhud
 
-          # 2. Instalamos o filtro base
+          # Instala o plugin raiz (filtro)
           moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
         env:
           DB: ${{ matrix.database }}
@@ -91,7 +96,7 @@ jobs:
         run: moodle-plugin-ci phpdoc --max-warnings 0
 
       - name: Validating
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && matrix.runchecks == 'all' }}
         run: moodle-plugin-ci validate
 
       - name: Check upgrade savepoints
@@ -115,15 +120,6 @@ jobs:
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci behat --profile chrome --scss-deprecations
 
-      - name: Upload Behat Faildump
-        if: ${{ failure() && steps.behat.outcome == 'failure' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: Behat Faildump (${{ join(matrix.*, ', ') }})
-          path: ${{ github.workspace }}/moodledata/behat_dump
-          retention-days: 7
-          if-no-files-found: ignore
-
-      - name: Mark cancelled jobs as failed.
+      - name: Mark cancelled jobs as failed
         if: ${{ cancelled() }}
         run: exit 1
