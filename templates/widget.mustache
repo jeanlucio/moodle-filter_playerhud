@@ -32,6 +32,7 @@
         "level_display": "1/10",
         "xp_display": "100 / 1000 XP",
         "progress": 10,
+        "url_quests": "#",
         "items": []
     }
 }}
@@ -140,16 +141,20 @@
                    title="{{#str}} tab_shop, filter_playerhud {{/str}}">
                     <span aria-hidden="true">🏪</span>
                 </a>
+                <a href="{{url_quests}}" class="btn btn-ph-level-border shadow-sm"
+                   title="{{#str}} tab_quests, block_playerhud {{/str}}">
+                    <span aria-hidden="true">📋</span>
+                </a>
+                <a href="{{url_disable}}" class="btn btn-ph-level-border shadow-sm js-disable-hud"
+                   data-confirm-msg="{{str_confirm_msg}}" title="{{str_disable_gamification}}">
+                    <span aria-hidden="true" class="text-danger"><i class="fa fa-power-off"></i></span>
+                </a>
                 {{#ranking}}
                 <a href="{{url}}" class="btn btn-ph-level-border shadow-sm"
                    title="{{tooltip}}">
                     <span aria-hidden="true">🏆</span>
                 </a>
                 {{/ranking}}
-                <a href="{{url_disable}}" class="btn btn-ph-level-border shadow-sm js-disable-hud"
-                   data-confirm-msg="{{str_confirm_msg}}" title="{{str_disable_gamification}}">
-                    <span aria-hidden="true" class="text-danger"><i class="fa fa-power-off"></i></span>
-                </a>
             </div>
         </div>
     </div>
