@@ -188,7 +188,11 @@ class widget implements renderable, templatable {
 
         // Quest notification dot: show when a reward is waiting to be claimed.
         $hasclaimable = \block_playerhud\quest::has_claimable_quests(
-            $this->instance->id, $USER->id, $this->courseid, $player->currentxp, $stats['level']
+            $this->instance->id,
+            $USER->id,
+            $this->courseid,
+            $player->currentxp,
+            $stats['level']
         );
 
         // Actions & URLs.
