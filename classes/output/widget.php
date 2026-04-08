@@ -173,6 +173,9 @@ class widget implements renderable, templatable {
                 $rank = \block_playerhud\game::get_user_rank($this->instance->id, $USER->id, $player->currentxp);
                 $rankdisplay = $rank;
                 $ranktooltip = "#{$rank} - " . get_string('view_ranking', 'filter_playerhud');
+            } else if ($isteacher) {
+                $rankdisplay = '-';
+                $ranktooltip = get_string('view_ranking', 'filter_playerhud');
             } else {
                 $rankdisplay = '-';
                 $ranktooltip = get_string('enable_ranking', 'filter_playerhud');
