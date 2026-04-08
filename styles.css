@@ -332,6 +332,17 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
+.ph-quest-notify-dot {
+    position: absolute;
+    top: 4px;
+    inset-inline-end: 4px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background-color: var(--danger, #dc3545);
+    border: 2px solid var(--white, #fff);
+    pointer-events: none;
+}
 
 .ph-widget-stash {
     display: flex;

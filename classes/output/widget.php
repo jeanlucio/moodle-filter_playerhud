@@ -186,6 +186,11 @@ class widget implements renderable, templatable {
             ];
         }
 
+        // Quest notification dot: show when a reward is waiting to be claimed.
+        $hasclaimable = \block_playerhud\quest::has_claimable_quests(
+            $this->instance->id, $USER->id, $this->courseid, $player->currentxp, $stats['level']
+        );
+
         // Actions & URLs.
         $urlbase = new moodle_url('/blocks/playerhud/view.php', ['id' => $this->courseid, 'instanceid' => $this->instance->id]);
         $actions = [
@@ -215,6 +220,7 @@ class widget implements renderable, templatable {
             'level_display' => $stats['level'] . '/' . $stats['max_levels'],
             'xp_display' => $xpdisplay,
             'progress' => $stats['progress'],
+            'has_claimable_quests' => $hasclaimable,
             'items' => $recentitems,
             'ranking' => $rankdata,
             'url_disable' => $urldisable->out(false),
