@@ -83,16 +83,16 @@
                 </span>
 
                 {{! Right Side: XP + Help }}
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center">
                     <span class="badge rounded-pill {{level_class}} text-nowrap">{{xp_display}}</span>
 
-                    <a href="{{url_history}}" class="ph-help-trigger"
+                    <a href="{{url_history}}" class="ph-help-trigger ms-2"
                        title="{{#str}} tab_history, block_playerhud {{/str}}"
                        aria-label="{{#str}} tab_history, block_playerhud {{/str}}">
                         <i class="fa fa-list-alt" aria-hidden="true"></i>
                     </a>
 
-                    <a href="{{url_backpack}}&tab=rules" class="ph-help-trigger"
+                    <a href="{{url_backpack}}&tab=rules" class="ph-help-trigger ms-2"
                        title="{{#str}} help_btn, filter_playerhud {{/str}}"
                        aria-label="{{#str}} help_btn, filter_playerhud {{/str}}">
                         <i class="fa fa-question-circle" aria-hidden="true"></i>
