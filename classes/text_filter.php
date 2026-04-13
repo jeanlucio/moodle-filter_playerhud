@@ -164,6 +164,7 @@ class text_filter extends \moodle_text_filter {
                 'cancel'            => get_string('cancel'),
                 'level'             => get_string('level', 'block_playerhud'),
                 'xp'                => get_string('xp', 'block_playerhud'),
+                'no_description'    => get_string('no_description', 'block_playerhud'),
             ];
 
             if (isset($PAGE) && $PAGE->requires) {
