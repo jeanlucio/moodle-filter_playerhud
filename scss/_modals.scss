@@ -1,41 +1,79 @@
 // Modals and Utilities.
+// AVISO: Modais no Bootstrap são anexados diretamente na tag <body>.
+// Portanto, eles não podem ser envolvidos por .block_playerhud ou .filter_playerhud.
+// Usamos especificidade alta diretamente nas classes 'ph-' na raiz.
 
-.ph-modal-img-container {
+/* stylelint-disable csstree/validator */
+
+// 1. Contêiner de Imagem Gigante (Dentro do corpo do Modal)
+div.modal-dialog div.ph-modal-img-container.ph-modal-img-container {
     min-width: 100px;
     font-size: 80px;
     line-height: 1;
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-bottom: 1rem;
 
+    // Trava a imagem do modal (Chega de Lewis Carroll gigante!)
+    img.ph-modal-img,
     img {
         max-width: 120px;
         max-height: 120px;
         width: auto;
         height: auto;
         object-fit: contain;
+        display: block;
+        margin: 0 auto;
     }
 }
 
-.ph-bg-teal {
-    background-color: var(--success, #208337);
+// Trava o Emoji do corpo do modal
+div.modal-dialog span.ph-modal-emoji.ph-modal-emoji {
+    font-size: 80px;
+    line-height: 1;
+    display: inline-block;
+    text-align: center;
 }
 
-.ph-me-1 {
+// 2. Imagem e Emoji no Cabeçalho (Header do Modal - Ex: Título do Item)
+div.modal-dialog img.ph-header-img.ph-header-img {
+    width: 50px;
+    height: 50px;
+    max-width: 50px;
+    max-height: 50px;
+    object-fit: contain;
+    margin-inline-end: 15px;
+    display: inline-block;
+}
+
+div.modal-dialog span.ph-header-emoji.ph-header-emoji {
+    font-size: 40px;
+    margin-inline-end: 15px;
+    line-height: 1;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+// 3. Utilitários Globais do PlayerHUD (Força dupla para segurança)
+.ph-bg-teal.ph-bg-teal {
+    background-color: var(--success, #208337);
+}
+.ph-me-1.ph-me-1 {
     margin-inline-end: 0.25rem;
 }
-.ph-ms-1 {
+.ph-ms-1.ph-ms-1 {
     margin-inline-start: 0.25rem;
 }
-.ph-cursor-help {
+.ph-cursor-help.ph-cursor-help {
     cursor: help;
 }
-.ph-cursor-wait {
+.ph-cursor-wait.ph-cursor-wait {
     cursor: wait;
 }
 
-// Accessibility & Visual Fixes.
-.playerhud-widget-container .visually-hidden {
+// 4. Acessibilidade (Screen readers)
+div.modal-dialog .visually-hidden.visually-hidden {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -47,22 +85,22 @@
     border: 0;
 }
 
-// Modal Close Button Fix (Moodle 4.5 & 5.1 Cross-compatibility).
-#phItemModalFilter {
-    .btn-close,
-    .close {
-        background-image: none; // Disable BS5 SVG to use the span securely.
-        background-color: transparent;
-        opacity: 1;
-        border: 0;
-        font-size: 1.5rem;
-        font-weight: 700;
-        line-height: 1;
-        color: #000;
-        text-shadow: 0 1px 0 #fff;
-        padding: 0.5rem;
-        margin: -0.5rem -0.5rem -0.5rem auto;
-        appearance: none;
-        cursor: pointer;
-    }
+// 5. Botão Fechar Modal (Fix para Moodle 4.5 e 5.1)
+div.modal-dialog button.btn-close,
+div.modal-dialog button.close {
+    background-image: none;
+    background-color: transparent;
+    opacity: 1;
+    border: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem auto;
+    appearance: none;
+    cursor: pointer;
 }
+
+/* stylelint-enable csstree/validator */

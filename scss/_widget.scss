@@ -1,6 +1,7 @@
 // Widget Styles (Standalone mode embedded in course content).
 
-.playerhud-widget-container {
+// Força máxima na raiz do widget
+div.playerhud-widget-container.playerhud-widget-container {
     border-radius: 12px;
     margin-bottom: 1.5rem;
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
@@ -21,150 +22,190 @@
         border-inline-start: 1px solid rgba(0, 0, 0, 0.125);
         border-top: 5px solid var(--gray-600, #6c757d);
     }
-}
 
-.ph-widget-left {
-    min-width: 110px;
-    width: 110px;
-    background-color: var(--gray-100, #f8f9fa);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-inline-end: 1px solid var(--gray-300, #dee2e6);
-    padding: 1rem;
-
-    @media (max-width: 767.98px) {
-        width: 100%;
-        min-width: 100%;
-        border-inline-end: none;
-        border-inline-start: none;
-        border-bottom: 1px solid var(--gray-300, #dee2e6);
-    }
-}
-
-.ph-widget-avatar img {
-    border-radius: 50%;
-    border: 3px solid var(--light, #fff);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    width: 75px;
-    height: 75px;
-}
-
-.ph-widget-center {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 1rem 1.5rem;
-    min-width: 0;
-
-    .ph-widget-name {
-        text-align: left;
-        margin-bottom: 0.25rem;
+    div.ph-widget-left {
+        min-width: 110px;
+        width: 110px;
+        background-color: var(--gray-100, #f8f9fa);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-inline-end: 1px solid var(--gray-300, #dee2e6);
+        padding: 1rem;
 
         @media (max-width: 767.98px) {
-            text-align: center;
-            margin-bottom: 0.75rem;
+            width: 100%;
+            min-width: 100%;
+            border-inline-end: none;
+            border-inline-start: none;
+            border-bottom: 1px solid var(--gray-300, #dee2e6);
         }
     }
 
-    @media (max-width: 767.98px) {
-        width: 100%;
-        min-width: 100%;
-        border-inline-end: none;
-        border-inline-start: none;
-        border-bottom: 1px solid var(--gray-300, #dee2e6);
-        padding: 1rem;
+    // Avatar blindado com força tripla
+    div.ph-widget-avatar img.ph-widget-avatar-img,
+    div.ph-widget-avatar img {
+        border-radius: 50%;
+        border: 3px solid var(--light, #fff);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        width: 75px;
+        height: 75px;
+        max-width: 75px;
+        max-height: 75px;
+        object-fit: cover;
+        display: block;
     }
-}
 
-.ph-widget-right {
-    min-width: 180px;
-    width: 180px;
-    background-color: var(--gray-100, #f8f9fa);
-    border-inline-start: 1px solid var(--gray-300, #dee2e6);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
-
-    @media (max-width: 767.98px) {
-        width: 100%;
-        min-width: 100%;
-        border-inline-end: none;
-        border-inline-start: none;
-        background-color: var(--light, #f8f9fa);
-        border-bottom: none;
-    }
-}
-
-.ph-widget-actions-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
-    width: 100%;
-
-    .btn {
-        width: 100%;
+    div.ph-widget-center {
+        flex-grow: 1;
         display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 1rem 1.5rem;
+        min-width: 0;
+
+        h5.ph-widget-name,
+        div.ph-widget-name {
+            text-align: left;
+            margin-bottom: 0.25rem;
+
+            @media (max-width: 767.98px) {
+                text-align: center;
+                margin-bottom: 0.75rem;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            width: 100%;
+            min-width: 100%;
+            border-inline-end: none;
+            border-inline-start: none;
+            border-bottom: 1px solid var(--gray-300, #dee2e6);
+            padding: 1rem;
+        }
+    }
+
+    div.ph-widget-right {
+        min-width: 180px;
+        width: 180px;
+        background-color: var(--gray-100, #f8f9fa);
+        border-inline-start: 1px solid var(--gray-300, #dee2e6);
+        display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
-        font-size: 1.2rem;
-        padding-block: 0.5rem;
+        gap: 0.5rem;
+        padding: 0.5rem;
+
+        @media (max-width: 767.98px) {
+            width: 100%;
+            min-width: 100%;
+            border-inline-end: none;
+            border-inline-start: none;
+            background-color: var(--light, #f8f9fa);
+            border-bottom: none;
+        }
     }
 
-    @media (max-width: 767.98px) {
-        grid-template-columns: repeat(2, 1fr);
+    div.ph-widget-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        width: 100%;
+
+        a.btn,
+        button.btn {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            padding-block: 0.5rem;
+        }
+
+        @media (max-width: 767.98px) {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
-}
 
-// Red notification dot on the quests button when rewards are claimable.
-.ph-quest-notify-dot {
-    position: absolute;
-    top: 4px;
-    inset-inline-end: 4px;
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background-color: var(--danger, #dc3545);
-    border: 2px solid var(--white, #fff);
-    pointer-events: none;
-}
-
-// Stash / Mini Items (Widget Context).
-.ph-widget-stash {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    min-height: 34px;
-    margin-top: 0.5rem;
-
-    @media (max-width: 767.98px) {
-        justify-content: center;
+    span.ph-quest-notify-dot {
+        position: absolute;
+        top: 4px;
+        inset-inline-end: 4px;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background-color: var(--danger, #dc3545);
+        border: 2px solid var(--white, #fff);
+        pointer-events: none;
     }
-}
 
-.ph-mini-item {
-    width: 34px;
-    height: 34px;
-    min-width: 34px;
-    background: var(--card-bg, #fff);
-    border: 1px solid var(--gray-300, #dee2e6);
-    border-radius: 6px;
-    padding: 0;
-    overflow: hidden;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    cursor: pointer;
-}
+    div.ph-widget-stash {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px; // Um pouco mais de respiro entre os itens
+        min-height: 34px;
+        margin-top: 0.5rem;
+        justify-content: center; // Garante que fiquem alinhados com o nome
 
-.ph-mini-item-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+        @media (max-width: 767.98px) {
+            justify-content: center;
+        }
+
+        div.ph-mini-item {
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            max-width: 34px;
+            background: var(--card-bg, #fff);
+            border: 1px solid var(--gray-300, #dee2e6);
+            border-radius: 6px;
+            padding: 0;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+
+            &:hover {
+                transform: translateY(-3px) scale(1.1);
+                border-color: var(--primary, #0d6efd);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+                z-index: 10;
+            }
+        }
+    }
+
+    img.ph-mini-item-img.ph-mini-item-img {
+        width: 34px;
+        height: 34px;
+        max-width: 34px;
+        max-height: 34px;
+        object-fit: cover;
+        display: block;
+        border-radius: 0;
+    }
+
+    span.ph-emoji.ph-emoji {
+        font-size: 20px;
+        line-height: 34px;
+        text-align: center;
+        width: 100%;
+        display: inline-block;
+    }
+
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
 }

@@ -1,71 +1,106 @@
 // Gamification Tiers (Standalone).
 
+/* stylelint-disable csstree/validator */
+
+// Mixin for Tiers
+@mixin ph-filter-tier($color) {
+    // 1. Pinta a barra de progresso E as Badges (Tags de Nível/XP)
+    &.progress-bar,
+    & .progress-bar,
+    &.badge,
+    & .badge {
+        background-color: $color;
+        color: var(--light, #fff);
+        border-color: $color;
+    }
+
+    // 2. Pinta a borda lateral do Widget
+    &.playerhud-widget-container.playerhud-widget-container {
+        border-inline-start: 5px solid $color;
+    }
+
+    // 3. Pinta os botões do Widget
+    & .btn-ph-level-border {
+        border-color: $color;
+        color: $color;
+
+        &:hover {
+            background-color: $color;
+            color: var(--light, #fff);
+        }
+    }
+}
+
 .btn-ph-level-border {
     background-color: var(--card-bg, #fff);
     border: 1px solid var(--gray-300, #dee2e6);
     color: var(--gray-700, #495057);
     font-weight: 700;
     transition: all 0.2s ease-in-out;
-
-    &:hover {
-        background-color: var(--gray-200, #e9ecef);
-    }
 }
 
-// Simplified Mixin for Tiers in the Filter.
-@mixin ph-filter-tier($color) {
-    &.progress-bar {
-        background-color: $color;
-    }
-
-    &.playerhud-widget-container {
-        border-inline-start-color: $color;
-    }
-}
-
-/* stylelint-disable csstree/validator */
-.ph-lvl-tier-1 {
+// Aplicação Direta Sem Envelope
+div.ph-lvl-tier-1 {
     @include ph-filter-tier(var(--gray-600, #6c757d));
 }
-.ph-lvl-tier-2 {
+div.ph-lvl-tier-2 {
     @include ph-filter-tier(var(--success, #208337));
 }
-.ph-lvl-tier-3 {
+div.ph-lvl-tier-3 {
     @include ph-filter-tier(var(--primary, #0b55c4));
 }
-.ph-lvl-tier-4 {
+div.ph-lvl-tier-4 {
     @include ph-filter-tier(var(--purple, #6f42c1));
 }
-/* stylelint-enable csstree/validator */
 
-.ph-lvl-tier-5 {
-    &.progress-bar {
-        /* stylelint-disable csstree/validator */
+div.ph-lvl-tier-5 {
+    &.progress-bar,
+    & .progress-bar,
+    &.badge,
+    & .badge {
         background: linear-gradient(45deg, var(--primary, #0d6efd), var(--purple, #6f42c1));
-        /* stylelint-enable csstree/validator */
+        color: var(--light, #fff);
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
-    &.playerhud-widget-container {
-        border-inline-start-color: var(--primary, #0d6efd);
+    &.playerhud-widget-container.playerhud-widget-container {
+        border-inline-start: 5px solid var(--primary, #0d6efd);
+        border-image: linear-gradient(to bottom, var(--primary, #0d6efd), var(--purple, #6f42c1)) 1;
+    }
+    & .btn-ph-level-border {
+        border-color: var(--primary, #0d6efd);
+        color: var(--primary, #0d6efd);
+        &:hover {
+            background: linear-gradient(45deg, var(--primary, #0d6efd), var(--purple, #6f42c1));
+            color: var(--light, #fff);
+            border-color: transparent;
+        }
     }
 }
 
-// Responsive borders.
+// Responsive borders (Para mobile)
 @media (max-width: 767.98px) {
-    .playerhud-widget-container {
+    div.playerhud-widget-container.playerhud-widget-container {
         &.ph-lvl-tier-1 {
-            border-top-color: var(--gray-600, #6c757d);
+            border-top: 5px solid var(--gray-600, #6c757d);
+            border-inline-start: 1px solid rgba(0, 0, 0, 0.125);
         }
         &.ph-lvl-tier-2 {
-            border-top-color: var(--success, #208337);
+            border-top: 5px solid var(--success, #208337);
+            border-inline-start: 1px solid rgba(0, 0, 0, 0.125);
         }
         &.ph-lvl-tier-3 {
-            border-top-color: var(--primary, #0b55c4);
+            border-top: 5px solid var(--primary, #0b55c4);
+            border-inline-start: 1px solid rgba(0, 0, 0, 0.125);
         }
         &.ph-lvl-tier-4 {
-            border-top-color: var(--purple, #6f42c1);
+            border-top: 5px solid var(--purple, #6f42c1);
+            border-inline-start: 1px solid rgba(0, 0, 0, 0.125);
         }
         &.ph-lvl-tier-5 {
-            border-top-color: var(--primary, #0d6efd);
+            border-top: 5px solid var(--primary, #0d6efd);
+            border-inline-start: 1px solid rgba(0, 0, 0, 0.125);
         }
     }
 }
+
+/* stylelint-enable csstree/validator */
