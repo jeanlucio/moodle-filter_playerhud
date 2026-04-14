@@ -140,9 +140,9 @@
                     <span class="small">{{label}}</span>
                     <span class="small fw-semibold">{{value_display}}</span>
                 </div>
-                <div class="ph-karma-bar" role="meter"
-                     aria-valuenow="{{value}}" aria-valuemin="-999" aria-valuemax="999"
-                     aria-label="{{label}}: {{value_display}}">
+                <div class="ph-karma-bar" role="progressbar"
+                    aria-valuenow="{{value}}" aria-valuemin="-999" aria-valuemax="999"
+                    aria-label="{{label}}: {{value_display}}">
                     <div class="ph-karma-fill {{bar_class}}" style="width: {{percent}}%;"></div>
                 </div>
             </div>
