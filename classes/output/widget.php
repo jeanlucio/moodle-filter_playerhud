@@ -189,6 +189,56 @@ class widget implements renderable, templatable {
             ];
         }
 
+        // Portrait data for widget left column (only when RPG mode is on).
+        $portraiturl = null;
+        $classfullname = null;
+        $tierstars = null;
+        $rpgmodeenabled = isset($config->enable_rpg) ? (bool) $config->enable_rpg : true;
+        $rpgprogress = $rpgmodeenabled
+            ? \block_playerhud\game::get_player_class($this->instance->id, $USER->id)
+            : null;
+        if ($rpgprogress && (int) $rpgprogress->classid > 0) {
+            $class = $DB->get_record('block_playerhud_classes', ['id' => $rpgprogress->classid]);
+            if ($class) {
+                $portraittier = \block_playerhud\utils::get_class_portrait_tier(
+                    $this->instance->id,
+                    $USER->id
+                );
+                $portraiturl = \block_playerhud\utils::get_class_evolution_image_by_tier(
+                    $class,
+                    $portraittier,
+                    $context
+                );
+                $classfullname = format_string($class->name) . ' ' . $USER->firstname;
+                $stars = [];
+                for ($i = 1; $i <= 5; $i++) {
+                    $stars[] = ['filled' => ($i <= $portraittier)];
+                }
+                $tierstars = $stars;
+            }
+        }
+
+        // Karma bar data (only when RPG mode is on).
+        $karmadata = null;
+        if ($rpgmodeenabled) {
+            $karma = \block_playerhud\game::get_player_karma($this->instance->id, $USER->id);
+            $karmapercent = max(0, min(100, (int) round(($karma + 999) / 1998 * 100)));
+            if ($karma < 0) {
+                $karmabarclass = 'ph-karma-fill--evil';
+            } else if ($karma > 0) {
+                $karmabarclass = 'ph-karma-fill--good';
+            } else {
+                $karmabarclass = 'ph-karma-fill--neutral';
+            }
+            $karmadata = [
+                'value'         => $karma,
+                'value_display' => ($karma > 0 ? '+' : '') . $karma,
+                'percent'       => $karmapercent,
+                'bar_class'     => $karmabarclass,
+                'label'         => get_string('karma', 'filter_playerhud'),
+            ];
+        }
+
         // Quest notification dot: show when a reward is waiting to be claimed.
         $hasclaimable = \block_playerhud\quest::has_claimable_quests(
             $this->instance->id,
@@ -227,6 +277,11 @@ class widget implements renderable, templatable {
             'level_display' => $stats['level'] . '/' . $stats['max_levels'],
             'xp_display' => $xpdisplay,
             'progress' => $stats['progress'],
+            'karma_data'      => $karmadata,
+            'portrait_url'    => $portraiturl,
+            'class_fullname'  => $classfullname,
+            'tier_stars'      => $tierstars,
+            'has_portrait'    => ($portraiturl !== null),
             'has_claimable_quests' => $hasclaimable,
             'items' => $recentitems,
             'ranking' => $rankdata,

@@ -346,6 +346,51 @@ div.playerhud-widget-container.playerhud-widget-container span.ph-quest-notify-d
     border: 2px solid var(--white, #fff);
     pointer-events: none;
 }
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-portrait-wrap {
+    position: relative;
+    display: inline-block;
+}
+div.playerhud-widget-container.playerhud-widget-container img.ph-widget-portrait-img {
+    width: 75px;
+    height: 75px;
+    max-width: 75px;
+    max-height: 75px;
+    border-radius: 50%;
+    border: 3px solid var(--gray-300, #dee2e6);
+    -o-object-fit: cover;
+    object-fit: cover;
+    display: block;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-tier-stars {
+    font-size: 0.8rem;
+    color: var(--bs-warning, #ffc107);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.25rem;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-karma-wrap {
+    width: 100%;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-karma-bar {
+    height: 6px;
+    background-color: var(--gray-200, #e9ecef);
+    border-radius: 3px;
+    overflow: hidden;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-karma-fill {
+    height: 100%;
+    background-color: var(--ph-karma-color, var(--bs-secondary, #6c757d));
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-karma-fill--evil {
+    --ph-karma-color: var(--bs-danger, #dc3545);
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-karma-fill--good {
+    --ph-karma-color: var(--bs-success, #198754);
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-karma-fill--neutral {
+    --ph-karma-color: var(--bs-secondary, #6c757d);
+}
 div.playerhud-widget-container.playerhud-widget-container div.ph-widget-stash {
     display: flex;
     flex-wrap: wrap;

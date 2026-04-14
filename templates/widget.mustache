@@ -32,6 +32,23 @@
         "level_display": "1/10",
         "xp_display": "100 / 1000 XP",
         "progress": 10,
+        "has_portrait": true,
+        "portrait_url": "https://example.com/portrait.png",
+        "class_fullname": "Mago Jean",
+        "tier_stars": [
+            {"filled": true},
+            {"filled": true},
+            {"filled": false},
+            {"filled": false},
+            {"filled": false}
+        ],
+        "karma_data": {
+            "value": 50,
+            "value_display": "+50",
+            "percent": 75,
+            "bar_class": "ph-karma-fill--good",
+            "label": "Destiny / Karma"
+        },
         "url_quests": "#",
         "items": []
     }
@@ -58,20 +75,27 @@
     {{! --- VIEW 2: WEB (DESKTOP AND MOBILE WEB) --- }}
     <div class="playerhud-widget-container {{level_class}}">
 
-        {{! Left: Avatar }}
+        {{! Left: Portrait (or avatar fallback) }}
         <div class="ph-widget-left">
-            <div class="ph-widget-avatar">
+            <div class="ph-widget-avatar ph-widget-portrait-wrap">
+                {{#has_portrait}}
+                <img src="{{portrait_url}}" alt="{{class_fullname}}"
+                     class="ph-widget-portrait-img">
+                {{/has_portrait}}
+                {{^has_portrait}}
                 {{{userpicture}}}
+                {{/has_portrait}}
             </div>
         </div>
 
         {{! Center: Stats & Stash }}
         <div class="ph-widget-center">
 
-            {{! 1. NAME (Own Line) }}
-            {{! On Desktop: Left-aligned | On Mobile: Centered (via CSS) }}
-            <h4 class="m-0 fw-bold text-dark text-truncate ph-widget-name" title="{{fullname}}">
-                {{fullname}}
+            {{! 1. NAME (character name if class, otherwise user name) }}
+            <h4 class="m-0 fw-bold text-dark text-truncate ph-widget-name"
+                title="{{#has_portrait}}{{class_fullname}}{{/has_portrait}}{{^has_portrait}}{{fullname}}{{/has_portrait}}">
+                {{#has_portrait}}{{class_fullname}}{{/has_portrait}}
+                {{^has_portrait}}{{fullname}}{{/has_portrait}}
             </h4>
 
             {{! 2. STATUS LINE (Level left | XP right) }}
@@ -108,6 +132,28 @@
                      <span class="ph-progress-text">{{progress}}%</span>
                 </div>
             </div>
+
+            {{! 3b. Karma Bar }}
+            {{#karma_data}}
+            <div class="ph-karma-wrap mt-1">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="small">{{label}}</span>
+                    <span class="small fw-semibold">{{value_display}}</span>
+                </div>
+                <div class="ph-karma-bar" role="meter"
+                     aria-valuenow="{{value}}" aria-valuemin="-999" aria-valuemax="999"
+                     aria-label="{{label}}: {{value_display}}">
+                    <div class="ph-karma-fill {{bar_class}}" style="width: {{percent}}%;"></div>
+                </div>
+            </div>
+            {{/karma_data}}
+
+            {{! 3c. Tier Stars (only when has portrait) }}
+            {{#tier_stars}}
+            <div class="ph-widget-tier-stars">
+                {{#tier_stars}}{{#filled}}★{{/filled}}{{^filled}}☆{{/filled}}{{/tier_stars}}
+            </div>
+            {{/tier_stars}}
 
             {{! 4. Stash }}
             <div class="ph-widget-stash">
