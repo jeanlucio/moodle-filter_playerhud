@@ -52,6 +52,13 @@ class render {
     protected static $playercache = [];
 
     /**
+     * Cache for player RPG class ID, keyed by "{instanceid}_{userid}".
+     *
+     * @var array
+     */
+    protected static $classcache = [];
+
+    /**
      * Preloads drops, inventory and media in bulk to prevent N+1 queries.
      *
      * @param array $dropcodes Array of drop codes found in the text.
@@ -175,6 +182,25 @@ class render {
         }
 
         if (!$data || $data->blockinstanceid != $blockinstanceid) {
+            return '';
+        }
+
+        // Class restriction: skip drop for players whose class is not allowed.
+        if (!isset(self::$classcache[$cachekey])) {
+            $myclassid = 0;
+            if ($DB->get_manager()->table_exists('block_playerhud_rpg_progress')) {
+                $prog = $DB->get_record(
+                    'block_playerhud_rpg_progress',
+                    ['userid' => $USER->id, 'blockinstanceid' => $blockinstanceid],
+                    'classid'
+                );
+                if ($prog) {
+                    $myclassid = (int) $prog->classid;
+                }
+            }
+            self::$classcache[$cachekey] = $myclassid;
+        }
+        if (!\block_playerhud\utils::is_visible_for_class($data->required_class_id, self::$classcache[$cachekey])) {
             return '';
         }
 
