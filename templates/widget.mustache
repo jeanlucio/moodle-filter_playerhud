@@ -127,7 +127,7 @@
             {{! 3. Progress Bar }}
             <div class="progress ph-progress-container">
                 <div class="progress-bar ph-progress-bar {{level_class}}" role="progressbar"
-                     style="width: {{progress}}%;"
+                     style="--ph-progress: {{progress}}%;"
                      aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100">
                      <span class="ph-progress-text">{{progress}}%</span>
                 </div>
@@ -143,7 +143,7 @@
                 <div class="ph-karma-bar" role="progressbar"
                     aria-valuenow="{{value}}" aria-valuemin="-999" aria-valuemax="999"
                     aria-label="{{label}}: {{value_display}}">
-                    <div class="ph-karma-fill {{bar_class}}" style="width: {{percent}}%;"></div>
+                    <div class="ph-karma-fill {{bar_class}}" style="--ph-progress: {{percent}}%;"></div>
                 </div>
             </div>
             {{/karma_data}}

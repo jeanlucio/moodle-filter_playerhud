@@ -165,6 +165,14 @@ div.playerhud-widget-container.playerhud-widget-container {
         margin-bottom: 0.25rem;
     }
 
+    // ── Progress bar ───────────────────────────────────────────────────────────
+
+    div.ph-progress-bar {
+        width: var(--ph-progress, 0%);
+        transition: width 0.6s ease;
+        height: 100%;
+    }
+
     // ── Karma bar ──────────────────────────────────────────────────────────────
 
     div.ph-karma-wrap {
@@ -180,6 +188,7 @@ div.playerhud-widget-container.playerhud-widget-container {
 
     div.ph-karma-fill {
         height: 100%;
+        width: var(--ph-progress, 50%);
         background-color: var(--ph-karma-color, var(--bs-secondary, #6c757d));
         border-radius: 3px;
         transition: width 0.4s ease;
