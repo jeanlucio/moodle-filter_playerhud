@@ -200,7 +200,7 @@ class render {
             }
             self::$classcache[$cachekey] = $myclassid;
         }
-        if (!\block_playerhud\utils::is_visible_for_class($data->required_class_id, self::$classcache[$cachekey])) {
+        if (!self::is_item_visible_for_class($data->required_class_id, self::$classcache[$cachekey])) {
             return '';
         }
 
@@ -524,5 +524,24 @@ class render {
         self::$dropmediacache   = [];
         self::$preloadeddropids = [];
         self::$playercache      = [];
+        self::$classcache       = [];
+    }
+
+    /**
+     * Returns true if the item is visible for the given class.
+     *
+     * Mirrors \block_playerhud\utils::is_visible_for_class() but kept local to
+     * avoid a hard runtime dependency on the block plugin's autoloaded classes.
+     *
+     * @param string $requiredclassids Comma-separated class IDs stored on the item, or '0'.
+     * @param int $userclassid The current player's class ID (0 = no class assigned).
+     * @return bool
+     */
+    private static function is_item_visible_for_class(string $requiredclassids, int $userclassid): bool {
+        if (empty($requiredclassids) || $requiredclassids === '0') {
+            return true;
+        }
+        $allowedarray = explode(',', $requiredclassids);
+        return in_array('0', $allowedarray) || in_array((string) $userclassid, $allowedarray);
     }
 }
