@@ -217,7 +217,7 @@ class widget implements renderable, templatable {
                     $context
                 );
                 $classname = format_string($class->name);
-                $classfullname = format_string($class->name) . ' ' . $USER->firstname;
+                $classfullname = format_string($class->name);
                 $classtier = $portraittier;
                 $classtiername = get_string('class_tier_' . $portraittier, 'block_playerhud');
                 $classdescription = format_text($class->description ?? '', FORMAT_HTML, ['context' => $context]);
@@ -247,7 +247,9 @@ class widget implements renderable, templatable {
             }
             $karmadata = [
                 'value'         => $karma,
-                'value_display' => ($karma > 0 ? '+' : '') . $karma,
+                'value_display' => ($karma === 0)
+                    ? get_string('karma_neutral', 'block_playerhud')
+                    : (($karma > 0 ? '+' : '') . $karma),
                 'percent'       => $karmapercent,
                 'bar_class'     => $karmabarclass,
                 'icon_class'    => $karmaiconclass,

@@ -29,6 +29,7 @@ div.playerhud-widget-container.playerhud-widget-container {
         width: 110px;
         background-color: var(--gray-100, #f8f9fa);
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         border-inline-end: 1px solid var(--gray-300, #dee2e6);
@@ -41,6 +42,15 @@ div.playerhud-widget-container.playerhud-widget-container {
             border-inline-start: none;
             border-bottom: 1px solid var(--gray-300, #dee2e6);
         }
+    }
+
+    div.ph-widget-username {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1.2;
+        color: var(--body-color, #212529);
     }
 
     // Avatar blindado com força tripla
@@ -65,10 +75,12 @@ div.playerhud-widget-container.playerhud-widget-container {
         padding: 1rem 1.5rem;
         min-width: 0;
 
+        h4.ph-widget-name,
         h5.ph-widget-name,
         div.ph-widget-name {
             text-align: left;
             margin-bottom: 0.25rem;
+            font-size: 1rem;
 
             @media (max-width: 767.98px) {
                 text-align: center;
