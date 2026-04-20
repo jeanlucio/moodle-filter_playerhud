@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['class_chosen'] = 'Class Chosen!';
+$string['class_chosen'] = 'Character Chosen!';
 $string['click_to_enable'] = 'Click to enable Gamification';
 $string['collected'] = 'Collected!';
 $string['coursegoal'] = 'Course Goal';
