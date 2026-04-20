@@ -208,6 +208,7 @@ div.playerhud-widget-container.playerhud-widget-container {
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     overflow: hidden;
     display: flex;
+    flex-wrap: wrap;
     align-items: stretch;
     position: relative;
     background-color: var(--card-bg, #fff);
@@ -361,11 +362,75 @@ div.playerhud-widget-container.playerhud-widget-container img.ph-widget-portrait
     object-fit: cover;
     display: block;
 }
-div.playerhud-widget-container.playerhud-widget-container div.ph-widget-tier-stars {
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-subtitle {
+    color: var(--gray-600, #6c757d);
     font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+}
+
+@media (max-width: 767.98px) {
+    div.playerhud-widget-container.playerhud-widget-container div.ph-widget-subtitle {
+        text-align: center;
+    }
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card {
+    flex: 0 0 100%;
+    width: 100%;
+    border-top: 1px solid var(--gray-200, #e9ecef);
+    background-color: var(--gray-100, #f8f9fa);
+    padding: 0.75rem 1rem;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-char-identity {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-char-portrait-wrap {
+    flex-shrink: 0;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-char-portrait {
+    width: 50px;
+    height: 50px;
+    max-width: 50px;
+    max-height: 50px;
+    border-radius: 50%;
+    border: 3px solid var(--gray-300, #dee2e6);
+    -o-object-fit: cover;
+    object-fit: cover;
+    display: block;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-char-portrait-fallback {
+    font-size: 50px;
+    line-height: 1;
+    color: var(--gray-400, #ced4da);
+    display: block;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-char-info {
+    min-width: 0;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-char-fullname {
+    font-size: 0.9rem;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-tier-stars {
+    font-size: 1rem;
     color: var(--bs-warning, #ffc107);
     letter-spacing: 0.1em;
-    margin-bottom: 0.25rem;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-karma-inline {
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    margin-top: 0.2rem;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-karma--good {
+    color: var(--success, #198754);
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-karma--neutral {
+    color: var(--secondary, #6c757d);
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-karma--evil {
+    color: var(--danger, #dc3545);
 }
 div.playerhud-widget-container.playerhud-widget-container div.ph-progress-bar {
     width: var(--ph-progress, 0%);

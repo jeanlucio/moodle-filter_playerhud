@@ -160,6 +160,7 @@ class widget implements renderable, templatable {
         // Ranking Logic.
         $rankdata = null;
         $enableranking = isset($config->enable_ranking) ? $config->enable_ranking : 1;
+        $isteacher = has_capability('block/playerhud:manage', $context);
 
         if ($enableranking) {
             $urlranking = new moodle_url('/blocks/playerhud/view.php', [
@@ -167,7 +168,6 @@ class widget implements renderable, templatable {
                 'instanceid' => $this->instance->id,
                 'tab' => 'ranking',
             ]);
-            $isteacher = has_capability('block/playerhud:manage', $context);
 
             if (!$isteacher && $player->ranking_visibility == 1 && $player->enable_gamification == 1) {
                 $rank = \block_playerhud\game::get_user_rank($this->instance->id, $USER->id, $player->currentxp);
@@ -192,14 +192,21 @@ class widget implements renderable, templatable {
         // Portrait data for widget left column (only when RPG mode is on).
         $portraiturl = null;
         $classfullname = null;
+        $classname = null;
+        $classtier = null;
+        $classtiername = null;
+        $classdescription = '';
+        $hasclassdescription = false;
         $tierstars = null;
         $rpgmodeenabled = isset($config->enable_rpg) ? (bool) $config->enable_rpg : true;
         $rpgprogress = $rpgmodeenabled
             ? \block_playerhud\game::get_player_class($this->instance->id, $USER->id)
             : null;
+        $hasclass = false;
         if ($rpgprogress && (int) $rpgprogress->classid > 0) {
             $class = $DB->get_record('block_playerhud_classes', ['id' => $rpgprogress->classid]);
             if ($class) {
+                $hasclass = true;
                 $portraittier = \block_playerhud\utils::get_class_portrait_tier(
                     $this->instance->id,
                     $USER->id
@@ -209,7 +216,12 @@ class widget implements renderable, templatable {
                     $portraittier,
                     $context
                 );
+                $classname = format_string($class->name);
                 $classfullname = format_string($class->name) . ' ' . $USER->firstname;
+                $classtier = $portraittier;
+                $classtiername = get_string('class_tier_' . $portraittier, 'block_playerhud');
+                $classdescription = format_text($class->description ?? '', FORMAT_HTML, ['context' => $context]);
+                $hasclassdescription = !empty(trim(strip_tags($classdescription)));
                 $stars = [];
                 for ($i = 1; $i <= 5; $i++) {
                     $stars[] = ['filled' => ($i <= $portraittier)];
@@ -225,16 +237,20 @@ class widget implements renderable, templatable {
             $karmapercent = max(0, min(100, (int) round(($karma + 999) / 1998 * 100)));
             if ($karma < 0) {
                 $karmabarclass = 'ph-karma-fill--evil';
+                $karmaiconclass = 'ph-karma--evil';
             } else if ($karma > 0) {
                 $karmabarclass = 'ph-karma-fill--good';
+                $karmaiconclass = 'ph-karma--good';
             } else {
                 $karmabarclass = 'ph-karma-fill--neutral';
+                $karmaiconclass = 'ph-karma--neutral';
             }
             $karmadata = [
                 'value'         => $karma,
                 'value_display' => ($karma > 0 ? '+' : '') . $karma,
                 'percent'       => $karmapercent,
                 'bar_class'     => $karmabarclass,
+                'icon_class'    => $karmaiconclass,
                 'label'         => get_string('karma', 'filter_playerhud'),
             ];
         }
@@ -245,6 +261,13 @@ class widget implements renderable, templatable {
             $USER->id,
             $this->courseid,
             $player->currentxp,
+            $stats['level']
+        );
+
+        // Story notification dot: show when there is an available unread chapter.
+        $hasunreadchapters = !$isteacher && \block_playerhud\story_manager::has_unread_chapters(
+            $this->instance->id,
+            $USER->id,
             $stats['level']
         );
 
@@ -271,6 +294,7 @@ class widget implements renderable, templatable {
         return [
             'is_active' => true,
             'is_app' => false,
+            'char_modal_id' => 'ph-char-modal-' . $this->instance->id,
             'userpicture' => $output->user_picture($USER, ['size' => 75]),
             'fullname' => fullname($USER),
             'level_class' => $stats['level_class'],
@@ -280,9 +304,16 @@ class widget implements renderable, templatable {
             'karma_data'      => $karmadata,
             'portrait_url'    => $portraiturl,
             'class_fullname'  => $classfullname,
+            'class_name'      => $classname,
+            'class_tier'      => $classtier,
+            'class_tier_name' => $classtiername,
+            'class_description' => $classdescription,
+            'has_class_description' => $hasclassdescription,
             'tier_stars'      => $tierstars,
+            'has_class'       => $hasclass,
             'has_portrait'    => ($portraiturl !== null),
             'has_claimable_quests' => $hasclaimable,
+            'has_unread_chapters' => $hasunreadchapters,
             'items' => $recentitems,
             'ranking' => $rankdata,
             'url_disable' => $urldisable->out(false),
