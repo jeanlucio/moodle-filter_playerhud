@@ -1,6 +1,5 @@
 // Widget Styles (Standalone mode embedded in course content).
 
-// Força máxima na raiz do widget
 div.playerhud-widget-container.playerhud-widget-container {
     border-radius: 12px;
     margin-bottom: 1.5rem;
@@ -53,7 +52,6 @@ div.playerhud-widget-container.playerhud-widget-container {
         color: var(--body-color, #212529);
     }
 
-    // Avatar blindado com força tripla
     div.ph-widget-avatar img.ph-widget-avatar-img,
     div.ph-widget-avatar img {
         border-radius: 50%;
@@ -311,10 +309,10 @@ div.playerhud-widget-container.playerhud-widget-container {
     div.ph-widget-stash {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px; // Um pouco mais de respiro entre os itens
+        gap: 6px;
         min-height: 34px;
         margin-top: 0.5rem;
-        justify-content: center; // Garante que fiquem alinhados com o nome
+        justify-content: center;
 
         @media (max-width: 767.98px) {
             justify-content: center;

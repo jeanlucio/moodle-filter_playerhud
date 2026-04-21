@@ -4,7 +4,7 @@
 
 // Mixin for Tiers
 @mixin ph-filter-tier($color) {
-    // 1. Pinta a barra de progresso E as Badges (Tags de Nível/XP)
+    // Colours the progress bar and XP/level badges.
     &.progress-bar,
     & .progress-bar,
     &.badge,
@@ -14,12 +14,12 @@
         border-color: $color;
     }
 
-    // 2. Pinta a borda lateral do Widget
+    // Colours the widget side border.
     &.playerhud-widget-container.playerhud-widget-container {
         border-inline-start: 5px solid $color;
     }
 
-    // 3. Pinta os botões do Widget
+    // Colours the widget buttons.
     & .btn-ph-level-border {
         border-color: $color;
         color: $color;
@@ -39,7 +39,6 @@
     transition: all 0.2s ease-in-out;
 }
 
-// Aplicação Direta Sem Envelope
 div.ph-lvl-tier-1 {
     @include ph-filter-tier(var(--gray-600, #6c757d));
 }
@@ -77,7 +76,7 @@ div.ph-lvl-tier-5 {
     }
 }
 
-// Responsive borders (Para mobile)
+// Responsive borders.
 @media (max-width: 767.98px) {
     div.playerhud-widget-container.playerhud-widget-container {
         &.ph-lvl-tier-1 {

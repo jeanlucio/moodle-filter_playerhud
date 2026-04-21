@@ -16,12 +16,11 @@ span.ph-text-dimmed {
     color: var(--gray-600, #6c757d);
 }
 
-// TRAVA DE LARGURA DO CARD
 div.card.ph-drop-card-container.ph-drop-card-container {
     width: 160px;
-    min-width: 160px; // Impede que o Moodle estique a caixa
+    min-width: 160px;
     max-width: 160px;
-    overflow: hidden; // Esconde qualquer coisa que tente vazar
+    overflow: hidden;
     display: inline-flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -47,8 +46,7 @@ div.card.ph-drop-card-container.ph-drop-card-container {
     }
 }
 
-// 🚨 MIRA A LASER NA IMAGEM 🚨
-// Agora miramos em QUALQUER 'img' dentro das nossas divs, esmagando o Boost
+// Targets all img inside plugin containers to override Boost theme defaults.
 body div.ph-drop-image-container img,
 body div.ph-drop-card-container img,
 body div.playerhud-item-card img {
@@ -62,7 +60,6 @@ body div.playerhud-item-card img {
     margin: 0 auto;
 }
 
-// Força máxima para Emojis
 span.ph-drop-emoji-lg.ph-drop-emoji-lg.ph-drop-emoji-lg {
     font-size: 60px;
     line-height: 1;

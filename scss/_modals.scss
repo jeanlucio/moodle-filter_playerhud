@@ -1,11 +1,7 @@
 // Modals and Utilities.
-// AVISO: Modais no Bootstrap são anexados diretamente na tag <body>.
-// Portanto, eles não podem ser envolvidos por .block_playerhud ou .filter_playerhud.
-// Usamos especificidade alta diretamente nas classes 'ph-' na raiz.
-
 /* stylelint-disable csstree/validator */
 
-// 1. Contêiner de Imagem Gigante (Dentro do corpo do Modal)
+// Image container inside modal body.
 div.modal-dialog div.ph-modal-img-container.ph-modal-img-container {
     min-width: 100px;
     font-size: 80px;
@@ -15,7 +11,6 @@ div.modal-dialog div.ph-modal-img-container.ph-modal-img-container {
     align-items: center;
     margin-bottom: 1rem;
 
-    // Trava a imagem do modal (Chega de Lewis Carroll gigante!)
     img.ph-modal-img,
     img {
         max-width: 120px;
@@ -28,7 +23,7 @@ div.modal-dialog div.ph-modal-img-container.ph-modal-img-container {
     }
 }
 
-// Trava o Emoji do corpo do modal
+// Constrains emoji size inside modal body.
 div.modal-dialog span.ph-modal-emoji.ph-modal-emoji {
     font-size: 80px;
     line-height: 1;
@@ -36,7 +31,7 @@ div.modal-dialog span.ph-modal-emoji.ph-modal-emoji {
     text-align: center;
 }
 
-// 2. Imagem e Emoji no Cabeçalho (Header do Modal - Ex: Título do Item)
+// Image and emoji in modal header.
 div.modal-dialog img.ph-header-img.ph-header-img {
     width: 50px;
     height: 50px;
@@ -55,7 +50,7 @@ div.modal-dialog span.ph-header-emoji.ph-header-emoji {
     vertical-align: middle;
 }
 
-// 3. Utilitários Globais do PlayerHUD (Força dupla para segurança)
+// Global PlayerHUD utility overrides.
 .ph-bg-teal.ph-bg-teal {
     background-color: var(--success, #208337);
 }
@@ -72,7 +67,7 @@ div.modal-dialog span.ph-header-emoji.ph-header-emoji {
     cursor: wait;
 }
 
-// 4. Acessibilidade (Screen readers)
+// Accessibility — screen reader support.
 div.modal-dialog .visually-hidden.visually-hidden {
     position: absolute;
     width: 1px;
@@ -85,7 +80,7 @@ div.modal-dialog .visually-hidden.visually-hidden {
     border: 0;
 }
 
-// 5. Botão Fechar Modal (Fix para Moodle 4.5 e 5.1)
+// Modal close button fix for Moodle 4.5 and 5.1.
 div.modal-dialog button.btn-close,
 div.modal-dialog button.close {
     background-image: none;
