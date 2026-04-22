@@ -296,6 +296,14 @@
 {{! JS Scripts for Web only (Tooltips) }}
 {{#js}}
 require(['jquery', 'core/tooltip'], function($, Tooltip) {
+    var charModalId = '{{char_modal_id}}';
+    if (charModalId) {
+        var $charModal = $('#' + charModalId);
+        if ($charModal.length) {
+            $charModal.appendTo('body');
+        }
+    }
+
     $('[data-bs-toggle="tooltip"]').each(function() {
         if (!$(this).data('bs.tooltip')) {
             new Tooltip(this);

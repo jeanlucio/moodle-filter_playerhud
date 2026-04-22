@@ -99,3 +99,40 @@ div.modal-dialog button.close {
 }
 
 /* stylelint-enable csstree/validator */
+
+// Star ratings and karma alignment colors for character modals.
+// Must be unscoped because char modals are hoisted to <body> via appendTo.
+div.modal-dialog .ph-tier-stars {
+    font-size: 1rem;
+    color: var(--bs-warning, #ffc107);
+    letter-spacing: 0.1em;
+}
+
+div.modal-dialog .ph-karma-inline {
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    margin-top: 0.2rem;
+}
+
+div.modal-dialog .ph-karma--good {
+    color: var(--bs-success, #198754);
+}
+
+div.modal-dialog .ph-karma--neutral {
+    color: var(--bs-secondary, #6c757d);
+}
+
+div.modal-dialog .ph-karma--evil {
+    color: var(--bs-danger, #dc3545);
+}
+
+// Z-index overrides for hoisted modals (moved to <body>).
+div.modal.ph-modal-zindex {
+    z-index: 10550;
+}
+
+div.modal.ph-z-index-high {
+    z-index: 10500;
+}
