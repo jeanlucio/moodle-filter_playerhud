@@ -213,16 +213,20 @@
                 </div>
                 <div class="ph-char-info">
                     <div class="fw-bold ph-char-fullname" title="{{class_fullname}}">{{class_fullname}}</div>
-                    <div class="ph-tier-name">{{class_tier_name}}</div>
-                    <div class="ph-tier-stars" role="img"
-                         aria-label="{{class_tier_name}}: {{class_tier}} {{#str}} out_of_5, block_playerhud {{/str}}">
-                        {{#tier_stars}}{{#filled}}★{{/filled}}{{^filled}}☆{{/filled}}{{/tier_stars}}
+                    <div class="ph-char-meta">
+                        <span class="ph-tier-name">{{class_tier_name}}</span>
+                        <span class="ph-meta-sep" aria-hidden="true"> · </span>
+                        <span class="ph-tier-stars" role="img"
+                              aria-label="{{class_tier_name}}: {{class_tier}} {{#str}} out_of_5, block_playerhud {{/str}}">
+                            {{#tier_stars}}{{#filled}}★{{/filled}}{{^filled}}☆{{/filled}}{{/tier_stars}}
+                        </span>
+                        {{#karma_data}}
+                        <span class="ph-meta-sep" aria-hidden="true"> · </span>
+                        <span class="ph-karma-inline {{icon_class}}" aria-label="{{label}}: {{value_display}}">
+                            <i class="fa fa-balance-scale me-1" aria-hidden="true"></i>{{value_display}}
+                        </span>
+                        {{/karma_data}}
                     </div>
-                    {{#karma_data}}
-                    <div class="ph-karma-inline {{icon_class}}" aria-label="{{label}}: {{value_display}}">
-                        <i class="fa fa-balance-scale me-1" aria-hidden="true"></i>{{value_display}}
-                    </div>
-                    {{/karma_data}}
                 </div>
 
             {{#has_class_description}}

@@ -212,6 +212,7 @@ div.playerhud-widget-container.playerhud-widget-container {
 
         .ph-char-portrait-wrap {
             flex-shrink: 0;
+            align-self: flex-start;
         }
 
         .ph-char-portrait {
@@ -240,18 +241,25 @@ div.playerhud-widget-container.playerhud-widget-container {
             font-size: 0.9rem;
         }
 
+        .ph-char-meta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0 0.15rem;
+            font-size: 0.8rem;
+        }
+
         .ph-tier-stars {
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: var(--bs-warning, #ffc107);
-            letter-spacing: 0.1em;
+            letter-spacing: 0.05em;
         }
 
         .ph-karma-inline {
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            margin-top: 0.2rem;
         }
 
         .ph-karma--good {

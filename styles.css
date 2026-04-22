@@ -411,6 +411,7 @@ div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-car
 }
 div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-char-portrait-wrap {
     flex-shrink: 0;
+    align-self: flex-start;
 }
 div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-char-portrait {
     width: 50px;
@@ -435,17 +436,23 @@ div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-car
 div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-char-fullname {
     font-size: 0.9rem;
 }
-div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-tier-stars {
-    font-size: 1rem;
-    color: var(--bs-warning, #ffc107);
-    letter-spacing: 0.1em;
-}
-div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-karma-inline {
-    font-size: 0.75rem;
-    font-weight: 600;
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-char-meta {
     display: flex;
     align-items: center;
-    margin-top: 0.2rem;
+    flex-wrap: wrap;
+    gap: 0 0.15rem;
+    font-size: 0.8rem;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-tier-stars {
+    font-size: 0.9rem;
+    color: var(--bs-warning, #ffc107);
+    letter-spacing: 0.05em;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-karma-inline {
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
 }
 div.playerhud-widget-container.playerhud-widget-container div.ph-widget-char-card .ph-karma--good {
     color: var(--success, #198754);
