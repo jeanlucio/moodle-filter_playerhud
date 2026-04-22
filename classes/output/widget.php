@@ -109,6 +109,9 @@ class widget implements renderable, templatable {
             $config = new \stdClass();
         }
 
+        $enableitems  = isset($config->enable_items) ? (bool) $config->enable_items : true;
+        $enablequests = isset($config->enable_quests) ? (bool) $config->enable_quests : true;
+
         $stats = \block_playerhud\game::get_game_stats($config, $this->instance->id, $player->currentxp);
         $xptotalgame = isset($stats['total_game_xp']) ? $stats['total_game_xp'] : 0;
 
@@ -119,42 +122,45 @@ class widget implements renderable, templatable {
             $xpdisplay .= ' 🏆';
         }
 
-        // Recent Items Logic.
-        $rawinventory = \block_playerhud\game::get_inventory($USER->id, $this->instance->id);
-        $count = 0;
-        $seen = [];
+        // Recent Items Logic — only when items feature is enabled.
         $context = context_block::instance($this->instance->id);
-        $itemstodisplay = [];
-
-        foreach ($rawinventory as $invitem) {
-            if ($count >= 6) {
-                break;
-            }
-            if (in_array($invitem->id, $seen)) {
-                continue;
-            }
-            $seen[] = $invitem->id;
-            $itemstodisplay[$invitem->id] = $invitem;
-            $count++;
-        }
-
-        $allmedia = \block_playerhud\utils::get_items_display_data($itemstodisplay, $context);
         $recentitems = [];
 
-        foreach ($itemstodisplay as $invitem) {
-            $media = $allmedia[$invitem->id];
-            $imagepayload = $media['is_image'] ? $media['url'] : strip_tags($media['content']);
+        if ($enableitems) {
+            $rawinventory = \block_playerhud\game::get_inventory($USER->id, $this->instance->id);
+            $count = 0;
+            $seen = [];
+            $itemstodisplay = [];
 
-            $recentitems[] = [
-                'name' => format_string($invitem->name),
-                'xp' => $invitem->xp . ' ' . $strxp,
-                'image' => $imagepayload,
-                'isimage' => $media['is_image'] ? 1 : 0,
-                'content' => $imagepayload,
-                'description' => !empty($invitem->description) ? format_text($invitem->description, FORMAT_HTML) : '',
-                'date' => userdate($invitem->collecteddate, get_string('strftimedatefullshort', 'langconfig')),
-                'timestamp' => $invitem->collecteddate,
-            ];
+            foreach ($rawinventory as $invitem) {
+                if ($count >= 6) {
+                    break;
+                }
+                if (in_array($invitem->id, $seen)) {
+                    continue;
+                }
+                $seen[] = $invitem->id;
+                $itemstodisplay[$invitem->id] = $invitem;
+                $count++;
+            }
+
+            $allmedia = \block_playerhud\utils::get_items_display_data($itemstodisplay, $context);
+
+            foreach ($itemstodisplay as $invitem) {
+                $media = $allmedia[$invitem->id];
+                $imagepayload = $media['is_image'] ? $media['url'] : strip_tags($media['content']);
+
+                $recentitems[] = [
+                    'name' => format_string($invitem->name),
+                    'xp' => $invitem->xp . ' ' . $strxp,
+                    'image' => $imagepayload,
+                    'isimage' => $media['is_image'] ? 1 : 0,
+                    'content' => $imagepayload,
+                    'description' => !empty($invitem->description) ? format_text($invitem->description, FORMAT_HTML) : '',
+                    'date' => userdate($invitem->collecteddate, get_string('strftimedatefullshort', 'langconfig')),
+                    'timestamp' => $invitem->collecteddate,
+                ];
+            }
         }
 
         // Ranking Logic.
@@ -258,7 +264,7 @@ class widget implements renderable, templatable {
         }
 
         // Quest notification dot: show when a reward is waiting to be claimed.
-        $hasclaimable = \block_playerhud\quest::has_claimable_quests(
+        $hasclaimable = $enablequests && \block_playerhud\quest::has_claimable_quests(
             $this->instance->id,
             $USER->id,
             $this->courseid,
@@ -267,7 +273,7 @@ class widget implements renderable, templatable {
         );
 
         // Story notification dot: show when there is an available unread chapter.
-        $hasunreadchapters = !$isteacher && \block_playerhud\story_manager::has_unread_chapters(
+        $hasunreadchapters = $rpgmodeenabled && !$isteacher && \block_playerhud\story_manager::has_unread_chapters(
             $this->instance->id,
             $USER->id,
             $stats['level']
@@ -314,6 +320,9 @@ class widget implements renderable, templatable {
             'tier_stars'      => $tierstars,
             'has_class'       => $hasclass,
             'has_portrait'    => ($portraiturl !== null),
+            'enable_items'  => $enableitems,
+            'enable_quests' => $enablequests,
+            'enable_rpg'    => $rpgmodeenabled,
             'has_claimable_quests' => $hasclaimable,
             'has_unread_chapters' => $hasunreadchapters,
             'items' => $recentitems,
