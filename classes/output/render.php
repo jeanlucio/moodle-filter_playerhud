@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace filter_playerhud\output;
 
@@ -22,8 +22,8 @@ use context_block;
 /**
  * Render output class for PlayerHUD filter.
  * @package    filter_playerhud
- * @copyright  2026 Jean Lúcio <jeanlucio@gmail.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  2026 Jean Lúcio
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class render {
     /** @var array Preloaded cache for drops. */
@@ -50,6 +50,13 @@ class render {
      * @var array
      */
     protected static $playercache = [];
+
+    /**
+     * Cache for player RPG class ID, keyed by "{instanceid}_{userid}".
+     *
+     * @var array
+     */
+    protected static $classcache = [];
 
     /**
      * Preloads drops, inventory and media in bulk to prevent N+1 queries.
@@ -175,6 +182,25 @@ class render {
         }
 
         if (!$data || $data->blockinstanceid != $blockinstanceid) {
+            return '';
+        }
+
+        // Class restriction: skip drop for players whose class is not allowed.
+        if (!isset(self::$classcache[$cachekey])) {
+            $myclassid = 0;
+            if ($DB->get_manager()->table_exists('block_playerhud_rpg_progress')) {
+                $prog = $DB->get_record(
+                    'block_playerhud_rpg_progress',
+                    ['userid' => $USER->id, 'blockinstanceid' => $blockinstanceid],
+                    'classid'
+                );
+                if ($prog) {
+                    $myclassid = (int) $prog->classid;
+                }
+            }
+            self::$classcache[$cachekey] = $myclassid;
+        }
+        if (!self::is_item_visible_for_class($data->required_class_id, self::$classcache[$cachekey])) {
             return '';
         }
 
@@ -498,5 +524,24 @@ class render {
         self::$dropmediacache   = [];
         self::$preloadeddropids = [];
         self::$playercache      = [];
+        self::$classcache       = [];
+    }
+
+    /**
+     * Returns true if the item is visible for the given class.
+     *
+     * Mirrors \block_playerhud\utils::is_visible_for_class() but kept local to
+     * avoid a hard runtime dependency on the block plugin's autoloaded classes.
+     *
+     * @param string $requiredclassids Comma-separated class IDs stored on the item, or '0'.
+     * @param int $userclassid The current player's class ID (0 = no class assigned).
+     * @return bool
+     */
+    private static function is_item_visible_for_class(string $requiredclassids, int $userclassid): bool {
+        if (empty($requiredclassids) || $requiredclassids === '0') {
+            return true;
+        }
+        $allowedarray = explode(',', $requiredclassids);
+        return in_array('0', $allowedarray) || in_array((string) $userclassid, $allowedarray);
     }
 }

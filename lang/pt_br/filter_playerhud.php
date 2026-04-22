@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -12,19 +12,19 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * Portuguese (Brazil) language strings for filter_playerhud.
  *
  * @package    filter_playerhud
- * @copyright  2026 Jean Lúcio <jeanlucio@gmail.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  2026 Jean Lúcio
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['class_chosen'] = 'Classe Escolhida!';
+$string['class_chosen'] = 'Personagem Escolhido!';
 $string['click_to_enable'] = 'Clique para ativar sua Gamificação';
 $string['collected'] = 'Coletado!';
 $string['coursegoal'] = 'Meta do Curso';
@@ -36,7 +36,7 @@ $string['help_btn'] = 'Ajuda';
 $string['infinite'] = 'Infinito';
 $string['items'] = 'Itens:';
 $string['items_owned'] = 'Itens possuídos';
-$string['karma'] = 'Destino / Karma';
+$string['karma'] = 'Reputação';
 $string['last_collected'] = 'Última coleta:';
 $string['level'] = 'Nível';
 $string['loading'] = 'Carregando...';

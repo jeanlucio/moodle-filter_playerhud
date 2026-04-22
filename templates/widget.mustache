@@ -1,5 +1,5 @@
 {{!
-    This file is part of Moodle - http://moodle.org/
+    This file is part of Moodle - https://moodle.org/
 
     Moodle is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 }}
 {{!
     @template filter_playerhud/widget
@@ -21,8 +21,8 @@
     Supports Web (Responsive) and App (Simplified Card).
 
     @package    block_playerhud
-    @copyright  2026 Jean Lúcio <jeanlucio@gmail.com>
-    @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+    @copyright  2026 Jean Lúcio
+    @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
     Example context (json):
     {
@@ -32,6 +32,27 @@
         "level_display": "1/10",
         "xp_display": "100 / 1000 XP",
         "progress": 10,
+        "has_portrait": true,
+        "has_class": true,
+        "portrait_url": "https://example.com/portrait.png",
+        "class_fullname": "Mago",
+        "class_tier_name": "Iniciado",
+        "class_tier": 2,
+        "tier_stars": [
+            {"filled": true},
+            {"filled": true},
+            {"filled": false},
+            {"filled": false},
+            {"filled": false}
+        ],
+        "karma_data": {
+            "value": 0,
+            "value_display": "Neutro",
+            "percent": 75,
+            "bar_class": "ph-karma-fill--good",
+            "icon_class": "ph-karma--good",
+            "label": "Destiny / Karma"
+        },
         "url_quests": "#",
         "items": []
     }
@@ -58,41 +79,31 @@
     {{! --- VIEW 2: WEB (DESKTOP AND MOBILE WEB) --- }}
     <div class="playerhud-widget-container {{level_class}}">
 
-        {{! Left: Avatar }}
+        {{! Left: User profile picture + name }}
         <div class="ph-widget-left">
             <div class="ph-widget-avatar">
                 {{{userpicture}}}
+            </div>
+            <div class="ph-widget-username text-truncate text-center small fw-bold mt-1" title="{{fullname}}">
+                {{fullname}}
             </div>
         </div>
 
         {{! Center: Stats & Stash }}
         <div class="ph-widget-center">
 
-            {{! 1. NAME (Own Line) }}
-            {{! On Desktop: Left-aligned | On Mobile: Centered (via CSS) }}
-            <h4 class="m-0 fw-bold text-dark text-truncate ph-widget-name" title="{{fullname}}">
-                {{fullname}}
-            </h4>
-
-            {{! 2. STATUS LINE (Level left | XP right) }}
-            <div class="d-flex justify-content-between align-items-center mb-1 w-100 mt-1">
-
-                {{! Left Side: Level }}
-                <span class="badge {{level_class}} border shadow-sm px-2">
-                    {{#str}} level, filter_playerhud {{/str}} {{level_display}}
-                </span>
-
-                {{! Right Side: XP + Help }}
-                <div class="d-flex align-items-center">
-                    <span class="badge rounded-pill {{level_class}} text-nowrap">{{xp_display}}</span>
-
-                    <a href="{{url_history}}" class="ph-help-trigger ms-2"
+            {{! 1. TITLE LINE: plugin name left | shortcuts right }}
+            <div class="d-flex justify-content-between align-items-center mb-1 w-100 ph-widget-title-row">
+                <h4 class="m-0 fw-bold text-dark ph-widget-name">
+                    {{#str}} pluginname, block_playerhud {{/str}}
+                </h4>
+                <div class="d-flex align-items-center gap-1">
+                    <a href="{{url_history}}" class="ph-help-trigger"
                        title="{{#str}} tab_history, block_playerhud {{/str}}"
                        aria-label="{{#str}} tab_history, block_playerhud {{/str}}">
                         <i class="fa fa-list-alt" aria-hidden="true"></i>
                     </a>
-
-                    <a href="{{url_backpack}}&tab=rules" class="ph-help-trigger ms-2"
+                    <a href="{{url_backpack}}&tab=rules" class="ph-help-trigger"
                        title="{{#str}} help_btn, filter_playerhud {{/str}}"
                        aria-label="{{#str}} help_btn, filter_playerhud {{/str}}">
                         <i class="fa fa-question-circle" aria-hidden="true"></i>
@@ -100,10 +111,18 @@
                 </div>
             </div>
 
+            {{! 2. LEVEL + XP LINE }}
+            <div class="d-flex justify-content-between align-items-center mb-1 w-100 mt-1">
+                <span class="badge {{level_class}} border shadow-sm px-2">
+                    {{#str}} level, filter_playerhud {{/str}} {{level_display}}
+                </span>
+                <span class="badge rounded-pill {{level_class}} text-nowrap">{{xp_display}}</span>
+            </div>
+
             {{! 3. Progress Bar }}
             <div class="progress ph-progress-container">
                 <div class="progress-bar ph-progress-bar {{level_class}}" role="progressbar"
-                     style="width: {{progress}}%;"
+                     style="--ph-progress: {{progress}}%;"
                      aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100">
                      <span class="ph-progress-text">{{progress}}%</span>
                 </div>
@@ -148,6 +167,13 @@
                     <span class="ph-quest-notify-dot" aria-hidden="true"></span>
                     {{/has_claimable_quests}}
                 </a>
+                <a href="{{url_story}}" class="btn btn-ph-level-border shadow-sm position-relative"
+                   title="{{#str}} story_shortcut, block_playerhud {{/str}}">
+                    <span aria-hidden="true">📖</span>
+                    {{#has_unread_chapters}}
+                    <span class="ph-quest-notify-dot" aria-hidden="true"></span>
+                    {{/has_unread_chapters}}
+                </a>
                 {{#ranking}}
                 <a href="{{url}}" class="btn btn-ph-level-border shadow-sm"
                    title="{{tooltip}}">
@@ -160,12 +186,128 @@
                 </a>
             </div>
         </div>
+
+        {{! Character card — RPG mode, full-width row below the 3 columns }}
+        {{#has_class}}
+        <div class="ph-widget-char-card">
+
+            {{#has_class_description}}
+            <button type="button"
+                    class="ph-char-identity ph-char-identity--clickable border-0 bg-transparent p-0 w-100 text-start"
+                    data-bs-toggle="modal" data-bs-target="#{{char_modal_id}}"
+                    data-toggle="modal" data-target="#{{char_modal_id}}"
+                    aria-haspopup="dialog"
+                    aria-label="{{class_fullname}}">
+            {{/has_class_description}}
+            {{^has_class_description}}
+            <div class="ph-char-identity">
+            {{/has_class_description}}
+
+                <div class="ph-char-portrait-wrap">
+                    {{#has_portrait}}
+                    <img src="{{portrait_url}}" alt="{{class_fullname}}" class="ph-char-portrait">
+                    {{/has_portrait}}
+                    {{^has_portrait}}
+                    <i class="fa fa-user-circle ph-char-portrait-fallback" aria-hidden="true"></i>
+                    {{/has_portrait}}
+                </div>
+                <div class="ph-char-info">
+                    <div class="fw-bold ph-char-fullname" title="{{class_fullname}}">{{class_fullname}}</div>
+                    <div class="ph-char-meta">
+                        <span class="ph-tier-name">{{class_tier_name}}</span>
+                        <span class="ph-meta-sep" aria-hidden="true"> · </span>
+                        <span class="ph-tier-stars" role="img"
+                              aria-label="{{class_tier_name}}: {{class_tier}} {{#str}} out_of_5, block_playerhud {{/str}}">
+                            {{#tier_stars}}{{#filled}}★{{/filled}}{{^filled}}☆{{/filled}}{{/tier_stars}}
+                        </span>
+                        {{#karma_data}}
+                        <span class="ph-meta-sep" aria-hidden="true"> · </span>
+                        <span class="ph-karma-inline {{icon_class}}" aria-label="{{label}}: {{value_display}}">
+                            <i class="fa fa-balance-scale me-1" aria-hidden="true"></i>{{value_display}}
+                        </span>
+                        {{/karma_data}}
+                    </div>
+                </div>
+
+            {{#has_class_description}}
+            </button>
+            {{/has_class_description}}
+            {{^has_class_description}}
+            </div>
+            {{/has_class_description}}
+
+        </div>
+
+        {{#has_class_description}}
+        <div class="modal fade ph-z-index-high" id="{{char_modal_id}}" tabindex="-1"
+             aria-labelledby="{{char_modal_id}}Label" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
+
+                    <div class="modal-header">
+                        <h2 class="modal-title h5 fw-bold m-0" id="{{char_modal_id}}Label">{{class_fullname}}</h2>
+                        <button type="button" class="btn-close"
+                                data-bs-dismiss="modal" data-dismiss="modal"
+                                aria-label="{{#str}} close, block_playerhud {{/str}}">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            {{#has_portrait}}
+                            <img src="{{portrait_url}}" alt="{{class_name}}"
+                                 class="flex-shrink-0"
+                                 width="120" height="120">
+                            {{/has_portrait}}
+                            {{^has_portrait}}
+                            <i class="fa fa-user-circle fa-4x text-secondary flex-shrink-0" aria-hidden="true"></i>
+                            {{/has_portrait}}
+                            <div>
+                                <div class="ph-tier-stars mb-1" role="img"
+                                     aria-label="{{class_tier_name}}: {{class_tier}} {{#str}} out_of_5, block_playerhud {{/str}}">
+                                    {{#tier_stars}}{{#filled}}★{{/filled}}{{^filled}}☆{{/filled}}{{/tier_stars}}
+                                </div>
+                                <div class="ph-tier-name">{{class_tier_name}}</div>
+                            </div>
+                        </div>
+                        <div class="ph-char-modal-desc">{{{class_description}}}</div>
+                        {{#karma_data}}
+                        <div class="ph-karma-inline {{icon_class}} mt-3 pt-2 border-top"
+                             aria-label="{{label}}: {{value_display}}">
+                            <i class="fa fa-balance-scale me-1" aria-hidden="true"></i>
+                            <span class="fw-semibold">{{label}}:</span> {{value_display}}
+                        </div>
+                        {{/karma_data}}
+                    </div>
+
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-secondary"
+                                data-bs-dismiss="modal" data-dismiss="modal">
+                            {{#str}} close, block_playerhud {{/str}}
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        {{/has_class_description}}
+
+        {{/has_class}}
     </div>
 {{/is_app}}
 
 {{! JS Scripts for Web only (Tooltips) }}
 {{#js}}
 require(['jquery', 'core/tooltip'], function($, Tooltip) {
+    var charModalId = '{{char_modal_id}}';
+    if (charModalId) {
+        var $charModal = $('#' + charModalId);
+        if ($charModal.length) {
+            $charModal.appendTo('body');
+        }
+    }
+
     $('[data-bs-toggle="tooltip"]').each(function() {
         if (!$(this).data('bs.tooltip')) {
             new Tooltip(this);

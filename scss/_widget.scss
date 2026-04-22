@@ -1,12 +1,12 @@
 // Widget Styles (Standalone mode embedded in course content).
 
-// Força máxima na raiz do widget
 div.playerhud-widget-container.playerhud-widget-container {
     border-radius: 12px;
     margin-bottom: 1.5rem;
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     overflow: hidden;
     display: flex;
+    flex-wrap: wrap;
     align-items: stretch;
     position: relative;
     background-color: var(--card-bg, #fff);
@@ -28,6 +28,7 @@ div.playerhud-widget-container.playerhud-widget-container {
         width: 110px;
         background-color: var(--gray-100, #f8f9fa);
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         border-inline-end: 1px solid var(--gray-300, #dee2e6);
@@ -42,7 +43,15 @@ div.playerhud-widget-container.playerhud-widget-container {
         }
     }
 
-    // Avatar blindado com força tripla
+    div.ph-widget-username {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1.2;
+        color: var(--body-color, #212529);
+    }
+
     div.ph-widget-avatar img.ph-widget-avatar-img,
     div.ph-widget-avatar img {
         border-radius: 50%;
@@ -64,10 +73,12 @@ div.playerhud-widget-container.playerhud-widget-container {
         padding: 1rem 1.5rem;
         min-width: 0;
 
+        h4.ph-widget-name,
         h5.ph-widget-name,
         div.ph-widget-name {
             text-align: left;
             margin-bottom: 0.25rem;
+            font-size: 1rem;
 
             @media (max-width: 767.98px) {
                 text-align: center;
@@ -140,13 +151,176 @@ div.playerhud-widget-container.playerhud-widget-container {
         pointer-events: none;
     }
 
+    // ── Character portrait (replaces avatar when class is set) ─────────────────
+
+    div.ph-widget-portrait-wrap {
+        position: relative;
+        display: inline-block;
+    }
+
+    img.ph-widget-portrait-img {
+        width: 75px;
+        height: 75px;
+        max-width: 75px;
+        max-height: 75px;
+        border-radius: 50%;
+        border: 3px solid var(--gray-300, #dee2e6);
+        object-fit: cover;
+        display: block;
+    }
+
+    // Subtitle: character class name below user name
+    div.ph-widget-subtitle {
+        color: var(--gray-600, #6c757d);
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+
+        @media (max-width: 767.98px) {
+            text-align: center;
+        }
+    }
+
+    // ── Character card (RPG identity, full-width row below the 3 columns) ─────
+
+    div.ph-widget-char-card {
+        flex: 0 0 100%;
+        width: 100%;
+        border-top: 1px solid var(--gray-200, #e9ecef);
+        background-color: var(--gray-100, #f8f9fa);
+        padding: 0.75rem 1rem;
+
+        .ph-char-identity {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .ph-char-identity--clickable {
+            cursor: pointer;
+            border-radius: 0.375rem;
+            transition: background-color 0.15s ease;
+
+            &:hover {
+                background-color: var(--gray-200, #e9ecef);
+            }
+
+            &:focus-visible {
+                outline: 2px solid var(--bs-primary, #0d6efd);
+                outline-offset: 2px;
+            }
+        }
+
+        .ph-char-portrait-wrap {
+            flex-shrink: 0;
+            align-self: flex-start;
+        }
+
+        .ph-char-portrait {
+            width: 50px;
+            height: 50px;
+            max-width: 50px;
+            max-height: 50px;
+            border-radius: 50%;
+            border: 3px solid var(--gray-300, #dee2e6);
+            object-fit: cover;
+            display: block;
+        }
+
+        .ph-char-portrait-fallback {
+            font-size: 50px;
+            line-height: 1;
+            color: var(--gray-400, #ced4da);
+            display: block;
+        }
+
+        .ph-char-info {
+            min-width: 0;
+        }
+
+        .ph-char-fullname {
+            font-size: 0.9rem;
+        }
+
+        .ph-char-meta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0 0.15rem;
+            font-size: 0.8rem;
+        }
+
+        .ph-tier-stars {
+            font-size: 0.9rem;
+            color: var(--bs-warning, #ffc107);
+            letter-spacing: 0.05em;
+        }
+
+        .ph-karma-inline {
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .ph-karma--good {
+            color: var(--success, #198754);
+        }
+        .ph-karma--neutral {
+            color: var(--secondary, #6c757d);
+        }
+        .ph-karma--evil {
+            color: var(--danger, #dc3545);
+        }
+    }
+
+    // ── Progress bar ───────────────────────────────────────────────────────────
+
+    div.ph-progress-bar {
+        width: var(--ph-progress, 0%);
+        transition: width 0.6s ease;
+        height: 100%;
+    }
+
+    // ── Karma bar ──────────────────────────────────────────────────────────────
+
+    div.ph-karma-wrap {
+        width: 100%;
+    }
+
+    div.ph-karma-bar {
+        height: 6px;
+        background-color: var(--gray-200, #e9ecef);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    div.ph-karma-fill {
+        height: 100%;
+        width: var(--ph-progress, 50%);
+        background-color: var(--ph-karma-color, var(--bs-secondary, #6c757d));
+        border-radius: 3px;
+        transition: width 0.4s ease;
+    }
+
+    div.ph-karma-fill--evil {
+        --ph-karma-color: var(--bs-danger, #dc3545);
+    }
+
+    div.ph-karma-fill--good {
+        --ph-karma-color: var(--bs-success, #198754);
+    }
+
+    div.ph-karma-fill--neutral {
+        --ph-karma-color: var(--bs-secondary, #6c757d);
+    }
+
     div.ph-widget-stash {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px; // Um pouco mais de respiro entre os itens
+        gap: 6px;
         min-height: 34px;
         margin-top: 0.5rem;
-        justify-content: center; // Garante que fiquem alinhados com o nome
+        justify-content: center;
 
         @media (max-width: 767.98px) {
             justify-content: center;
