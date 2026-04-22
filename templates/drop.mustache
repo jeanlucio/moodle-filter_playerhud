@@ -74,7 +74,7 @@
 {{#is_image_mode}}
     <div class="ph-drop-image-container
                 {{#limit_reached}}ph-item-details-trigger ph-cursor-help{{/limit_reached}}
-                {{#is_cooldown}}ph-cursor-wait{{/is_cooldown}}"
+                {{#is_cooldown}}ph-item-details-trigger ph-cursor-wait{{/is_cooldown}}"
          {{#limit_reached}}role="button" tabindex="0" aria-disabled="true"{{/limit_reached}}
          {{#is_cooldown}}role="button" tabindex="0" aria-disabled="true"{{/is_cooldown}}
          {{{data_attributes}}}>
