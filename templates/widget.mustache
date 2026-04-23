@@ -57,7 +57,10 @@
         "items": [],
         "enable_items": true,
         "enable_quests": true,
-        "enable_rpg": true
+        "enable_rpg": true,
+        "has_class_description": true,
+        "class_description": "<p>Um mago forjado nos livros do conhecimento.</p>",
+        "char_modal_id": "ph-char-modal-19"
     }
 }}
 {{#is_app}}
@@ -209,17 +212,17 @@
                     aria-haspopup="dialog"
                     aria-label="{{class_fullname}}">
 
-                <div class="ph-char-portrait-wrap">
+                <span class="ph-char-portrait-wrap">
                     {{#has_portrait}}
                     <img src="{{portrait_url}}" alt="{{class_fullname}}" class="ph-char-portrait">
                     {{/has_portrait}}
                     {{^has_portrait}}
                     <i class="fa fa-user-circle ph-char-portrait-fallback" aria-hidden="true"></i>
                     {{/has_portrait}}
-                </div>
-                <div class="ph-char-info">
-                    <div class="fw-bold ph-char-fullname" title="{{class_fullname}}">{{class_fullname}}</div>
-                    <div class="ph-char-meta">
+                </span>
+                <span class="ph-char-info">
+                    <span class="d-block fw-bold ph-char-fullname" title="{{class_fullname}}">{{class_fullname}}</span>
+                    <span class="d-block ph-char-meta">
                         <span class="ph-tier-name">{{class_tier_name}}</span>
                         <span class="ph-meta-sep" aria-hidden="true"> · </span>
                         <span class="ph-tier-stars" role="img"
@@ -232,8 +235,8 @@
                             <i class="fa fa-balance-scale me-1" aria-hidden="true"></i>{{value_display}}
                         </span>
                         {{/karma_data}}
-                    </div>
-                </div>
+                    </span>
+                </span>
 
             </button>
 
@@ -299,6 +302,7 @@
 
 {{! JS Scripts for Web only (Tooltips) }}
 {{#js}}
+/* global bootstrap */
 require(['jquery', 'core/tooltip'], function($, Tooltip) {
     var charModalId = '{{char_modal_id}}';
     if (charModalId) {
