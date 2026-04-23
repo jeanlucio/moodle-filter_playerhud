@@ -202,17 +202,12 @@
         {{#has_class}}
         <div class="ph-widget-char-card">
 
-            {{#has_class_description}}
+            {{! Character card — always clickable to open the character lore modal }}
             <button type="button"
                     class="ph-char-identity ph-char-identity--clickable border-0 bg-transparent p-0 w-100 text-start"
-                    data-bs-toggle="modal" data-bs-target="#{{char_modal_id}}"
-                    data-toggle="modal" data-target="#{{char_modal_id}}"
+                    data-ph-modal="{{char_modal_id}}"
                     aria-haspopup="dialog"
                     aria-label="{{class_fullname}}">
-            {{/has_class_description}}
-            {{^has_class_description}}
-            <div class="ph-char-identity">
-            {{/has_class_description}}
 
                 <div class="ph-char-portrait-wrap">
                     {{#has_portrait}}
@@ -240,16 +235,10 @@
                     </div>
                 </div>
 
-            {{#has_class_description}}
             </button>
-            {{/has_class_description}}
-            {{^has_class_description}}
-            </div>
-            {{/has_class_description}}
 
         </div>
 
-        {{#has_class_description}}
         <div class="modal fade ph-z-index-high ph-filter-char-modal" id="{{char_modal_id}}" tabindex="-1"
              aria-labelledby="{{char_modal_id}}Label" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -282,7 +271,9 @@
                                 <div class="ph-tier-name">{{class_tier_name}}</div>
                             </div>
                         </div>
+                        {{#has_class_description}}
                         <div class="ph-char-modal-desc">{{{class_description}}}</div>
+                        {{/has_class_description}}
                         {{#karma_data}}
                         <div class="ph-karma-inline {{icon_class}} mt-3 pt-2 border-top"
                              aria-label="{{label}}: {{value_display}}">
@@ -302,8 +293,6 @@
                 </div>
             </div>
         </div>
-        {{/has_class_description}}
-
         {{/has_class}}
     </div>
 {{/is_app}}
@@ -316,6 +305,21 @@ require(['jquery', 'core/tooltip'], function($, Tooltip) {
         var $charModal = $('#' + charModalId);
         if ($charModal.length) {
             $charModal.appendTo('body');
+
+            // Char modal — explicit handler (cross-version safe: BS4 + BS5).
+            // data-bs-toggle declarative may not fire in Moodle 4.5 if Bootstrap's
+            // document-level listener hasn't been registered yet via AMD.
+            $(document).on('click', '[data-ph-modal="' + charModalId + '"]', function() {
+                var el = document.getElementById(charModalId);
+                if (!el) {
+                    return;
+                }
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    bootstrap.Modal.getOrCreateInstance(el).show();
+                } else {
+                    $(el).modal('show');
+                }
+            });
         }
     }
 
