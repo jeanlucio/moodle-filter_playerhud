@@ -80,24 +80,6 @@ div.modal-dialog .visually-hidden.visually-hidden {
     border: 0;
 }
 
-// Modal close button fix for Moodle 4.5 and 5.1.
-div.modal-dialog button.btn-close,
-div.modal-dialog button.close {
-    background-image: none;
-    background-color: transparent;
-    opacity: 1;
-    border: 0;
-    font-size: 1.5rem;
-    font-weight: 700;
-    line-height: 1;
-    color: #000;
-    text-shadow: 0 1px 0 #fff;
-    padding: 0.5rem;
-    margin: -0.5rem -0.5rem -0.5rem auto;
-    appearance: none;
-    cursor: pointer;
-}
-
 /* stylelint-enable csstree/validator */
 
 // Star ratings and karma alignment colors for character modals.
@@ -135,4 +117,27 @@ div.modal.ph-modal-zindex {
 
 div.modal.ph-z-index-high {
     z-index: 10500;
+}
+
+// Hoisted modal close button fixes for filter_playerhud.
+// #phItemModalFilter is hoisted to body via appendTo in filter_collect.js.
+// .ph-filter-char-modal is the char-card modal from widget.mustache (dynamic ID),
+// also hoisted to body. Both use <span>&times;</span> as the visible X so that
+// it works in Bootstrap 4 (Moodle 4.5) and Bootstrap 5 (Moodle 5.1).
+#phItemModalFilter,
+.ph-filter-char-modal {
+    .btn-close {
+        background-image: none;
+        background-color: transparent;
+        border: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1;
+        color: #000;
+        text-shadow: 0 1px 0 #fff;
+        padding: 0.5rem;
+        margin: -0.5rem -0.5rem -0.5rem auto;
+        opacity: 1;
+        cursor: pointer;
+    }
 }
