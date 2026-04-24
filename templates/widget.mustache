@@ -60,7 +60,11 @@
         "enable_rpg": true,
         "has_class_description": true,
         "class_description": "<p>Um mago forjado nos livros do conhecimento.</p>",
-        "char_modal_id": "ph-char-modal-19"
+        "char_modal_id": "ph-char-modal-19",
+        "hasgroup": true,
+        "groupbadge": "🛡️",
+        "groupname": "Alpha Squad",
+        "groupmembers": "3/5"
     }
 }}
 {{#is_app}}
@@ -134,7 +138,16 @@
                 </div>
             </div>
 
-            {{! 4. Stash — only when items feature is enabled }}
+            {{! 4. Group info (soft dependency on mod_playergroup) }}
+            {{#hasgroup}}
+            <div class="ph-group-line mt-1 small text-muted">
+                <span aria-hidden="true">{{groupbadge}}</span>
+                <span class="fw-semibold ms-1">{{groupname}}</span>
+                <span class="ms-1">· {{groupmembers}}</span>
+            </div>
+            {{/hasgroup}}
+
+            {{! 5. Stash — only when items feature is enabled }}
             {{#enable_items}}
             <div class="ph-widget-stash">
                 {{#items}}
