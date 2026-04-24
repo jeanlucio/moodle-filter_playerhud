@@ -299,6 +299,15 @@ class widget implements renderable, templatable {
             'returnurl' => '/course/view.php?id=' . $this->courseid,
         ]);
 
+        // PlayerGroup info (soft dependency — only when mod_playergroup is installed).
+        $groupinfo = null;
+        if (class_exists('\mod_playergroup\api\group_info')) {
+            $groupinfo = \mod_playergroup\api\group_info::get_player_group_in_course(
+                (int) $this->courseid,
+                (int) $USER->id
+            );
+        }
+
         return [
             'is_active' => true,
             'is_app' => false,
@@ -327,6 +336,12 @@ class widget implements renderable, templatable {
             'has_unread_chapters' => $hasunreadchapters,
             'items' => $recentitems,
             'ranking' => $rankdata,
+            'hasgroup'     => $groupinfo !== null,
+            'groupbadge'   => $groupinfo ? $groupinfo->badge : '',
+            'groupname'    => $groupinfo ? format_string($groupinfo->groupname) : '',
+            'groupmembers' => $groupinfo
+                ? $groupinfo->membercount . '/' . $groupinfo->maxmembers
+                : '',
             'url_disable' => $urldisable->out(false),
             'str_disable_gamification' => get_string('disable_exit', 'block_playerhud'),
             'str_confirm_msg' => get_string('confirm_disable', 'block_playerhud'),
