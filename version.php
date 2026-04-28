@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'filter_playerhud';
-$plugin->version   = 2026042300;
+$plugin->version   = 2026042800;
 $plugin->requires  = 2024100700;        // Requires: Moodle 4.5+.
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v1.3.1';
+$plugin->release   = 'v1.3.2';
 $plugin->dependencies = ['block_playerhud' => 2026042300];
