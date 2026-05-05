@@ -305,7 +305,7 @@ class render {
         }
 
         $emojihyml = !empty($btnemoji) ? '<span aria-hidden="true" class="me-1">' . s($btnemoji) . '</span> ' : '';
-        $textlabel = ($issecret) ? $displayname : ($customtext ?: $displayname);
+        $textlabel = ($issecret && empty($customtext)) ? $displayname : ($customtext ?: $displayname);
 
         $templatedata = [
             'is_card' => ($mode === 'card'),
