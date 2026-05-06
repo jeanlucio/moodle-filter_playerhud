@@ -152,17 +152,20 @@ class text_filter extends \moodle_text_filter {
                 $PAGE->requires->js_call_amd('block_playerhud/timers', 'init', [$jstimerstrings]);
             }
 
-            // Append modal HTML directly to the page output instead of passing it via
-            // js_call_amd — that would exceed Moodle 4.5's 1024-char argument limit and
-            // also gets stripped by HTML Purifier when the filter runs inside forum content.
+            // Pass modal HTML via data_for_js — no size limit (unlike js_call_amd which caps
+            // at 1024 chars in developer mode) and outputs before the AMD require block,
+            // so filter_collect.js can inject it directly into <body> at init time.
+            // Injecting from JS bypasses HTML Purifier timing issues in forum nested v2.
+            $modalshtml = '';
             if (class_exists('\filter_playerhud\output\assets')) {
                 $assets = new \filter_playerhud\output\assets();
-                $text .= $assets->get_modals_html();
+                $modalshtml = $assets->get_modals_html();
             }
 
-            // Register strings via strings_for_js so they stay under the js_call_amd
-            // 1024-char argument limit. filter_collect.js reads them via M.util.get_string().
+            // Register strings via strings_for_js so filter_collect.js reads them
+            // via M.util.get_string() with no AMD argument overhead.
             if (isset($PAGE) && $PAGE->requires) {
+                $PAGE->requires->data_for_js('block_playerhud_filter', ['modalsHtml' => $modalshtml]);
                 $PAGE->requires->strings_for_js([
                     'collected',
                     'respawntime',
