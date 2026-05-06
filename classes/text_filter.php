@@ -134,11 +134,6 @@ class text_filter extends \moodle_text_filter {
 
         // Inject global assets (Modals and JS) if needed.
         if ($needsassets && !self::$assetsinjected) {
-            if (class_exists('\filter_playerhud\output\assets')) {
-                $assets = new \filter_playerhud\output\assets();
-                $text .= $assets->get_modals_html();
-            }
-
             $jstimerstrings = [
                 'ready' => get_string('ready', 'block_playerhud'),
                 'take'  => get_string('take', 'block_playerhud'),
@@ -149,6 +144,12 @@ class text_filter extends \moodle_text_filter {
 
             if (isset($PAGE) && $PAGE->requires) {
                 $PAGE->requires->js_call_amd('block_playerhud/timers', 'init', [$jstimerstrings]);
+            }
+
+            $modalshtml = '';
+            if (class_exists('\filter_playerhud\output\assets')) {
+                $assets = new \filter_playerhud\output\assets();
+                $modalshtml = $assets->get_modals_html();
             }
 
             $jscollectstrings = [
@@ -168,7 +169,10 @@ class text_filter extends \moodle_text_filter {
             ];
 
             if (isset($PAGE) && $PAGE->requires) {
-                $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', [['strings' => $jscollectstrings]]);
+                $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', [[
+                    'strings'   => $jscollectstrings,
+                    'modalsHtml' => $modalshtml,
+                ]]);
             }
 
             self::$assetsinjected = true;
