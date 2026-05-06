@@ -77,6 +77,12 @@ class text_filter extends \moodle_text_filter {
             'userid'          => $USER->id,
         ]);
 
+        // Share the fetched player with render so render_drop() reuses it (avoids a duplicate query).
+        if (class_exists('\filter_playerhud\output\render')) {
+            $rendercachekey = $blockinstance->id . '_' . $USER->id;
+            \filter_playerhud\output\render::populate_player_cache($rendercachekey, $player ?: false);
+        }
+
         if (!$player || empty($player->enable_gamification)) {
             $text = str_replace('[PLAYERHUD_WIDGET]', '', $text);
             $text = preg_replace('/\[PLAYERHUD_DROP\s+[^\]]+\]/i', '', $text);
@@ -146,33 +152,32 @@ class text_filter extends \moodle_text_filter {
                 $PAGE->requires->js_call_amd('block_playerhud/timers', 'init', [$jstimerstrings]);
             }
 
-            $modalshtml = '';
+            // Append modal HTML directly to the page output instead of passing it via
+            // js_call_amd — that would exceed Moodle 4.5's 1024-char argument limit and
+            // also gets stripped by HTML Purifier when the filter runs inside forum content.
             if (class_exists('\filter_playerhud\output\assets')) {
                 $assets = new \filter_playerhud\output\assets();
-                $modalshtml = $assets->get_modals_html();
+                $text .= $assets->get_modals_html();
             }
 
-            $jscollectstrings = [
-                'collected'         => get_string('collected', 'block_playerhud'),
-                'respawntime'       => get_string('respawntime', 'block_playerhud'),
-                'infinite'          => get_string('infinite', 'block_playerhud'),
-                'immediate'         => get_string('drops_immediate', 'block_playerhud'),
-                'single_collection' => get_string('single_collection', 'block_playerhud'),
-                'error'             => get_string('error_connection', 'block_playerhud'),
-                'last_collected'    => get_string('last_collected', 'block_playerhud'),
-                'confirm_title'     => get_string('confirmation', 'admin'),
-                'yes'               => get_string('yes'),
-                'cancel'            => get_string('cancel'),
-                'level'             => get_string('level', 'block_playerhud'),
-                'xp'                => get_string('xp', 'block_playerhud'),
-                'no_description'    => get_string('no_description', 'block_playerhud'),
-            ];
-
+            // Register strings via strings_for_js so they stay under the js_call_amd
+            // 1024-char argument limit. filter_collect.js reads them via M.util.get_string().
             if (isset($PAGE) && $PAGE->requires) {
-                $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', [[
-                    'strings'   => $jscollectstrings,
-                    'modalsHtml' => $modalshtml,
-                ]]);
+                $PAGE->requires->strings_for_js([
+                    'collected',
+                    'respawntime',
+                    'infinite',
+                    'drops_immediate',
+                    'single_collection',
+                    'error_connection',
+                    'last_collected',
+                    'level',
+                    'xp',
+                    'no_description',
+                ], 'block_playerhud');
+                $PAGE->requires->string_for_js('confirmation', 'admin');
+                $PAGE->requires->strings_for_js(['yes', 'cancel'], 'moodle');
+                $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', []);
             }
 
             self::$assetsinjected = true;

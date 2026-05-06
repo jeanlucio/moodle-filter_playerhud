@@ -185,22 +185,26 @@ class render {
             return '';
         }
 
-        // Class restriction: skip drop for players whose class is not allowed.
-        if (!isset(self::$classcache[$cachekey])) {
-            $myclassid = 0;
-            if ($DB->get_manager()->table_exists('block_playerhud_rpg_progress')) {
-                $prog = $DB->get_record(
-                    'block_playerhud_rpg_progress',
-                    ['userid' => $USER->id, 'blockinstanceid' => $blockinstanceid],
-                    'classid'
-                );
-                if ($prog) {
-                    $myclassid = (int) $prog->classid;
+        // Class restriction: only query RPG progress when the item actually has a restriction.
+        $userclassid = 0;
+        if (!empty($data->required_class_id) && $data->required_class_id !== '0') {
+            if (!isset(self::$classcache[$cachekey])) {
+                $myclassid = 0;
+                if ($DB->get_manager()->table_exists('block_playerhud_rpg_progress')) {
+                    $prog = $DB->get_record(
+                        'block_playerhud_rpg_progress',
+                        ['userid' => $USER->id, 'blockinstanceid' => $blockinstanceid],
+                        'classid'
+                    );
+                    if ($prog) {
+                        $myclassid = (int) $prog->classid;
+                    }
                 }
+                self::$classcache[$cachekey] = $myclassid;
             }
-            self::$classcache[$cachekey] = $myclassid;
+            $userclassid = self::$classcache[$cachekey];
         }
-        if (!self::is_item_visible_for_class($data->required_class_id, self::$classcache[$cachekey])) {
+        if (!self::is_item_visible_for_class($data->required_class_id, $userclassid)) {
             return '';
         }
 
@@ -510,6 +514,19 @@ class render {
         ];
 
         return $OUTPUT->render_from_template('filter_playerhud/trade', $templatedata);
+    }
+
+    /**
+     * Pre-populates the player cache from an already-fetched record.
+     *
+     * Call this from text_filter after fetching the player, so render_drop()
+     * reuses the same record and avoids a duplicate DB query.
+     *
+     * @param string $cachekey "{instanceid}_{userid}" key.
+     * @param object|false $player The player record (or false when none exists).
+     */
+    public static function populate_player_cache(string $cachekey, object|false $player): void {
+        self::$playercache[$cachekey] = $player;
     }
 
     /**

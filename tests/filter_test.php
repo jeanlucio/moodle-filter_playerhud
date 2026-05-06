@@ -182,7 +182,9 @@ final class filter_test extends advanced_testcase {
 
         // 6. The Architectural Assertion:
         // A perfect O(1) architecture makes exactly 5 base queries for the entire page:
-        // (1 Block + 1 Filter User + 1 Render User + 1 Drops Batch + 1 Inventory Batch)
+        // (1 Block + 1 Filter User + 1 Drops Batch + 1 File Storage + 1 Inventory Batch)
+        // The render player query is eliminated by populate_player_cache() in text_filter.
+        // The RPG class query is skipped because test items have required_class_id = '0'.
         // If they were separate (N+1) queries, it would result in more than 25 reads.
         $this->assertLessThanOrEqual(5, $totalreads, "The filter is making $totalreads DB queries! Possible N+1 issue detected.");
     }
