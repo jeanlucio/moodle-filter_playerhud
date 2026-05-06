@@ -6,7 +6,6 @@
 ![Status](https://img.shields.io/badge/Status-Stable-green?style=flat-square)
 [![PlayerHUD Ecosystem](https://img.shields.io/badge/PlayerHUD-Ecosystem-6f42c1?style=flat-square&logo=gamepad&logoColor=white)](https://github.com/jeanlucio/moodle-block_playerhud)
 ![Role](https://img.shields.io/badge/Role-Content_Integration-0d6efd?style=flat-square)
-![GitHub release](https://img.shields.io/github/v/release/jeanlucio/moodle-filter_playerhud?style=flat-square)
 
 [English](#english) | [Português](#português)
 
@@ -35,12 +34,12 @@ This filter allows teachers to embed interactive drop elements within pages, lab
 
 This plugin works together with:
 
-* **PlayerHUD Block (Required)**  
+* **PlayerHUD Block (Required)**
   👉 https://github.com/jeanlucio/moodle-block_playerhud
 
 Optional extension:
 
-* **PlayerHUD Availability Condition**  
+* **PlayerHUD Availability Condition**
   👉 https://github.com/jeanlucio/moodle-availability_playerhud
 
 ---
@@ -48,7 +47,7 @@ Optional extension:
 ### 📦 Requirements
 
 * **Moodle:** 4.5 or higher
-* **Required Dependency:** PlayerHUD Block  
+* **Required Dependency:** PlayerHUD Block
   https://github.com/jeanlucio/moodle-block_playerhud
 * **PHP:** Compatible with your Moodle version
 
@@ -56,17 +55,17 @@ Optional extension:
 
 ### 🛠️ Installation
 
-1. Ensure the **PlayerHUD Block** is installed first:  
-   👉 https://github.com/jeanlucio/moodle-block_playerhud  
+1. Ensure the **PlayerHUD Block** is installed first:
+   👉 https://github.com/jeanlucio/moodle-block_playerhud
    The filter depends on the block and will not install without it.
 
 2. Download the `.zip` file or clone this repository.
 3. Extract the folder into your Moodle `filter/` directory.
-4. Rename the folder to `playerhud` (if necessary).  
-   Final path:  
+4. Rename the folder to `playerhud` (if necessary).
+   Final path:
    `your-moodle/filter/playerhud/`
 5. Visit **Site administration > Notifications** to complete installation.
-6. Enable the filter in:  
+6. Enable the filter in:
    **Site administration > Plugins > Filters > Manage filters**
 
 ---
@@ -121,12 +120,12 @@ Esse filtro possibilita que o professor incorpore elementos interativos dentro d
 
 Este plugin funciona em conjunto com:
 
-* **Bloco PlayerHUD (Obrigatório)**  
+* **Bloco PlayerHUD (Obrigatório)**
   👉 https://github.com/jeanlucio/moodle-block_playerhud
 
 Extensão opcional:
 
-* **Restrição de Acesso PlayerHUD**  
+* **Restrição de Acesso PlayerHUD**
   👉 https://github.com/jeanlucio/moodle-availability_playerhud
 
 ---
@@ -134,7 +133,7 @@ Extensão opcional:
 ### 📦 Requisitos
 
 * **Moodle:** 4.5 ou superior
-* **Dependência Obrigatória:** Bloco PlayerHUD  
+* **Dependência Obrigatória:** Bloco PlayerHUD
   https://github.com/jeanlucio/moodle-block_playerhud
 * **PHP:** Compatível com a versão do Moodle
 
@@ -142,17 +141,17 @@ Extensão opcional:
 
 ### 🛠️ Instalação
 
-1. Certifique-se de que o **Bloco PlayerHUD** esteja instalado primeiro:  
-   👉 https://github.com/jeanlucio/moodle-block_playerhud  
+1. Certifique-se de que o **Bloco PlayerHUD** esteja instalado primeiro:
+   👉 https://github.com/jeanlucio/moodle-block_playerhud
    O filtro depende do bloco e não será instalado sem ele.
 
 2. Baixe o arquivo `.zip` ou clone o repositório.
 3. Extraia a pasta para o diretório `filter/` do seu Moodle.
-4. Renomeie para `playerhud` (se necessário).  
-   Caminho final:  
+4. Renomeie para `playerhud` (se necessário).
+   Caminho final:
    `seu-moodle/filter/playerhud/`
 5. Acesse **Administração do site > Notificações** para concluir a instalação.
-6. Ative o filtro em:  
+6. Ative o filtro em:
    **Administração do site > Plugins > Filtros > Gerenciar filtros**
 
 ---
