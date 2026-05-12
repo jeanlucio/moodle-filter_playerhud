@@ -156,7 +156,7 @@
                          data-name="{{name}}" data-xp="{{xp}}" data-image="{{image}}"
                          data-isimage="{{isimage}}" data-date="{{date}}"
                          data-timestamp="{{timestamp}}">
-                         <div class="d-none ph-item-description-content">{{description}}</div>
+                         <div class="d-none ph-item-description-content">{{{description}}}</div>
                          {{#isimage}}<img src="{{image}}" alt="" class="ph-mini-item-img rounded-0">{{/isimage}}
                          {{^isimage}}<span class="ph-emoji" aria-hidden="true">{{content}}</span>{{/isimage}}
                     </div>
@@ -313,10 +313,9 @@
     </div>
 {{/is_app}}
 
-{{! JS Scripts for Web only (Tooltips) }}
+{{! JS Scripts for Web only (Char Modal) }}
 {{#js}}
-/* global bootstrap */
-require(['jquery', 'core/tooltip'], function($, Tooltip) {
+require(['jquery', 'theme_boost/bootstrap/modal'], function($, BootstrapModal) {
     var charModalId = '{{char_modal_id}}';
     if (charModalId) {
         var $charModal = $('#' + charModalId);
@@ -331,19 +330,13 @@ require(['jquery', 'core/tooltip'], function($, Tooltip) {
                 if (!el) {
                     return;
                 }
-                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                    bootstrap.Modal.getOrCreateInstance(el).show();
-                } else {
-                    $(el).modal('show');
-                }
+                document.body.appendChild(el);
+                var inst = (BootstrapModal.getInstance && BootstrapModal.getInstance(el))
+                    || $(el).data('bs.modal')
+                    || new BootstrapModal(el);
+                inst.show();
             });
         }
     }
-
-    $('[data-bs-toggle="tooltip"]').each(function() {
-        if (!$(this).data('bs.tooltip')) {
-            new Tooltip(this);
-        }
-    });
 });
 {{/js}}
