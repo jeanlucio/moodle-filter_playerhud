@@ -19,6 +19,7 @@ Feature: PlayerHUD filter modal behaviour
     And I am on "Course 1" course homepage with editing mode on
     And I add the "PlayerHUD" block
     And a PlayerHUD item "Test Gem" with drop code "GEM01" exists in course "C1"
+    And a label with shortcode "[PLAYERHUD_DROP code=GEM01]" exists in the course
     And I log out
 
   # -----------------------------------------------------------------
