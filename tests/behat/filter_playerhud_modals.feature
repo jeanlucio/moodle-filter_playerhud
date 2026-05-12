@@ -56,7 +56,7 @@ Feature: PlayerHUD filter modal behaviour
     And I click on the first ".ph-item-trigger" element
     Then the PlayerHUD item details modal is visible
     And I should not see "<p dir=" in the PlayerHUD modal
-    And I should not see "style=\"text-align" in the PlayerHUD modal
+    And I should not see "style=text-align" in the PlayerHUD modal
 
   # -----------------------------------------------------------------
   # Strings — não devem mostrar placeholders [[...]]

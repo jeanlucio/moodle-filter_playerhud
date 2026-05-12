@@ -185,3 +185,22 @@ a.ph-link-overlay {
     height: 100%;
     z-index: 10;
 }
+
+// Moodle 4.5 (Bootstrap 4) fallback: .visually-hidden does not exist in BS4.
+// Covers all screen-reader spans rendered inline by drop.mustache.
+.ph-item-details-trigger,
+.ph-action-collect,
+.ph-drop-image-container,
+.ph-drop-trigger-area {
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+}
