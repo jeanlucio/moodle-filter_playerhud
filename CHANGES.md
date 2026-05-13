@@ -1,5 +1,20 @@
 # Changes
 
+## v1.3.5 (2026051301)
+
+- Add: widget stash limited to 5 unique items; +N overflow badge appears when
+  inventory exceeds the limit, consistent with the block sidebar.
+- Add: Behat acceptance test suite covering collect redirect, modal from widget
+  stash, HTML tag leakage, string placeholders and DOM duplication.
+- Fix: char modal now uses `theme_boost/bootstrap/modal` with `getInstance`
+  fallback chain for BS4/BS5 cross-version compatibility; modal hoisted to body
+  before `show()`; description rendered with triple braces to preserve HTML.
+- Fix: Bootstrap 4/5 compatibility — calendar icon changed to `fa-calendar`;
+  gap fallback for badge row; `ph-help-trigger` spacing via CSS.
+- Fix: `sr-only` removed from templates; `.visually-hidden` CSS fallback added
+  for Moodle 4.5 (Bootstrap 4 does not define this utility).
+- Update: plugin icon.
+
 ## v1.3.4 (2026050601)
 
 - Fix: item modal no longer fails to open in forum posts — modal HTML is now
