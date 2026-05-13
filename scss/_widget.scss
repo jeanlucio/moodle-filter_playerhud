@@ -387,4 +387,12 @@ div.playerhud-widget-container.playerhud-widget-container {
         white-space: nowrap;
         border: 0;
     }
+
+    div.ph-stash-more {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--secondary, #6c757d);
+        border-style: dashed;
+        cursor: default;
+    }
 }

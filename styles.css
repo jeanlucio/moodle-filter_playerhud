@@ -578,6 +578,13 @@ div.playerhud-widget-container.playerhud-widget-container .visually-hidden {
     white-space: nowrap;
     border: 0;
 }
+div.playerhud-widget-container.playerhud-widget-container div.ph-stash-more {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--secondary, #6c757d);
+    border-style: dashed;
+    cursor: default;
+}
 
 /* stylelint-disable csstree/validator */
 .btn-ph-level-border {

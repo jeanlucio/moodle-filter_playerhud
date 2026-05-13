@@ -125,24 +125,29 @@ class widget implements renderable, templatable {
         // Recent Items Logic — only when items feature is enabled.
         $context = context_block::instance($this->instance->id);
         $recentitems = [];
+        $hasmore = false;
+        $morebadge = '';
 
         if ($enableitems) {
             $rawinventory = \block_playerhud\game::get_inventory($USER->id, $this->instance->id);
-            $count = 0;
+            $stashlimit = 5;
             $seen = [];
             $itemstodisplay = [];
 
             foreach ($rawinventory as $invitem) {
-                if ($count >= 6) {
-                    break;
-                }
                 if (in_array($invitem->id, $seen)) {
                     continue;
                 }
                 $seen[] = $invitem->id;
-                $itemstodisplay[$invitem->id] = $invitem;
-                $count++;
+                if (count($itemstodisplay) < $stashlimit) {
+                    $itemstodisplay[$invitem->id] = $invitem;
+                }
             }
+
+            $totalunique = count($seen);
+            $morecount = max(0, $totalunique - $stashlimit);
+            $hasmore = $morecount > 0;
+            $morebadge = $hasmore ? '+' . $morecount : '';
 
             $allmedia = \block_playerhud\utils::get_items_display_data($itemstodisplay, $context);
 
@@ -335,6 +340,8 @@ class widget implements renderable, templatable {
             'has_claimable_quests' => $hasclaimable,
             'has_unread_chapters' => $hasunreadchapters,
             'items' => $recentitems,
+            'hasmore'  => $hasmore,
+            'morebadge' => $morebadge,
             'ranking' => $rankdata,
             'hasgroup'     => $groupinfo !== null,
             'groupbadge'   => $groupinfo ? $groupinfo->badge : '',

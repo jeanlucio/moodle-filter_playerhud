@@ -89,6 +89,35 @@ Optional extension:
 
 ---
 
+### 🧪 Automated Tests
+
+The filter ships with unit/integration (PHPUnit) and browser acceptance (Behat) tests, executed on every CI push.
+
+#### PHPUnit — Unit & Integration Tests
+
+| Test file | Cases | What is covered |
+|-----------|------:|----------------|
+| `filter_test.php` | 3 | Shortcode parsing, zero N+1 queries on multiple drops, drop visibility when gamification is paused |
+| **Total** | **3** | |
+
+```bash
+vendor/bin/phpunit --testsuite filter_playerhud
+```
+
+#### Behat — Acceptance Tests
+
+| Feature file | Scenarios | What is covered |
+|--------------|----------:|----------------|
+| `filter_playerhud_modals.feature` | 5 | AJAX collect without redirect, item detail from widget stash, HTML rendering in modal, no raw placeholders, duplicate-modal guard |
+| **Total** | **5** | |
+
+```bash
+php admin/tool/behat/cli/init.php
+vendor/bin/behat --tags=@filter_playerhud --profile=chrome
+```
+
+---
+
 ## 📄 License / Licença
 
 This project is licensed under the **GNU General Public License v3 (GPLv3)**.
@@ -172,6 +201,35 @@ Extensão opcional:
 * Validação no servidor do tempo de recarga e limites de coleta
 * Interação segura via API externa do Moodle
 * Compatível com serviços mobile do Moodle
+
+---
+
+### 🧪 Testes Automatizados
+
+O filtro inclui testes unitários/integração (PHPUnit) e de aceitação em navegador (Behat), executados a cada push de CI.
+
+#### PHPUnit — Testes Unitários e de Integração
+
+| Arquivo de teste | Casos | O que é coberto |
+|-----------------|------:|----------------|
+| `filter_test.php` | 3 | Parsing de shortcode, zero queries N+1 com múltiplos drops, visibilidade de drops com gamificação pausada |
+| **Total** | **3** | |
+
+```bash
+vendor/bin/phpunit --testsuite filter_playerhud
+```
+
+#### Behat — Testes de Aceitação
+
+| Arquivo de feature | Cenários | O que é coberto |
+|-------------------|--------:|----------------|
+| `filter_playerhud_modals.feature` | 5 | Coleta AJAX sem redirecionamento, detalhe do item via widget stash, renderização HTML no modal, sem placeholders brutos, proteção contra modal duplicado |
+| **Total** | **5** | |
+
+```bash
+php admin/tool/behat/cli/init.php
+vendor/bin/behat --tags=@filter_playerhud --profile=chrome
+```
 
 ---
 

@@ -161,6 +161,9 @@
                          {{^isimage}}<span class="ph-emoji" aria-hidden="true">{{content}}</span>{{/isimage}}
                     </div>
                 {{/items}}
+                {{#hasmore}}
+                <div class="ph-mini-item ph-stash-more" aria-hidden="true">{{morebadge}}</div>
+                {{/hasmore}}
                 {{^items}}
                     <span class="small text-muted align-self-center">
                         {{#str}} items, filter_playerhud {{/str}} {{#str}} empty, filter_playerhud {{/str}}
