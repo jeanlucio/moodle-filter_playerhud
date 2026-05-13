@@ -124,6 +124,12 @@ div.modal.ph-z-index-high {
 // .ph-filter-char-modal is the char-card modal from widget.mustache (dynamic ID),
 // also hoisted to body. Both use <span>&times;</span> as the visible X so that
 // it works in Bootstrap 4 (Moodle 4.5) and Bootstrap 5 (Moodle 5.1).
+// Badge row inside the item detail modal (hoisted to body, gap-2 is BS5-only).
+#phModalDropStatsF,
+#phModalDropStatsView {
+    gap: 0.5rem;
+}
+
 #phItemModalFilter,
 .ph-filter-char-modal {
     .btn-close {

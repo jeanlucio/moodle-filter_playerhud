@@ -204,6 +204,7 @@ a.ph-link-overlay {
 
 .ph-item-details-trigger .visually-hidden,
 .ph-action-collect .visually-hidden,
+.ph-drop-card-container .visually-hidden,
 .ph-drop-image-container .visually-hidden,
 .ph-drop-trigger-area .visually-hidden {
     position: absolute;
@@ -291,6 +292,9 @@ div.playerhud-widget-container.playerhud-widget-container div.ph-widget-center {
     justify-content: center;
     padding: 1rem 1.5rem;
     min-width: 0;
+}
+div.playerhud-widget-container.playerhud-widget-container div.ph-widget-center .ph-help-trigger + .ph-help-trigger {
+    margin-inline-start: 0.25rem;
 }
 div.playerhud-widget-container.playerhud-widget-container div.ph-widget-center h4.ph-widget-name,
 div.playerhud-widget-container.playerhud-widget-container div.ph-widget-center h5.ph-widget-name,
@@ -823,6 +827,11 @@ div.modal.ph-modal-zindex {
 
 div.modal.ph-z-index-high {
     z-index: 10500;
+}
+
+#phModalDropStatsF,
+#phModalDropStatsView {
+    gap: 0.5rem;
 }
 
 #phItemModalFilter .btn-close,

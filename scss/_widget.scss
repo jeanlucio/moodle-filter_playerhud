@@ -73,6 +73,11 @@ div.playerhud-widget-container.playerhud-widget-container {
         padding: 1rem 1.5rem;
         min-width: 0;
 
+        // BS4 fallback: gap-1 is BS5-only; use adjacent sibling margin instead.
+        .ph-help-trigger + .ph-help-trigger {
+            margin-inline-start: 0.25rem;
+        }
+
         h4.ph-widget-name,
         h5.ph-widget-name,
         div.ph-widget-name {
