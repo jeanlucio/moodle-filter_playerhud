@@ -4,7 +4,7 @@
 ![Moodle](https://img.shields.io/badge/Moodle-4.5%2B-orange?style=flat-square&logo=moodle&logoColor=white)
 ![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Stable-green?style=flat-square)
-[![PlayerHUD Ecosystem](https://img.shields.io/badge/PlayerHUD-Ecosystem-6f42c1?style=flat-square&logo=gamepad&logoColor=white)](https://github.com/jeanlucio/moodle-block_playerhud)
+[![PlayerGames Ecosystem](https://img.shields.io/badge/PlayerGames-Ecosystem-6f42c1?style=flat-square&logo=gamepad&logoColor=white)](https://moodle.org/plugins/browse.php?list=contributor&id=3970322)
 ![Role](https://img.shields.io/badge/Role-Content_Integration-0d6efd?style=flat-square)
 
 [English](#english) | [Português](#português)
@@ -30,17 +30,18 @@ This filter allows teachers to embed interactive drop elements within pages, lab
 
 ---
 
-### 🔗 Part of the PlayerHUD Ecosystem
+### 🕹️ Part of the PlayerGames Ecosystem
 
-This plugin works together with:
+This plugin is part of the **PlayerGames** gamification ecosystem. Together, these plugins transform Moodle into an immersive experience:
 
 * **PlayerHUD Block (Required)**
   👉 https://github.com/jeanlucio/moodle-block_playerhud
 
-Optional extension:
-
-* **PlayerHUD Availability Condition**
+* **PlayerHUD Availability Restriction**
   👉 https://github.com/jeanlucio/moodle-availability_playerhud
+
+* **PlayerGroup:** Lets students autonomously form their own groups directly from the activity page — no teacher intervention needed.
+  👉 https://github.com/jeanlucio/moodle-mod_playergroup
 
 ---
 
@@ -145,17 +146,18 @@ Esse filtro possibilita que o professor incorpore elementos interativos dentro d
 
 ---
 
-### 🔗 Parte do Ecossistema PlayerHUD
+### 🕹️ Parte do Ecossistema PlayerGames
 
-Este plugin funciona em conjunto com:
+Este plugin faz parte do ecossistema de gamificação **PlayerGames**. Juntos, esses plugins transformam o Moodle em uma experiência imersiva:
 
 * **Bloco PlayerHUD (Obrigatório)**
   👉 https://github.com/jeanlucio/moodle-block_playerhud
 
-Extensão opcional:
-
 * **Restrição de Acesso PlayerHUD**
   👉 https://github.com/jeanlucio/moodle-availability_playerhud
+
+* **PlayerGroup:** Permite que os alunos formem seus próprios grupos de forma autônoma diretamente na página da atividade — sem necessidade de intervenção do professor.
+  👉 https://github.com/jeanlucio/moodle-mod_playergroup
 
 ---
 
