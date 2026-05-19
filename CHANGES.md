@@ -1,5 +1,15 @@
 # Changes
 
+## v1.4.1 (2026051901)
+
+- Fix: `aria-label` misuse warnings in widget.mustache — added `role="img"` to
+  the inline karma `<span>` (label differs from visible text); removed redundant
+  `aria-label` from the karma `<div>` in the modal body (visible text is identical).
+
+## v1.4.0 (2026051501)
+
+- Add: declare supported Moodle versions [405, 502] in version.php.
+
 ## v1.3.5 (2026051301)
 
 - Add: widget stash limited to 5 unique items; +N overflow badge appears when
