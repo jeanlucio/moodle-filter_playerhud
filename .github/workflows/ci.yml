@@ -31,19 +31,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # O Segredo do Moodle HQ: As checagens estáticas (runchecks: 'all') rodam APENAS na versão mais estável e retrocompatível.
-          - {moodle-branch: 'MOODLE_405_STABLE', php: '8.2', database: 'pgsql', runchecks: 'all'}
-          - {moodle-branch: 'MOODLE_405_STABLE', php: '8.2', database: 'mariadb'}
-
-          # Para as versões mais novas, rodamos apenas os testes funcionais (PHPUnit e Behat)
+          - {moodle-branch: 'MOODLE_502_STABLE', php: '8.4', database: 'pgsql', runchecks: 'all'}
+          - {moodle-branch: 'MOODLE_502_STABLE', php: '8.3', database: 'mariadb'}
+          - {moodle-branch: 'MOODLE_501_STABLE', php: '8.3', database: 'pgsql'}
+          - {moodle-branch: 'MOODLE_501_STABLE', php: '8.2', database: 'mariadb'}
           - {moodle-branch: 'MOODLE_500_STABLE', php: '8.2', database: 'pgsql'}
           - {moodle-branch: 'MOODLE_500_STABLE', php: '8.2', database: 'mariadb'}
-
-          - {moodle-branch: 'MOODLE_501_STABLE', php: '8.3', database: 'pgsql'}
-          - {moodle-branch: 'MOODLE_501_STABLE', php: '8.3', database: 'mariadb'}
-
-          - {moodle-branch: 'MOODLE_502_STABLE', php: '8.3', database: 'pgsql'}
-          - {moodle-branch: 'MOODLE_502_STABLE', php: '8.3', database: 'mariadb'}
+          - {moodle-branch: 'MOODLE_405_STABLE', php: '8.2', database: 'pgsql'}
+          - {moodle-branch: 'MOODLE_405_STABLE', php: '8.2', database: 'mariadb'}
 
     steps:
       - name: Check out repository code
@@ -69,10 +64,7 @@ jobs:
 
       - name: Install moodle-plugin-ci
         run: |
-          # Adiciona a dependência do bloco de forma nativa e segura
           moodle-plugin-ci add-plugin jeanlucio/moodle-block_playerhud
-
-          # Instala o plugin raiz (filtro)
           moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
         env:
           DB: ${{ matrix.database }}
@@ -96,7 +88,7 @@ jobs:
         run: moodle-plugin-ci phpdoc --max-warnings 0
 
       - name: Validating
-        if: ${{ !cancelled() && matrix.runchecks == 'all' }}
+        if: ${{ !cancelled() }}
         run: moodle-plugin-ci validate
 
       - name: Check upgrade savepoints
