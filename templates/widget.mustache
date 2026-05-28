@@ -162,7 +162,11 @@
                     </div>
                 {{/items}}
                 {{#hasmore}}
-                <div class="ph-mini-item ph-stash-more" aria-hidden="true">{{morebadge}}</div>
+                <div class="ph-mini-item ph-stash-more"
+                     role="button"
+                     tabindex="0"
+                     aria-label="{{morebadge}}"
+                     data-overflow="{{overflowjson}}">{{morebadge}}</div>
                 {{/hasmore}}
                 {{^items}}
                     <span class="small text-muted align-self-center">

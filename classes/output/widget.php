@@ -131,8 +131,10 @@ class widget implements renderable, templatable {
         if ($enableitems) {
             $rawinventory = \block_playerhud\game::get_inventory($USER->id, $this->instance->id);
             $stashlimit = 5;
+            $overflowlimit = 20;
             $seen = [];
             $itemstodisplay = [];
+            $overflowdisplay = [];
 
             foreach ($rawinventory as $invitem) {
                 if (in_array($invitem->id, $seen)) {
@@ -141,6 +143,8 @@ class widget implements renderable, templatable {
                 $seen[] = $invitem->id;
                 if (count($itemstodisplay) < $stashlimit) {
                     $itemstodisplay[$invitem->id] = $invitem;
+                } else if (count($overflowdisplay) < $overflowlimit) {
+                    $overflowdisplay[$invitem->id] = $invitem;
                 }
             }
 
@@ -149,7 +153,11 @@ class widget implements renderable, templatable {
             $hasmore = $morecount > 0;
             $morebadge = $hasmore ? '+' . $morecount : '';
 
-            $allmedia = \block_playerhud\utils::get_items_display_data($itemstodisplay, $context);
+            // Single bulk call covers both stash and overflow items.
+            $allmedia = \block_playerhud\utils::get_items_display_data(
+                $itemstodisplay + $overflowdisplay,
+                $context
+            );
 
             foreach ($itemstodisplay as $invitem) {
                 $media = $allmedia[$invitem->id];
@@ -165,6 +173,21 @@ class widget implements renderable, templatable {
                     'date' => userdate($invitem->collecteddate, get_string('strftimedatefullshort', 'langconfig')),
                     'timestamp' => $invitem->collecteddate,
                 ];
+            }
+
+            // Build JSON for the overflow popover (+N badge).
+            $overflowjson = '';
+            if (!empty($overflowdisplay)) {
+                $overflowjsonitems = [];
+                foreach ($overflowdisplay as $oid => $ovitem) {
+                    $m = $allmedia[$oid] ?? ['is_image' => false, 'url' => '', 'content' => ''];
+                    $overflowjsonitems[] = [
+                        'n' => format_string($ovitem->name),
+                        'i' => (int)(bool)$m['is_image'],
+                        'u' => $m['is_image'] ? $m['url'] : strip_tags($m['content']),
+                    ];
+                }
+                $overflowjson = json_encode($overflowjsonitems);
             }
         }
 
@@ -340,8 +363,9 @@ class widget implements renderable, templatable {
             'has_claimable_quests' => $hasclaimable,
             'has_unread_chapters' => $hasunreadchapters,
             'items' => $recentitems,
-            'hasmore'  => $hasmore,
-            'morebadge' => $morebadge,
+            'hasmore'    => $hasmore,
+            'morebadge'  => $morebadge,
+            'overflowjson' => $overflowjson ?? '',
             'ranking' => $rankdata,
             'hasgroup'     => $groupinfo !== null,
             'groupbadge'   => $groupinfo ? $groupinfo->badge : '',

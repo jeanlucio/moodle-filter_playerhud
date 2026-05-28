@@ -395,4 +395,61 @@ div.playerhud-widget-container.playerhud-widget-container {
         border-style: dashed;
         cursor: default;
     }
+
+    div.ph-stash-more[data-overflow] {
+        cursor: pointer;
+
+        &:hover {
+            border-color: var(--primary, #0f6cbf);
+            color: var(--primary, #0f6cbf);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--primary, #0f6cbf);
+            outline-offset: 2px;
+        }
+    }
+}
+
+// Overflow popover card — appended to <body>, cannot be scoped to the widget.
+// Duplicated here because the filter may be active on pages without block_playerhud CSS.
+#ph-overflow-card {
+    position: fixed;
+    z-index: 10600;
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--gray-200, #e9ecef);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    padding: 0.5rem;
+    max-width: 220px;
+
+    .ph-overflow-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .ph-overflow-thumb {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+        background: var(--card-bg, #fff);
+        border: 1px solid var(--gray-300, #dee2e6);
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .ph-overflow-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .ph-overflow-emoji {
+        font-size: 1.2rem;
+        line-height: 1;
+    }
 }
