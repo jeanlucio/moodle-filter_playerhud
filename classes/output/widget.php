@@ -336,11 +336,23 @@ class widget implements renderable, templatable {
             );
         }
 
+        // Build user picture (check for equipped avatar).
+        $avatarid = (int) get_user_preferences('block_playerhud_avatar_' . $this->instance->id, 0);
+        if ($avatarid > 0) {
+            $avatarctx  = \context_block::instance((int)$this->instance->id);
+            $avataritem = \block_playerhud\game::get_avatar_item((int)$this->instance->id, $avatarid);
+            $userpicture = $avataritem
+                ? \block_playerhud\utils::get_avatar_html($avataritem, $avatarctx, $output)
+                : $output->user_picture($USER, ['size' => 75]);
+        } else {
+            $userpicture = $output->user_picture($USER, ['size' => 75]);
+        }
+
         return [
             'is_active' => true,
             'is_app' => false,
             'char_modal_id' => 'ph-char-modal-' . $this->instance->id,
-            'userpicture' => $output->user_picture($USER, ['size' => 75]),
+            'userpicture' => $userpicture,
             'fullname' => fullname($USER),
             'level_class' => $stats['level_class'],
             'level_display' => $stats['level'] . '/' . $stats['max_levels'],
