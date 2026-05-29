@@ -276,6 +276,8 @@ div.playerhud-widget-container.playerhud-widget-container div.ph-widget-avatar .
     display: block;
     -o-object-fit: cover;
     object-fit: cover;
+    flex-shrink: 0;
+    aspect-ratio: 1/1;
     width: 75px;
     height: 75px;
     border: 3px solid var(--light, #fff);
