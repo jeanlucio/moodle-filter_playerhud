@@ -1,5 +1,11 @@
 # Changes
 
+## v1.5.0 (2026060400)
+
+- Add: filter widget avatar now displays the equipped item image (or emoji) instead
+  of the Moodle user profile picture.
+- Add: +N overflow badge in the widget stash now opens a popover listing the hidden items.
+
 ## v1.4.1 (2026051901)
 
 - Fix: `aria-label` misuse warnings in widget.mustache — added `role="img"` to
