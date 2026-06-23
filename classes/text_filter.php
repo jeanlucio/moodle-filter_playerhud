@@ -165,7 +165,11 @@ class text_filter extends \moodle_text_filter {
             // Register strings via strings_for_js so filter_collect.js reads them
             // via M.util.get_string() with no AMD argument overhead.
             if (isset($PAGE) && $PAGE->requires) {
-                $PAGE->requires->data_for_js('block_playerhud_filter', ['modalsHtml' => $modalshtml]);
+                $levelupimg = (new \moodle_url('/blocks/playerhud/pix/huddy/levelup.png'))->out(false);
+                $PAGE->requires->data_for_js('block_playerhud_filter', [
+                    'modalsHtml' => $modalshtml,
+                    'levelupImg' => $levelupimg,
+                ]);
                 $PAGE->requires->strings_for_js([
                     'collected',
                     'respawntime',
@@ -175,6 +179,8 @@ class text_filter extends \moodle_text_filter {
                     'error_connection',
                     'last_collected',
                     'level',
+                    'levelup_subtitle',
+                    'levelup_title',
                     'xp',
                     'no_description',
                 ], 'block_playerhud');
