@@ -167,10 +167,12 @@ class text_filter extends \moodle_text_filter {
             if (isset($PAGE) && $PAGE->requires) {
                 $levelupimg = (new \moodle_url('/blocks/playerhud/pix/huddy/levelup.png'))->out(false);
                 $coinimg = (new \moodle_url('/blocks/playerhud/pix/huddy/coins.png'))->out(false);
+                $winimg = (new \moodle_url('/blocks/playerhud/pix/huddy/achievement.png'))->out(false);
                 $PAGE->requires->data_for_js('block_playerhud_filter', [
                     'modalsHtml' => $modalshtml,
                     'levelupImg' => $levelupimg,
                     'coinImg'    => $coinimg,
+                    'winImg'     => $winimg,
                 ]);
                 $PAGE->requires->strings_for_js([
                     'collected',
@@ -185,6 +187,8 @@ class text_filter extends \moodle_text_filter {
                     'levelup_title',
                     'coin_intro_desc',
                     'coin_intro_title',
+                    'win_desc',
+                    'win_title',
                     'xp',
                     'no_description',
                 ], 'block_playerhud');
