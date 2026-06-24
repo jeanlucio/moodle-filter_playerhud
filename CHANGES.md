@@ -1,5 +1,11 @@
 # Changes
 
+## v1.6.0 (2026062400)
+
+- Add: collecting an item through the in-text widget now triggers the milestone
+  celebration popups (level-up, the first PlayerCoin and beating the game) with the
+  Huddy mascot, matching the block. Mascot art is served as WebP.
+
 ## v1.5.0 (2026060400)
 
 - Add: filter widget avatar now displays the equipped item image (or emoji) instead
