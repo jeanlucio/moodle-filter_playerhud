@@ -165,9 +165,9 @@ class text_filter extends \moodle_text_filter {
             // Register strings via strings_for_js so filter_collect.js reads them
             // via M.util.get_string() with no AMD argument overhead.
             if (isset($PAGE) && $PAGE->requires) {
-                $levelupimg = (new \moodle_url('/blocks/playerhud/pix/huddy/levelup.png'))->out(false);
-                $coinimg = (new \moodle_url('/blocks/playerhud/pix/huddy/coins.png'))->out(false);
-                $winimg = (new \moodle_url('/blocks/playerhud/pix/huddy/achievement.png'))->out(false);
+                $levelupimg = (new \moodle_url('/blocks/playerhud/pix/huddy/levelup.webp'))->out(false);
+                $coinimg = (new \moodle_url('/blocks/playerhud/pix/huddy/coins.webp'))->out(false);
+                $winimg = (new \moodle_url('/blocks/playerhud/pix/huddy/achievement.webp'))->out(false);
                 $PAGE->requires->data_for_js('block_playerhud_filter', [
                     'modalsHtml' => $modalshtml,
                     'levelupImg' => $levelupimg,
