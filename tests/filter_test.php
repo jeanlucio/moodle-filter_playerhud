@@ -17,7 +17,9 @@
 namespace filter_playerhud;
 
 use advanced_testcase;
+use core_useragent;
 use filter_playerhud\output\assets;
+use filter_playerhud\output\widget;
 use filter_playerhud\privacy\provider;
 use filter_playerhud\text_filter;
 
@@ -477,5 +479,88 @@ final class filter_test extends advanced_testcase {
         $this->assertStringNotContainsString('[PLAYERHUD_TRADE', $filteredtext);
         $this->assertStringNotContainsString('ph-trade-widget-card', $filteredtext);
         $this->assertEquals('Offer:  here.', $filteredtext);
+    }
+
+    /**
+     * When gamification is paused, the widget renders an opt-in button, not the HUD.
+     *
+     * @covers \filter_playerhud\output\widget::export_for_template
+     * @covers \filter_playerhud\output\widget::render
+     */
+    public function test_widget_optin_when_paused(): void {
+        global $DB, $PAGE, $COURSE, $USER;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid, $user] = $this->setup_environment();
+        $PAGE->set_url('/course/view.php', ['id' => $COURSE->id]);
+
+        $player = $DB->get_record('block_playerhud_user', [
+            'blockinstanceid' => $instanceid,
+            'userid'          => $USER->id,
+        ]);
+        $player->enable_gamification = 0;
+        $DB->update_record('block_playerhud_user', $player);
+
+        $instance = $DB->get_record('block_instances', ['id' => $instanceid]);
+        $widget = new widget($instance, $COURSE->id);
+        $data = $widget->export_for_template($PAGE->get_renderer('core'));
+
+        $this->assertFalse($data['is_active']);
+        $this->assertArrayHasKey('optin_url', $data);
+
+        $html = $widget->render();
+        $this->assertStringContainsString('btn-primary', $html);
+        $this->assertStringContainsString(get_string('click_to_enable', 'filter_playerhud'), $html);
+        $this->assertStringNotContainsString('ph-char-modal', $html);
+    }
+
+    /**
+     * An active player renders the full HUD widget with their profile data.
+     *
+     * @covers \filter_playerhud\output\widget::export_for_template
+     * @covers \filter_playerhud\output\widget::render
+     */
+    public function test_widget_renders_active(): void {
+        global $DB, $PAGE, $COURSE;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid, $user] = $this->setup_environment();
+        $PAGE->set_url('/course/view.php', ['id' => $COURSE->id]);
+
+        $instance = $DB->get_record('block_instances', ['id' => $instanceid]);
+        $widget = new widget($instance, $COURSE->id);
+        $data = $widget->export_for_template($PAGE->get_renderer('core'));
+
+        $this->assertTrue($data['is_active']);
+        $this->assertFalse($data['is_app']);
+        $this->assertEquals(fullname($user), $data['fullname']);
+        $this->assertArrayHasKey('level_display', $data);
+
+        $html = $widget->render();
+        $this->assertStringContainsString(fullname($user), $html);
+    }
+
+    /**
+     * Inside the Moodle app, the widget returns a redirect to the backpack view.
+     *
+     * @covers \filter_playerhud\output\widget::export_for_template
+     */
+    public function test_widget_app_redirect(): void {
+        global $DB, $PAGE, $COURSE;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+        $PAGE->set_url('/course/view.php', ['id' => $COURSE->id]);
+
+        // Force Moodle app detection through the user agent.
+        core_useragent::instance(true, 'Mozilla/5.0 (Linux; Android) MoodleMobile');
+        $this->assertTrue(core_useragent::is_moodle_app());
+
+        $instance = $DB->get_record('block_instances', ['id' => $instanceid]);
+        $widget = new widget($instance, $COURSE->id);
+        $data = $widget->export_for_template($PAGE->get_renderer('core'));
+
+        core_useragent::instance(true, '');
+
+        $this->assertTrue($data['is_app']);
+        $this->assertTrue($data['is_active']);
+        $this->assertStringContainsString('/blocks/playerhud/view.php', $data['url_redirect']);
     }
 }
