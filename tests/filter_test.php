@@ -17,6 +17,8 @@
 namespace filter_playerhud;
 
 use advanced_testcase;
+use filter_playerhud\output\assets;
+use filter_playerhud\privacy\provider;
 use filter_playerhud\text_filter;
 
 /**
@@ -223,5 +225,257 @@ final class filter_test extends advanced_testcase {
         $this->assertStringNotContainsString('[PLAYERHUD_DROP code=HIDE123]', $filteredtext);
         $this->assertStringNotContainsString('ph-action-collect', $filteredtext);
         $this->assertEquals('Here is a drop:  hidden.', $filteredtext);
+    }
+
+    /**
+     * Helper to insert a drop row for a given item.
+     *
+     * @param int $instanceid The block instance ID.
+     * @param int $itemid The item ID the drop yields.
+     * @param string $code The drop collection code.
+     * @param int $maxusage Maximum number of collections (0 = unlimited).
+     * @param int $respawntime Cooldown in seconds before recollection (0 = none).
+     * @return int The new drop ID.
+     */
+    protected function create_drop(
+        int $instanceid,
+        int $itemid,
+        string $code,
+        int $maxusage = 1,
+        int $respawntime = 0
+    ): int {
+        global $DB;
+
+        $drop = new \stdClass();
+        $drop->blockinstanceid = $instanceid;
+        $drop->itemid = $itemid;
+        $drop->name = 'Drop ' . $code;
+        $drop->maxusage = $maxusage;
+        $drop->respawntime = $respawntime;
+        $drop->code = $code;
+        $drop->timecreated = time();
+        $drop->timemodified = time();
+
+        return $DB->insert_record('block_playerhud_drops', $drop);
+    }
+
+    /**
+     * The null provider must return the documented reason string.
+     *
+     * @covers \filter_playerhud\privacy\provider::get_reason
+     */
+    public function test_provider_get_reason(): void {
+        $this->assertEquals('privacy:metadata', provider::get_reason());
+    }
+
+    /**
+     * Guests (and the site front page) must never see PlayerHUD shortcodes.
+     *
+     * @covers \filter_playerhud\text_filter::filter
+     */
+    public function test_filter_strips_for_guest(): void {
+        $this->resetAfterTest(true);
+        $this->setGuestUser();
+
+        $context = \context_system::instance();
+        $filter = new text_filter($context, []);
+        $inputtext = 'A [PLAYERHUD_WIDGET] and a [PLAYERHUD_DROP code=ABC123] and a '
+            . '[PLAYERHUD_TRADE code=XYZ789] here.';
+        $filteredtext = $filter->filter($inputtext);
+
+        $this->assertStringNotContainsString('[PLAYERHUD_WIDGET]', $filteredtext);
+        $this->assertStringNotContainsString('[PLAYERHUD_DROP', $filteredtext);
+        $this->assertStringNotContainsString('[PLAYERHUD_TRADE', $filteredtext);
+        $this->assertStringNotContainsString('ph-action-collect', $filteredtext);
+    }
+
+    /**
+     * In a course without a PlayerHUD block instance, shortcodes must be stripped.
+     *
+     * @covers \filter_playerhud\text_filter::filter
+     */
+    public function test_filter_strips_when_no_block(): void {
+        global $COURSE;
+        $this->resetAfterTest(true);
+
+        $course = $this->getDataGenerator()->create_course();
+        $COURSE = $course;
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $course->id, 'student');
+        $this->setUser($user);
+
+        $context = \context_course::instance($course->id);
+        $filter = new text_filter($context, []);
+        $inputtext = 'Drop here: [PLAYERHUD_DROP code=NOBLOCK] and widget [PLAYERHUD_WIDGET].';
+        $filteredtext = $filter->filter($inputtext);
+
+        $this->assertStringNotContainsString('[PLAYERHUD_DROP', $filteredtext);
+        $this->assertStringNotContainsString('[PLAYERHUD_WIDGET]', $filteredtext);
+        $this->assertStringNotContainsString('ph-action-collect', $filteredtext);
+    }
+
+    /**
+     * The modals fragment must render some HTML for the page assets.
+     *
+     * @covers \filter_playerhud\output\assets::get_modals_html
+     */
+    public function test_assets_modals_html(): void {
+        $this->resetAfterTest(true);
+
+        $html = (new assets())->get_modals_html();
+
+        $this->assertNotEmpty($html);
+        $this->assertStringContainsString('modal', $html);
+    }
+
+    /**
+     * A secret drop that was never collected must be rendered as a mystery item.
+     *
+     * @covers \filter_playerhud\output\render::render_drop
+     */
+    public function test_render_drop_secret_item(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+
+        $secretitem = new \stdClass();
+        $secretitem->blockinstanceid = $instanceid;
+        $secretitem->name = 'Real Name';
+        $secretitem->xp = 50;
+        $secretitem->image = '';
+        $secretitem->description = '';
+        $secretitem->enabled = 1;
+        $secretitem->secret = 1;
+        $secretitem->timecreated = time();
+        $secretitem->timemodified = time();
+        $secretitemid = $DB->insert_record('block_playerhud_items', $secretitem);
+
+        $this->create_drop($instanceid, $secretitemid, 'SECRET1');
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter('Hidden: [PLAYERHUD_DROP code=SECRET1]');
+
+        // The real item name must be hidden; the mystery placeholders must show instead.
+        $this->assertStringNotContainsString('Real Name', $filteredtext);
+        $this->assertStringContainsString(get_string('mysteryitem', 'filter_playerhud'), $filteredtext);
+        $this->assertStringContainsString('data-xp="???"', $filteredtext);
+    }
+
+    /**
+     * A drop whose usage limit is reached must render disabled, with no collect action.
+     *
+     * @covers \filter_playerhud\output\render::render_drop
+     */
+    public function test_render_drop_limit_reached(): void {
+        global $DB, $USER;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+
+        $dropid = $this->create_drop($instanceid, $itemid, 'LIMIT1', 1, 0);
+
+        // Record one collection so count (1) reaches maxusage (1).
+        $inv = new \stdClass();
+        $inv->userid = $USER->id;
+        $inv->itemid = $itemid;
+        $inv->dropid = $dropid;
+        $inv->source = 'map';
+        $inv->timecreated = time();
+        $DB->insert_record('block_playerhud_inventory', $inv);
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter('Done: [PLAYERHUD_DROP code=LIMIT1]');
+
+        $this->assertStringContainsString('ph-owned', $filteredtext);
+        $this->assertStringContainsString('aria-disabled="true"', $filteredtext);
+        $this->assertStringNotContainsString('ph-action-collect', $filteredtext);
+    }
+
+    /**
+     * A recently collected drop still within its respawn window must render in cooldown.
+     *
+     * @covers \filter_playerhud\output\render::render_drop
+     */
+    public function test_render_drop_cooldown(): void {
+        global $DB, $USER;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+
+        // Unlimited usage with an hour-long respawn, collected just now.
+        $dropid = $this->create_drop($instanceid, $itemid, 'COOL1', 0, HOURSECS);
+
+        $inv = new \stdClass();
+        $inv->userid = $USER->id;
+        $inv->itemid = $itemid;
+        $inv->dropid = $dropid;
+        $inv->source = 'map';
+        $inv->timecreated = time();
+        $DB->insert_record('block_playerhud_inventory', $inv);
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter('Wait: [PLAYERHUD_DROP code=COOL1]');
+
+        $this->assertStringContainsString('ph-timer', $filteredtext);
+        $this->assertStringNotContainsString('ph-action-collect', $filteredtext);
+    }
+
+    /**
+     * A valid trade code must resolve and render the trade card with its requirements.
+     *
+     * @covers \filter_playerhud\output\render::render_trade_by_code
+     * @covers \filter_playerhud\output\render::render_trade
+     */
+    public function test_render_trade_by_code_valid(): void {
+        global $DB, $PAGE, $COURSE;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+        $PAGE->set_url('/course/view.php', ['id' => $COURSE->id]);
+
+        $trade = new \stdClass();
+        $trade->blockinstanceid = $instanceid;
+        $trade->name = 'Magic Trade';
+        $trade->groupid = 0;
+        $trade->centralized = 1;
+        $trade->onetime = 0;
+        $trade->timecreated = time();
+        $tradeid = $DB->insert_record('block_playerhud_trades', $trade);
+
+        $req = new \stdClass();
+        $req->tradeid = $tradeid;
+        $req->itemid = $itemid;
+        $req->qty = 2;
+        $DB->insert_record('block_playerhud_trade_reqs', $req);
+
+        $reward = new \stdClass();
+        $reward->tradeid = $tradeid;
+        $reward->itemid = $itemid;
+        $reward->qty = 1;
+        $DB->insert_record('block_playerhud_trade_rewards', $reward);
+
+        // The public code is the first 6 hex chars of md5("{id}_{timecreated}").
+        $code = strtoupper(substr(md5($tradeid . '_' . $trade->timecreated), 0, 6));
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter("Offer: [PLAYERHUD_TRADE code={$code}]");
+
+        $this->assertStringNotContainsString('[PLAYERHUD_TRADE', $filteredtext);
+        $this->assertStringContainsString('ph-trade-widget-card', $filteredtext);
+        $this->assertStringContainsString('Magic Trade', $filteredtext);
+    }
+
+    /**
+     * An unknown trade code must render nothing (guards against ID enumeration).
+     *
+     * @covers \filter_playerhud\output\render::render_trade_by_code
+     */
+    public function test_render_trade_by_code_invalid(): void {
+        $this->resetAfterTest(true);
+        [$context, $instanceid] = $this->setup_environment();
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter('Offer: [PLAYERHUD_TRADE code=ZZZ999] here.');
+
+        $this->assertStringNotContainsString('[PLAYERHUD_TRADE', $filteredtext);
+        $this->assertStringNotContainsString('ph-trade-widget-card', $filteredtext);
+        $this->assertEquals('Offer:  here.', $filteredtext);
     }
 }
