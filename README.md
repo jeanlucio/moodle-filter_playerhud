@@ -98,8 +98,19 @@ The filter ships with unit/integration (PHPUnit) and browser acceptance (Behat) 
 
 | Test file | Cases | What is covered |
 |-----------|------:|----------------|
-| `filter_test.php` | 3 | Shortcode parsing, zero N+1 queries on multiple drops, drop visibility when gamification is paused |
-| **Total** | **3** | |
+| `filter_test.php` | 15 | Shortcode parsing · zero N+1 queries on multiple drops · drop visibility when gamification is paused · strips all shortcodes for guests and missing block · secret item mystery rendering · limit-reached and cooldown states · trade rendering by secure code (valid + invalid) · widget opt-in when paused · active HUD widget · Moodle app redirect · assets modals HTML · privacy null provider |
+| **Total** | **15** | |
+
+**Line coverage by class (PHPUnit + Xdebug):**
+
+| Class | Line coverage |
+|-------|:-------------:|
+| `output\assets` | 100% |
+| `privacy\provider` | 100% |
+| `text_filter` | 85% |
+| `output\render` | 71% |
+| `output\widget` | 74% |
+| **Overall** | **75%** |
 
 ```bash
 vendor/bin/phpunit --testsuite filter_playerhud
@@ -214,8 +225,19 @@ O filtro inclui testes unitários/integração (PHPUnit) e de aceitação em nav
 
 | Arquivo de teste | Casos | O que é coberto |
 |-----------------|------:|----------------|
-| `filter_test.php` | 3 | Parsing de shortcode, zero queries N+1 com múltiplos drops, visibilidade de drops com gamificação pausada |
-| **Total** | **3** | |
+| `filter_test.php` | 15 | Parsing de shortcode · zero queries N+1 com múltiplos drops · visibilidade de drops com gamificação pausada · remoção de shortcodes para convidados e curso sem bloco · renderização de item secreto como mistério · estados de limite atingido e cooldown · renderização de trade por código seguro (válido + inválido) · widget com opt-in pausado · widget HUD ativo · redirect no app Moodle · HTML dos modais de assets · null provider de privacidade |
+| **Total** | **15** | |
+
+**Cobertura de linhas por classe (PHPUnit + Xdebug):**
+
+| Classe | Cobertura de linhas |
+|--------|:-------------------:|
+| `output\assets` | 100% |
+| `privacy\provider` | 100% |
+| `text_filter` | 85% |
+| `output\render` | 71% |
+| `output\widget` | 74% |
+| **Total** | **75%** |
 
 ```bash
 vendor/bin/phpunit --testsuite filter_playerhud
