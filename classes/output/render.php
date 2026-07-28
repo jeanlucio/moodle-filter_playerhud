@@ -287,7 +287,11 @@ class render {
             'sesskey' => sesskey(),
         ]);
         $safename = s($displayname);
-        $htmldesc = base64_encode($displaydesc);
+        // Description is a nullable column (NOTNULL="false"); every current writer in
+        // block_playerhud coerces it to a string before insert, but base64_encode()
+        // itself does not tolerate null, so guard here against the schema's own contract
+        // rather than trusting every future writer to keep doing so.
+        $htmldesc = base64_encode($displaydesc ?? '');
         $rawimage = $media['is_image'] ? $media['url'] : strip_tags($media['content']);
         $dataattributes = 'data-name="' . $safename . '" ' .
                           'data-desc-b64="' . $htmldesc . '" ' .

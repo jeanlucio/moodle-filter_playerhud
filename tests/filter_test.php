@@ -364,6 +364,39 @@ final class filter_test extends advanced_testcase {
     }
 
     /**
+     * An item whose description column is null (the field is nullable in install.xml, even
+     * though every current writer coerces it to a string) must still render the collect
+     * card instead of crashing base64_encode() with a TypeError.
+     *
+     * @covers \filter_playerhud\output\render::render_drop
+     */
+    public function test_render_drop_null_description_does_not_crash(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+        [$context, $instanceid] = $this->setup_environment();
+
+        $item = new \stdClass();
+        $item->blockinstanceid = $instanceid;
+        $item->name = 'No Description Item';
+        $item->xp = 10;
+        $item->image = '';
+        $item->description = null;
+        $item->enabled = 1;
+        $item->secret = 0;
+        $item->timecreated = time();
+        $item->timemodified = time();
+        $itemid = $DB->insert_record('block_playerhud_items', $item);
+
+        $this->create_drop($instanceid, $itemid, 'NULLDESC1');
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter('Take: [PLAYERHUD_DROP code=NULLDESC1]');
+
+        $this->assertStringContainsString('ph-action-collect', $filteredtext);
+        $this->assertStringContainsString('data-desc-b64=""', $filteredtext);
+    }
+
+    /**
      * A drop whose usage limit is reached must render disabled, with no collect action.
      *
      * @covers \filter_playerhud\output\render::render_drop
