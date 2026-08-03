@@ -1,5 +1,25 @@
 # Changes
 
+## v1.6.1 (2026080301)
+
+- Fix: item descriptions are now sanitised with `format_text()` before reaching the
+  client, closing a stored XSS where a teacher-authored `<img onerror=...>` in a drop
+  or trade description could execute in the session of any student opening its modal.
+- Fix: the filter now enforces `block/playerhud:view` before rendering the HUD, drops
+  and trades from shortcodes, matching the capability check already applied to the
+  block's own actions (collecting, trading).
+- Fix: descriptions cleaned with `format_text()` no longer re-expand shortcodes, which
+  previously caused unbounded recursion (and a fatal request) when a description
+  contained the same `[PLAYERHUD_DROP ...]` shortcode as its own item.
+- Fix: `render_drop()` no longer crashes on a `null` item description.
+- Fix: the block's `configdata` is now deserialised with `unserialize_object()` instead
+  of a bare `unserialize()`.
+- Add: PHPUnit and Behat coverage for the fixes above (22 PHPUnit cases, 6 Behat
+  scenarios in total).
+- Update: full documentation (features, shortcode syntax, security details, test
+  breakdown) moved to a GitHub Pages site; README is now a short entry point linking
+  to it.
+
 ## v1.6.0 (2026062400)
 
 - Add: collecting an item through the in-text widget now triggers the milestone

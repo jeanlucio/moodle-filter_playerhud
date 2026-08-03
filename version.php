@@ -29,5 +29,5 @@ $plugin->version   = 2026080301;
 $plugin->requires  = 2024100700;        // Requires: Moodle 4.5+.
 $plugin->supported = [405, 502];
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v1.6.0';
+$plugin->release   = 'v1.6.1';
 $plugin->dependencies = ['block_playerhud' => 2026062400];
