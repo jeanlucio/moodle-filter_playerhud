@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Test double proving unserialize_object() blocks PHP object injection.
+ * Test double used to prove unserialize_object() never instantiates an arbitrary class.
  *
  * @package    filter_playerhud
  * @copyright  2026 Jean Lúcio
@@ -25,14 +25,15 @@
 namespace filter_playerhud;
 
 /**
- * A class smuggled through a crafted configdata payload must never be instantiated as
- * itself, so its __wakeup() side effect (simulating a POP-gadget) must never fire.
+ * A class embedded in an untrusted serialized payload must never be instantiated as
+ * itself, so this class' __wakeup() must never fire when the payload is decoded through
+ * unserialize_object().
  *
  * @package    filter_playerhud
  * @copyright  2026 Jean Lúcio
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class filter_playerhud_pwned_marker {
+class filter_playerhud_wakeup_probe {
     /** @var int Times __wakeup() has fired across the test run. */
     public static int $wakeups = 0;
 

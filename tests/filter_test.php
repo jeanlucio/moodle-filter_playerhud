@@ -26,7 +26,7 @@ use filter_playerhud\text_filter;
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->dirroot . '/filter/playerhud/tests/fixtures/pwned_marker.php');
+require_once($CFG->dirroot . '/filter/playerhud/tests/fixtures/wakeup_probe.php');
 
 /**
  * Tests for the PlayerHUD text filter.
@@ -605,11 +605,10 @@ final class filter_test extends advanced_testcase {
     }
 
     /**
-     * An item description containing an XSS payload must be cleaned with format_text()
-     * before being base64-encoded for the drop's data-desc-b64 attribute — the block's JS
-     * injects that value as live HTML on the client, so a raw description here is a stored
-     * XSS. Regression test for the finding both MDL Shield and moodle-security-audit
-     * reported against filter_playerhud v1.6.0.
+     * An item description must be cleaned with format_text() before being base64-encoded
+     * for the drop's data-desc-b64 attribute, since the block's JS injects that value as
+     * live HTML on the client — a raw description here would let an event-handler
+     * attribute execute in every student's session.
      */
     public function test_render_drop_description_is_sanitised(): void {
         global $DB;
@@ -621,7 +620,7 @@ final class filter_test extends advanced_testcase {
         $item->name = 'XSS Item';
         $item->xp = 10;
         $item->image = '';
-        $item->description = '<img src=x onerror="alert(document.cookie)">Texto seguro';
+        $item->description = '<img src=x onerror="x">Texto seguro';
         $item->enabled = 1;
         $item->secret = 0;
         $item->timecreated = time();
@@ -643,10 +642,10 @@ final class filter_test extends advanced_testcase {
     }
 
     /**
-     * A crafted configdata payload containing a serialized object of an arbitrary class
-     * must never be instantiated as that class. unserialize_object() restricts allowed
-     * classes to stdClass, so the fixture's __wakeup() (simulating a POP-gadget side
-     * effect) must never fire — a bare unserialize() would let it fire.
+     * A configdata value containing a serialized object of an arbitrary class must never
+     * be instantiated as that class. unserialize_object() restricts allowed classes to
+     * stdClass, so the probe's __wakeup() must never fire — a bare unserialize() would
+     * let it fire.
      */
     public function test_widget_configdata_rejects_arbitrary_class(): void {
         global $DB, $PAGE, $COURSE;
@@ -654,15 +653,15 @@ final class filter_test extends advanced_testcase {
         [$context, $instanceid] = $this->setup_environment();
         $PAGE->set_url('/course/view.php', ['id' => $COURSE->id]);
 
-        filter_playerhud_pwned_marker::$wakeups = 0;
-        $malicious = base64_encode(serialize(new filter_playerhud_pwned_marker()));
-        $DB->set_field('block_instances', 'configdata', $malicious, ['id' => $instanceid]);
+        filter_playerhud_wakeup_probe::$wakeups = 0;
+        $untrusted = base64_encode(serialize(new filter_playerhud_wakeup_probe()));
+        $DB->set_field('block_instances', 'configdata', $untrusted, ['id' => $instanceid]);
 
         $instance = $DB->get_record('block_instances', ['id' => $instanceid]);
         $widget = new widget($instance, $COURSE->id);
         $data = $widget->export_for_template($PAGE->get_renderer('core'));
 
-        $this->assertSame(0, filter_playerhud_pwned_marker::$wakeups);
+        $this->assertSame(0, filter_playerhud_wakeup_probe::$wakeups);
         $this->assertTrue($data['is_active']);
     }
 
@@ -676,7 +675,7 @@ final class filter_test extends advanced_testcase {
         global $OUTPUT;
         $this->resetAfterTest(true);
 
-        $payload = '<script>alert(1)</script>';
+        $payload = '<script>x</script>';
         $html = $OUTPUT->render_from_template('filter_playerhud/drop', [
             'is_card' => true,
             'is_image_media' => false,
@@ -701,7 +700,7 @@ final class filter_test extends advanced_testcase {
         global $OUTPUT;
         $this->resetAfterTest(true);
 
-        $payload = '<script>alert(1)</script>';
+        $payload = '<script>x</script>';
         $html = $OUTPUT->render_from_template('filter_playerhud/trade', [
             'trade_name' => 'Test Trade',
             'reqs' => [
@@ -722,8 +721,7 @@ final class filter_test extends advanced_testcase {
      * A user whose block/playerhud:view capability is explicitly prohibited must not see
      * the HUD, drops or trades through the filter, even though the deterministic checks
      * (login, guest, gamification) all pass. view.php, collect.php and process_trade.php
-     * already enforced this capability; the filter itself never did — a regression test
-     * for the finding from moodle-security-audit.
+     * already enforced this capability; the filter itself never did.
      */
     public function test_filter_strips_when_view_capability_prohibited(): void {
         global $DB;
