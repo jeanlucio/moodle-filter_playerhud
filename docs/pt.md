@@ -8,7 +8,7 @@ lang: pt
 ![Moodle](https://img.shields.io/badge/Moodle-4.5%2B-orange?style=flat-square&logo=moodle&logoColor=white)
 ![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Stable-green?style=flat-square)
-[![PlayerGames Ecosystem](https://img.shields.io/badge/PlayerGames-Ecosystem-6f42c1?style=flat-square&logo=gamepad&logoColor=white)](https://moodle.org/plugins/browse.php?list=contributor&id=3970322)
+[![PlayerGames Ecosystem](https://img.shields.io/badge/PlayerGames-Ecosystem-6f42c1?style=flat-square&logo=gamepad&logoColor=white)](https://jeanlucio.github.io/playergames/)
 ![Role](https://img.shields.io/badge/Role-Content_Integration-0d6efd?style=flat-square)
 
 O **Filtro PlayerHUD** é um plugin complementar obrigatório do [Bloco PlayerHUD](https://github.com/jeanlucio/moodle-block_playerhud).

@@ -1,5 +1,11 @@
 # Changes
 
+## v1.6.3 (2026080303)
+
+- Update: the PlayerGames Ecosystem badge in the README and documentation now links to
+  the ecosystem site (`jeanlucio.github.io/playergames`) instead of the old Plugins
+  Directory contributor listing.
+
 ## v1.6.2 (2026080302)
 
 - Fix: `docs/` and `.github/` are now excluded from the release archive via
