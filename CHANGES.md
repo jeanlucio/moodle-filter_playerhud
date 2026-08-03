@@ -1,5 +1,10 @@
 # Changes
 
+## v1.6.4 (2026080304)
+
+- Update: renamed an internal test fixture and softened wording in the security
+  regression test suite; no functional change, same assertions and code paths covered.
+
 ## v1.6.3 (2026080303)
 
 - Update: the PlayerGames Ecosystem badge in the README and documentation now links to
