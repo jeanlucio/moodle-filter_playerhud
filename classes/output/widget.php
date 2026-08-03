@@ -103,11 +103,11 @@ class widget implements renderable, templatable {
             ];
         }
 
-        // Load Config & Stats.
-        $config = unserialize(base64_decode($this->instance->configdata));
-        if (!$config) {
-            $config = new \stdClass();
-        }
+        // Load Config & Stats. unserialize_object() restricts the payload to stdClass,
+        // matching the ~20 call sites in block_playerhud (view.php, manage.php, etc.) and
+        // preventing PHP object injection via a crafted configdata payload; it always
+        // returns a stdClass, so no empty-config guard is needed here.
+        $config = unserialize_object(base64_decode($this->instance->configdata));
 
         $enableitems  = isset($config->enable_items) ? (bool) $config->enable_items : true;
         $enablequests = isset($config->enable_quests) ? (bool) $config->enable_quests : true;

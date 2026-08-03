@@ -251,8 +251,12 @@ class render {
             $media = ['is_image' => false, 'content' => '❓', 'url' => ''];
             $xpdisplay = '???';
         } else {
+            $context = context_block::instance($blockinstanceid);
             $displayname = format_string($data->itemname);
-            $displaydesc = $data->description;
+            // The widget stash path (widget.php) already cleans this same column with
+            // format_text() before rendering; this path skipped that step and shipped the
+            // raw HTML to the client instead, where the block's JS injects it verbatim.
+            $displaydesc = format_text($data->description ?? '', FORMAT_HTML, ['context' => $context]);
 
             if ((int)$data->maxusage === 0) {
                 $xpdisplay = '0';
@@ -267,7 +271,6 @@ class render {
             // Fetch media from cache.
             $media = self::$dropmediacache[$data->itemid] ?? null;
             if (!$media) {
-                $context = context_block::instance($blockinstanceid);
                 $fakeitem = (object)['id' => $data->itemid, 'image' => $data->image];
                 $media = \block_playerhud\utils::get_item_display_data($fakeitem, $context);
             }
@@ -287,11 +290,10 @@ class render {
             'sesskey' => sesskey(),
         ]);
         $safename = s($displayname);
-        // Description is a nullable column (NOTNULL="false"); every current writer in
-        // block_playerhud coerces it to a string before insert, but base64_encode()
-        // itself does not tolerate null, so guard here against the schema's own contract
-        // rather than trusting every future writer to keep doing so.
-        $htmldesc = base64_encode($displaydesc ?? '');
+        // The description is always a string by this point: the mystery-item branch uses
+        // get_string(), and the real-item branch coerces the nullable description column
+        // with ?? '' before format_text() (which itself never returns null).
+        $htmldesc = base64_encode($displaydesc);
         $rawimage = $media['is_image'] ? $media['url'] : strip_tags($media['content']);
         $dataattributes = 'data-name="' . $safename . '" ' .
                           'data-desc-b64="' . $htmldesc . '" ' .
@@ -339,10 +341,15 @@ class render {
     }
 
     /**
-     * Resolves a secure trade code to its ID and renders it.
-     * Prevents ID Enumeration by requiring the unguessable hash.
+     * Resolves a short lookup code to its trade ID and renders it.
      *
-     * @param string $code The 6-character secure code.
+     * The code is derived from md5($id . '_' . $timecreated), truncated to 6 hex chars —
+     * a convenience identifier for the shortcode syntax, not a security boundary. It is
+     * derivable from two low-entropy values and offline-bruteforceable; do not rely on it
+     * to gate access. The real access control lives in process_trade.php (sesskey,
+     * capability and group checks), which this method never bypasses.
+     *
+     * @param string $code The 6-character lookup code.
      * @param int $blockinstanceid The block instance ID.
      * @return string HTML content of the trade card.
      */

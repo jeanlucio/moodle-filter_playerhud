@@ -24,7 +24,7 @@ namespace filter_playerhud;
  * @copyright  2026 Jean Lúcio
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class text_filter extends \moodle_text_filter {
+class text_filter extends \core_filters\text_filter {
     /** @var bool Flag to ensure assets are injected only once per page. */
     protected static $assetsinjected = false;
 

@@ -50,6 +50,12 @@ Feature: PlayerHUD filter modal behaviour
   # Descrição do item — não deve exibir HTML raw
   # -----------------------------------------------------------------
 
+  # NOTE: "I should not see" checks rendered VISIBLE TEXT (Mink getText()), not the DOM's
+  # actual HTML/attributes. A dangerous attribute like onerror="..." never shows up as
+  # visible text whether it was safely escaped or unsafely injected as live HTML, so this
+  # scenario alone does not prove script-execution safety — it only proves that raw editor
+  # markup (e.g. an unparsed "<p dir=" from a WYSIWYG paste) does not leak as literal text.
+  # See "does not leak a script payload" below for the HTML-level regression test.
   Scenario: Item description in the modal does not render raw HTML tags
     Given "student1" has collected drop "GEM01" in course "C1"
     When I log in as "student1"
@@ -58,6 +64,38 @@ Feature: PlayerHUD filter modal behaviour
     Then the PlayerHUD item details modal is visible
     And I should not see "<p dir=" in the PlayerHUD modal
     And I should not see "style=text-align" in the PlayerHUD modal
+
+  # -----------------------------------------------------------------
+  # Descrição do item — payload de XSS não sobrevive no HTML do modal
+  # Regressão do achado HIGH (MDL Shield + moodle-security-audit) em
+  # filter_playerhud v1.6.0: render_drop() entregava a descrição crua,
+  # injetada como HTML vivo pelo JS do bloco.
+  # -----------------------------------------------------------------
+
+  # Uses .ph-drop-trigger-area, NOT .ph-item-trigger: the latter is the block sidebar
+  # stash's own trigger, bound to a separate script (view.js) whenever the block is on the
+  # page (see filter_collect.js's own guard around .ph-item-trigger) and would silently
+  # test the wrong code path. .ph-drop-trigger-area is unique to the drop card rendered by
+  # THIS plugin's render_drop() / drop.mustache, and is unconditionally bound to
+  # filter_collect.js's modal handler — the exact path that was fixed.
+  #
+  # Scoped by [data-name="Evil Gem"] rather than "the first" match: the Background above
+  # already creates its own GEM01 drop card on the same page, and "first .ph-drop-trigger-
+  # area element" silently clicked THAT one instead of this scenario's own card in an
+  # earlier version of this test — a false pass, since GEM01 has no description at all.
+  Scenario: Item description with a script payload does not leak into the modal HTML
+    Given I log in as "teacher1"
+    And I am on "Course 1" course homepage
+    And a PlayerHUD item "Evil Gem" with drop code "XSSGEM" and description "<img src=x onerror='window.playerhudXssFired=true'>Safe text" exists in course "C1"
+    And a label with shortcode "[PLAYERHUD_DROP code=XSSGEM]" exists in the course
+    And I log out
+    And "student1" has collected drop "XSSGEM" in course "C1"
+    When I log in as "student1"
+    And I am on "Course 1" course homepage
+    And I click on the first "[data-name='Evil Gem'] .ph-drop-trigger-area" element
+    Then the PlayerHUD item details modal is visible
+    And the PlayerHUD filter modal description HTML should not contain "onerror"
+    And the PlayerHUD filter modal description HTML should not contain "<script"
 
   # -----------------------------------------------------------------
   # Strings — não devem mostrar placeholders [[...]]

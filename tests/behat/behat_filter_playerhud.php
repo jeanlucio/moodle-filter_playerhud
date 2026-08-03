@@ -28,10 +28,51 @@
 /**
  * Custom Behat step definitions for the PlayerHUD filter.
  *
- * All step definitions shared with block_playerhud (label creation, modal
- * assertions, URL tracking, etc.) are declared in behat_block_playerhud and
- * are globally available because both plugins are installed together during CI.
- * This class is intentionally empty to avoid duplicate step definition errors.
+ * Most step definitions shared with block_playerhud (label creation, generic modal
+ * assertions, URL tracking, etc.) are declared in behat_block_playerhud and are globally
+ * available because both plugins are installed together during CI.
+ *
+ * This class holds only steps that inspect the item-description modal populated by
+ * filter_collect.js — kept here rather than in the block's step file so ownership of the
+ * assertion matches ownership of the vulnerability class it guards against (this plugin's
+ * render_drop(), not the block's own rendering).
  */
 class behat_filter_playerhud extends behat_base {
+    /**
+     * Asserts that the raw HTML of the item description modal does NOT contain the given
+     * substring.
+     *
+     * Deliberately inspects getHtml() (the DOM markup/attributes), not getText() (rendered
+     * visible text) — the two are not equivalent for XSS purposes. A dangerous attribute
+     * like onerror="..." never shows up as visible text either way, so a text-based
+     * assertion cannot tell a sanitised description from a live-HTML-injected one; only
+     * inspecting the actual markup does. See "does not render raw HTML tags" below for what
+     * a text-based assertion in this same feature does and does not prove.
+     *
+     * The description container's id suffix depends on which modal root filter_collect.js's
+     * own getModalElements() finds first (#phItemModalView / #ph-item-modal-view from
+     * block_playerhud when the block is on the page, or this plugin's own #phItemModalFilter
+     * otherwise) — so both candidate ids are tried, mirroring that same resolution order.
+     *
+     * @param string $text Substring that must be absent from the modal description's HTML.
+     * @Then the PlayerHUD filter modal description HTML should not contain :text
+     */
+    public function the_playerhud_filter_modal_description_html_should_not_contain(string $text): void {
+        $candidates = ['#phModalDescView', '#phModalDescF'];
+        foreach ($candidates as $selector) {
+            try {
+                $node = $this->find('css', $selector);
+            } catch (\Behat\Mink\Exception\ElementNotFoundException $e) {
+                continue;
+            }
+            $html = $node->getHtml();
+            if (str_contains($html, $text)) {
+                throw new \Exception(
+                    "'{$text}' was found in the PlayerHUD modal description HTML ({$selector}): {$html}"
+                );
+            }
+            return;
+        }
+        throw new \Exception('No PlayerHUD modal description element found on the page.');
+    }
 }

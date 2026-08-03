@@ -15,19 +15,31 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Test double proving unserialize_object() blocks PHP object injection.
  *
  * @package    filter_playerhud
  * @copyright  2026 Jean Lúcio
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+namespace filter_playerhud;
 
-$plugin->component = 'filter_playerhud';
-$plugin->version   = 2026080300;
-$plugin->requires  = 2024100700;        // Requires: Moodle 4.5+.
-$plugin->supported = [405, 502];
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v1.6.0';
-$plugin->dependencies = ['block_playerhud' => 2026062400];
+/**
+ * A class smuggled through a crafted configdata payload must never be instantiated as
+ * itself, so its __wakeup() side effect (simulating a POP-gadget) must never fire.
+ *
+ * @package    filter_playerhud
+ * @copyright  2026 Jean Lúcio
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class filter_playerhud_pwned_marker {
+    /** @var int Times __wakeup() has fired across the test run. */
+    public static int $wakeups = 0;
+
+    /**
+     * Records that this class was actually instantiated during unserialize().
+     */
+    public function __wakeup(): void {
+        self::$wakeups++;
+    }
+}
