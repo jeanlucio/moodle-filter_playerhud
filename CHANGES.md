@@ -1,5 +1,11 @@
 # Changes
 
+## v1.6.2 (2026080302)
+
+- Fix: `docs/` and `.github/` are now excluded from the release archive via
+  `.gitattributes` (`export-ignore`), so the Plugin Directory zip no longer ships the
+  GitHub Pages source and CI workflow files.
+
 ## v1.6.1 (2026080301)
 
 - Fix: item descriptions are now sanitised with `format_text()` before reaching the
