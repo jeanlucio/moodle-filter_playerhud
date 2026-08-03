@@ -1,23 +1,23 @@
 # Changes
 
-## v1.6.4 (2026080304)
+## [v1.6.4] — 2026-08-03
 
 - Update: renamed an internal test fixture and softened wording in the security
   regression test suite; no functional change, same assertions and code paths covered.
 
-## v1.6.3 (2026080303)
+## [v1.6.3] — 2026-08-03
 
 - Update: the PlayerGames Ecosystem badge in the README and documentation now links to
   the ecosystem site (`jeanlucio.github.io/playergames`) instead of the old Plugins
   Directory contributor listing.
 
-## v1.6.2 (2026080302)
+## [v1.6.2] — 2026-08-03
 
 - Fix: `docs/` and `.github/` are now excluded from the release archive via
   `.gitattributes` (`export-ignore`), so the Plugin Directory zip no longer ships the
   GitHub Pages source and CI workflow files.
 
-## v1.6.1 (2026080301)
+## [v1.6.1] — 2026-08-03
 
 - Fix: item descriptions are now sanitised with `format_text()` before reaching the
   client, closing a stored XSS where a teacher-authored `<img onerror=...>` in a drop
@@ -37,29 +37,29 @@
   breakdown) moved to a GitHub Pages site; README is now a short entry point linking
   to it.
 
-## v1.6.0 (2026062400)
+## [v1.6.0] — 2026-06-24
 
 - Add: collecting an item through the in-text widget now triggers the milestone
   celebration popups (level-up, the first PlayerCoin and beating the game) with the
   Huddy mascot, matching the block. Mascot art is served as WebP.
 
-## v1.5.0 (2026060400)
+## [v1.5.0] — 2026-06-04
 
 - Add: filter widget avatar now displays the equipped item image (or emoji) instead
   of the Moodle user profile picture.
 - Add: +N overflow badge in the widget stash now opens a popover listing the hidden items.
 
-## v1.4.1 (2026051901)
+## [v1.4.1] — 2026-05-19
 
 - Fix: `aria-label` misuse warnings in widget.mustache — added `role="img"` to
   the inline karma `<span>` (label differs from visible text); removed redundant
   `aria-label` from the karma `<div>` in the modal body (visible text is identical).
 
-## v1.4.0 (2026051501)
+## [v1.4.0] — 2026-05-15
 
 - Add: declare supported Moodle versions [405, 502] in version.php.
 
-## v1.3.5 (2026051301)
+## [v1.3.5] — 2026-05-13
 
 - Add: widget stash limited to 5 unique items; +N overflow badge appears when
   inventory exceeds the limit, consistent with the block sidebar.
@@ -74,7 +74,7 @@
   for Moodle 4.5 (Bootstrap 4 does not define this utility).
 - Update: plugin icon.
 
-## v1.3.4 (2026050601)
+## [v1.3.4] — 2026-05-06
 
 - Fix: item modal no longer fails to open in forum posts — modal HTML is now
   appended to `$text` so it is present in the DOM when `filter_collect.js`
@@ -87,15 +87,15 @@
   duplicate query), and the RPG class lookup is skipped for items with no
   class restriction (`required_class_id = '0'`).
 
-## v1.3.3 (2026050500)
+## [v1.3.3] — 2026-05-05
 
 - Fix: custom text in secret item drops is now shown correctly instead of "Mystery Item"
 
-## v1.3.2 (2026042800)
+## [v1.3.2] — 2026-04-28
 
 - Add dynamic CI and release badges to README
 - Show player group widget in filter widget (soft dependency on mod_playergroup)
 
-## v1.3.1 (2026042300)
+## [v1.3.1] — 2026-04-23
 
 - Initial stable release
