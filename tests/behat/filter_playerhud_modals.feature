@@ -22,10 +22,6 @@ Feature: PlayerHUD filter modal behaviour
     And a label with shortcode "[PLAYERHUD_DROP code=GEM01]" exists in the course
     And I log out
 
-  # -----------------------------------------------------------------
-  # Shortcode de coleta — AJAX não redireciona
-  # -----------------------------------------------------------------
-
   Scenario: Collecting a drop via filter shortcode does not redirect the page
     Given I log in as "student1"
     And I am on "Course 1" course homepage
@@ -34,10 +30,6 @@ Feature: PlayerHUD filter modal behaviour
     And I wait for the PlayerHUD AJAX collect to complete
     Then the page URL has not changed
 
-  # -----------------------------------------------------------------
-  # Modal de detalhes via widget stash — abre corretamente
-  # -----------------------------------------------------------------
-
   Scenario: Student opens item details from the widget stash after collecting
     Given "student1" has collected drop "GEM01" in course "C1"
     When I log in as "student1"
@@ -45,10 +37,6 @@ Feature: PlayerHUD filter modal behaviour
     And I click on the first ".ph-item-trigger" element
     Then the PlayerHUD item details modal is visible
     And I should see "Test Gem" in the PlayerHUD modal
-
-  # -----------------------------------------------------------------
-  # Descrição do item — não deve exibir HTML raw
-  # -----------------------------------------------------------------
 
   # NOTE: "I should not see" checks rendered VISIBLE TEXT (Mink getText()), not the DOM's
   # actual HTML/attributes. A dangerous attribute like onerror="..." never shows up as
@@ -65,19 +53,16 @@ Feature: PlayerHUD filter modal behaviour
     And I should not see "<p dir=" in the PlayerHUD modal
     And I should not see "style=text-align" in the PlayerHUD modal
 
-  # -----------------------------------------------------------------
-  # Descrição do item — payload de XSS não sobrevive no HTML do modal
-  # Regressão do achado HIGH (MDL Shield + moodle-security-audit) em
-  # filter_playerhud v1.6.0: render_drop() entregava a descrição crua,
-  # injetada como HTML vivo pelo JS do bloco.
-  # -----------------------------------------------------------------
-
+  # Regression guard: item descriptions must be sanitized before being injected as live
+  # HTML in the modal, so a script/event-handler payload stored in a description cannot
+  # execute.
+  #
   # Uses .ph-drop-trigger-area, NOT .ph-item-trigger: the latter is the block sidebar
   # stash's own trigger, bound to a separate script (view.js) whenever the block is on the
   # page (see filter_collect.js's own guard around .ph-item-trigger) and would silently
   # test the wrong code path. .ph-drop-trigger-area is unique to the drop card rendered by
   # THIS plugin's render_drop() / drop.mustache, and is unconditionally bound to
-  # filter_collect.js's modal handler — the exact path that was fixed.
+  # filter_collect.js's modal handler — the path that renders the description as HTML.
   #
   # Scoped by [data-name="Evil Gem"] rather than "the first" match: the Background above
   # already creates its own GEM01 drop card on the same page, and "first .ph-drop-trigger-
@@ -97,10 +82,6 @@ Feature: PlayerHUD filter modal behaviour
     And the PlayerHUD filter modal description HTML should not contain "onerror"
     And the PlayerHUD filter modal description HTML should not contain "<script"
 
-  # -----------------------------------------------------------------
-  # Strings — não devem mostrar placeholders [[...]]
-  # -----------------------------------------------------------------
-
   Scenario: Filter modal does not display raw string placeholders
     Given "student1" has collected drop "GEM01" in course "C1"
     When I log in as "student1"
@@ -109,10 +90,6 @@ Feature: PlayerHUD filter modal behaviour
     Then the PlayerHUD item details modal is visible
     And I should not see "[[" in the PlayerHUD modal
     And I should not see "]]" in the PlayerHUD modal
-
-  # -----------------------------------------------------------------
-  # Múltiplos cliques — modal não duplica no DOM
-  # -----------------------------------------------------------------
 
   Scenario: Clicking item trigger multiple times does not duplicate the modal in DOM
     Given "student1" has collected drop "GEM01" in course "C1"
