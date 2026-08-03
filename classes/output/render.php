@@ -256,7 +256,15 @@ class render {
             // The widget stash path (widget.php) already cleans this same column with
             // format_text() before rendering; this path skipped that step and shipped the
             // raw HTML to the client instead, where the block's JS injects it verbatim.
-            $displaydesc = format_text($data->description ?? '', FORMAT_HTML, ['context' => $context]);
+            // The 'filter' => false option: an item description never needs shortcode expansion, and
+            // without it a description containing this filter's own [PLAYERHUD_DROP ...]
+            // shortcode would re-enter text_filter::filter() from inside render_drop(),
+            // recursing until the request dies on memory_limit — core's filter chain has
+            // no reentrancy guard of its own.
+            $displaydesc = format_text($data->description ?? '', FORMAT_HTML, [
+                'context' => $context,
+                'filter' => false,
+            ]);
 
             if ((int)$data->maxusage === 0) {
                 $xpdisplay = '0';

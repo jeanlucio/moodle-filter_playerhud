@@ -169,7 +169,13 @@ class widget implements renderable, templatable {
                     'image' => $imagepayload,
                     'isimage' => $media['is_image'] ? 1 : 0,
                     'content' => $imagepayload,
-                    'description' => !empty($invitem->description) ? format_text($invitem->description, FORMAT_HTML) : '',
+                    // The 'filter' => false option: an item description never needs shortcode expansion,
+                    // and without it a description containing [PLAYERHUD_DROP ...] would
+                    // re-enter text_filter::filter() from inside this same render pass —
+                    // core's filter chain has no reentrancy guard of its own.
+                    'description' => !empty($invitem->description)
+                        ? format_text($invitem->description, FORMAT_HTML, ['filter' => false])
+                        : '',
                     'date' => userdate($invitem->collecteddate, get_string('strftimedatefullshort', 'langconfig')),
                     'timestamp' => $invitem->collecteddate,
                 ];
@@ -254,7 +260,14 @@ class widget implements renderable, templatable {
                 $classfullname = format_string($class->name);
                 $classtier = $portraittier;
                 $classtiername = get_string('class_tier_' . $portraittier, 'block_playerhud');
-                $classdescription = format_text($class->description ?? '', FORMAT_HTML, ['context' => $context]);
+                // The 'filter' => false option: a class description never needs shortcode expansion, and
+                // without it a description containing [PLAYERHUD_WIDGET] would re-enter
+                // text_filter::filter() from inside this same render pass — core's filter
+                // chain has no reentrancy guard of its own.
+                $classdescription = format_text($class->description ?? '', FORMAT_HTML, [
+                    'context' => $context,
+                    'filter' => false,
+                ]);
                 $hasclassdescription = !empty(trim(strip_tags($classdescription)));
                 $stars = [];
                 for ($i = 1; $i <= 5; $i++) {

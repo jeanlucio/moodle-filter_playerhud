@@ -717,4 +717,75 @@ final class filter_test extends advanced_testcase {
         $this->assertStringNotContainsString($payload, $html);
         $this->assertStringContainsString('&lt;script&gt;', $html);
     }
+
+    /**
+     * A user whose block/playerhud:view capability is explicitly prohibited must not see
+     * the HUD, drops or trades through the filter, even though the deterministic checks
+     * (login, guest, gamification) all pass. view.php, collect.php and process_trade.php
+     * already enforced this capability; the filter itself never did — a regression test
+     * for the finding from moodle-security-audit.
+     */
+    public function test_filter_strips_when_view_capability_prohibited(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+
+        $this->create_drop($instanceid, $itemid, 'NOVIEW1');
+
+        $studentrole = $DB->get_record('role', ['shortname' => 'student'], '*', MUST_EXIST);
+        $blockcontext = \context_block::instance($instanceid);
+        assign_capability('block/playerhud:view', CAP_PROHIBIT, $studentrole->id, $blockcontext->id, true);
+        accesslib_clear_all_caches_for_unit_testing();
+
+        $filter = new text_filter($context, []);
+        // Drop only: the guard is a single early-return check shared by widget/drop/trade,
+        // so proving it here proves all three without pulling in the widget renderer's own
+        // $PAGE/$OUTPUT setup requirements, which are unrelated to this fix.
+        $filteredtext = $filter->filter('Take: [PLAYERHUD_DROP code=NOVIEW1].');
+
+        $this->assertStringNotContainsString('[PLAYERHUD_DROP', $filteredtext);
+        $this->assertStringNotContainsString('ph-action-collect', $filteredtext);
+    }
+
+    /**
+     * An item description containing the drop's own shortcode must not be re-expanded.
+     * render_drop() passes 'filter' => false to format_text() specifically so a
+     * self-referential (or mutually referential) description cannot recurse back into
+     * text_filter::filter() from inside itself — core's filter_manager::apply_filter_chain()
+     * has no reentrancy guard of its own (verified against filter/classes/filter_manager.php),
+     * so an unguarded recursion would exhaust memory and fatal every request that renders it.
+     * Deliberately does not revert the fix to prove this one the way the other regression
+     * tests do: doing so would trigger the actual unbounded recursion in a live process.
+     */
+    public function test_render_drop_description_shortcode_is_not_reexpanded(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+        [$context, $instanceid] = $this->setup_environment();
+
+        $item = new \stdClass();
+        $item->blockinstanceid = $instanceid;
+        $item->name = 'Recursive Item';
+        $item->xp = 10;
+        $item->image = '';
+        $item->description = 'See also: [PLAYERHUD_DROP code=SELF1]';
+        $item->enabled = 1;
+        $item->secret = 0;
+        $item->timecreated = time();
+        $item->timemodified = time();
+        $itemid = $DB->insert_record('block_playerhud_items', $item);
+
+        $this->create_drop($instanceid, $itemid, 'SELF1');
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter('Take: [PLAYERHUD_DROP code=SELF1]');
+
+        $this->assertMatchesRegularExpression('/data-desc-b64="([^"]*)"/', $filteredtext);
+        preg_match('/data-desc-b64="([^"]*)"/', $filteredtext, $matches);
+        $decoded = base64_decode($matches[1]);
+
+        // The shortcode text must survive untouched inside the description: if it had
+        // been re-expanded, this would instead contain a second, nested drop card.
+        $this->assertStringContainsString('[PLAYERHUD_DROP code=SELF1]', $decoded);
+        $this->assertStringNotContainsString('ph-action-collect', $decoded);
+    }
 }

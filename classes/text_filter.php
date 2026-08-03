@@ -69,6 +69,17 @@ class text_filter extends \core_filters\text_filter {
             return $text;
         }
 
+        // The widget/drop/trade renderers never check this themselves (view.php,
+        // process_trade.php and the collect web service all do), so a user with the
+        // capability prohibited or not granted would otherwise still see the HUD, item
+        // names/XP and trade contents through the filter alone.
+        if (!has_capability('block/playerhud:view', \context_block::instance($blockinstance->id))) {
+            $text = str_replace('[PLAYERHUD_WIDGET]', '', $text);
+            $text = preg_replace('/\[PLAYERHUD_DROP\s+[^\]]+\]/i', '', $text);
+            $text = preg_replace('/\[PLAYERHUD_TRADE\s+[^\]]+\]/i', '', $text);
+            return $text;
+        }
+
         // FIX: Check gamification status at the filter level before doing any rendering.
         // This ensures shortcodes are stripped for users with gamification paused,
         // without relying on render::render_drop() to do it (which the tests verify).
