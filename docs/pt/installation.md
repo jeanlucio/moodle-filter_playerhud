@@ -1,8 +1,9 @@
 # 🛠️ Instalação
 
-1. Certifique-se de que o **Bloco PlayerHUD** esteja instalado primeiro:
-   👉 https://github.com/jeanlucio/moodle-block_playerhud
-   O filtro depende do bloco e não será instalado sem ele.
+1. Certifique-se de que o **Bloco PlayerHUD** esteja instalado primeiro — o filtro depende do
+   bloco e não será instalado sem ele.
+
+   👉 <https://github.com/jeanlucio/moodle-block_playerhud>
 2. Baixe o arquivo `.zip` ou clone este repositório.
 3. Extraia a pasta para o diretório `filter/` do seu Moodle.
 4. Renomeie para `playerhud` (se necessário).
