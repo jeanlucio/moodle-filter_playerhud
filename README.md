@@ -1,11 +1,16 @@
 # Moodle Filter PlayerHUD
 
+![Moodle](https://img.shields.io/badge/Moodle-4.5%2B-orange?style=flat&logo=moodle&logoColor=white)
+![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat)
+![Status](https://img.shields.io/badge/Status-Stable-green?style=flat)
+[![Latest Release](https://img.shields.io/github/v/release/jeanlucio/moodle-filter_playerhud?style=flat)](https://github.com/jeanlucio/moodle-filter_playerhud/releases)
+[![PlayerGames Ecosystem](https://img.shields.io/badge/PlayerGames-Ecosystem-6f42c1?style=flat&logo=gamepad&logoColor=white)](https://jeanlucio.github.io/playergames/)
+![Role](https://img.shields.io/badge/Role-Content_Integration-0d6efd?style=flat)
+[![Author](https://img.shields.io/badge/by-Jean_Lucio-6f42c1?style=flat)](https://marketplace.moodle.com/user/984)
+
 [![Moodle Plugin CI](https://github.com/jeanlucio/moodle-filter_playerhud/actions/workflows/ci.yml/badge.svg)](https://github.com/jeanlucio/moodle-filter_playerhud/actions/workflows/ci.yml)
-![Moodle](https://img.shields.io/badge/Moodle-4.5%2B-orange?style=flat-square&logo=moodle&logoColor=white)
-![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)
-![Status](https://img.shields.io/badge/Status-Stable-green?style=flat-square)
-[![PlayerGames Ecosystem](https://img.shields.io/badge/PlayerGames-Ecosystem-6f42c1?style=flat-square&logo=gamepad&logoColor=white)](https://jeanlucio.github.io/playergames/)
-![Role](https://img.shields.io/badge/Role-Content_Integration-0d6efd?style=flat-square)
+[![Last Commit](https://img.shields.io/github/last-commit/jeanlucio/moodle-filter_playerhud?style=flat)](https://github.com/jeanlucio/moodle-filter_playerhud/commits)
+[![Open Issues](https://img.shields.io/github/issues/jeanlucio/moodle-filter_playerhud?style=flat)](https://github.com/jeanlucio/moodle-filter_playerhud/issues)
 
 [English](#english) | [Português](#português)
 
