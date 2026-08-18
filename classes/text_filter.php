@@ -204,7 +204,7 @@ class text_filter extends \core_filters\text_filter {
                     'no_description',
                 ], 'block_playerhud');
                 $PAGE->requires->string_for_js('confirmation', 'admin');
-                $PAGE->requires->strings_for_js(['yes', 'cancel'], 'moodle');
+                $PAGE->requires->strings_for_js(['yes', 'cancel', 'error', 'ok'], 'moodle');
                 $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', []);
             }
 
