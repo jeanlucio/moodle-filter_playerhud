@@ -106,7 +106,7 @@ class render {
                 [$didsql, $didparams] = $DB->get_in_or_equal($dropids, SQL_PARAMS_NAMED, 'did');
                 $didparams['uid'] = $USER->id;
 
-                $invsql = "SELECT id, dropid, timecreated
+                $invsql = "SELECT id, dropid, timecreated, 1 as qty
                              FROM {block_playerhud_inventory}
                             WHERE userid = :uid AND dropid $didsql
                          ORDER BY timecreated DESC";
@@ -117,8 +117,51 @@ class render {
                         self::$inventorycache[$inv->dropid][] = $inv;
                     }
                 }
+
+                // Also bulk load the new-engine stacking storage (grant entries only, never
+                // revoked) — see get_pickup_totals() for why both sources must be summed.
+                if ($DB->get_manager()->table_exists('block_playerhud_stack_log')) {
+                    $sqsql = "SELECT id, dropid, timecreated, delta as qty
+                                FROM {block_playerhud_stack_log}
+                               WHERE userid = :uid AND dropid $didsql
+                                     AND delta > 0 AND source <> 'revoked'
+                            ORDER BY timecreated DESC";
+                    $sqs = $DB->get_records_sql($sqsql, $didparams);
+                    if ($sqs) {
+                        foreach ($sqs as $sq) {
+                            self::$inventorycache[$sq->dropid][] = $sq;
+                        }
+                    }
+                }
             }
         }
+    }
+
+    /**
+     * Sums the total quantity collected and the most recent collection timestamp for a drop,
+     * across both storage generations: the legacy per-unit inventory rows (1 unit each) and the
+     * new-engine stack_log grant entries (each worth its own delta, which can be more than 1
+     * when the drop's "value per collection" is greater than 1). A row-count alone would
+     * silently under-report both the collection count and the most recent date for any drop
+     * collected after the item-quantity redesign.
+     *
+     * @param array $entries List of {timecreated, qty} rows from the merged cache/fallback.
+     * @return array {count: int, last: \stdClass|null} Total quantity and the most recent entry.
+     */
+    private static function get_pickup_totals(array $entries): array {
+        $count = 0;
+        $last = null;
+        $lasttime = 0;
+
+        foreach ($entries as $entry) {
+            $count += (int)($entry->qty ?? 1);
+            if ($entry->timecreated > $lasttime) {
+                $lasttime = $entry->timecreated;
+                $last = $entry;
+            }
+        }
+
+        return ['count' => $count, 'last' => $last];
     }
 
     /**
@@ -217,14 +260,32 @@ class render {
         // is empty. This prevents a fallback query for users who simply never collected yet.
         $inventory = self::$inventorycache[$dropid] ?? [];
         if (!isset(self::$preloadeddropids[$dropid]) && empty($inventory)) {
-            $inventory = $DB->get_records('block_playerhud_inventory', [
+            $legacyfallback = $DB->get_records('block_playerhud_inventory', [
                 'userid' => $USER->id,
                 'dropid' => $dropid,
             ], 'timecreated DESC');
+            foreach ($legacyfallback as $row) {
+                $row->qty = 1;
+                $inventory[] = $row;
+            }
+
+            if ($DB->get_manager()->table_exists('block_playerhud_stack_log')) {
+                $stackfallback = $DB->get_records_select(
+                    'block_playerhud_stack_log',
+                    'userid = :uid AND dropid = :dropid AND delta > 0 AND source <> :revoked',
+                    ['uid' => $USER->id, 'dropid' => $dropid, 'revoked' => 'revoked'],
+                    'timecreated DESC'
+                );
+                foreach ($stackfallback as $row) {
+                    $row->qty = $row->delta;
+                    $inventory[] = $row;
+                }
+            }
         }
 
-        $count = count($inventory);
-        $lastcollected = !empty($inventory) ? reset($inventory) : null;
+        $pickuptotals = self::get_pickup_totals($inventory);
+        $count = $pickuptotals['count'];
+        $lastcollected = $pickuptotals['last'];
 
         $isunique = ($data->maxusage == 1);
         $limitreached = ($data->maxusage > 0 && $count >= $data->maxusage);
@@ -464,9 +525,20 @@ class render {
 
         $allmedia = \block_playerhud\utils::get_items_display_data($fakeitems, $context);
 
-        // 2. Bulk fetch user inventory to validate if they can afford the trade.
+        // 2. Bulk fetch user inventory to validate if they can afford the trade. Sums both
+        // storage generations: the legacy per-unit inventory rows and the new-engine stack
+        // balance (block_playerhud_stack) — an item obtained only through the new engine would
+        // otherwise never count towards affordability.
         $sqlinv = "SELECT itemid, COUNT(id) as qty FROM {block_playerhud_inventory} WHERE userid = :userid GROUP BY itemid";
         $myinventory = $DB->get_records_sql_menu($sqlinv, ['userid' => $USER->id]);
+
+        if ($DB->get_manager()->table_exists('block_playerhud_stack')) {
+            $sqlstack = "SELECT itemid, qty FROM {block_playerhud_stack} WHERE userid = :userid";
+            $mystack = $DB->get_records_sql_menu($sqlstack, ['userid' => $USER->id]);
+            foreach ($mystack as $stackitemid => $stackqty) {
+                $myinventory[$stackitemid] = ($myinventory[$stackitemid] ?? 0) + $stackqty;
+            }
+        }
 
         // 3. Format Requirements and Check Affordability simultaneously.
         $reqsdata = [];

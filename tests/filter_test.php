@@ -433,6 +433,84 @@ final class filter_test extends advanced_testcase {
     }
 
     /**
+     * A drop collected only through block_playerhud's new-engine stacking storage
+     * (block_playerhud_stack_log) must still be recognised as limit-reached, not just a drop
+     * collected via the legacy per-unit inventory table. Regression test for a real gap found
+     * live: render_drop() only ever summed block_playerhud_inventory, so a drop collected via
+     * the item-quantity engine appeared collectable again on every page reload, and the server
+     * correctly rejecting the resulting duplicate collection surfaced as a raw error to the
+     * student instead of the drop simply showing as already collected.
+     *
+     * @covers \filter_playerhud\output\render::render_drop
+     */
+    public function test_render_drop_limit_reached_via_new_engine_stack_log(): void {
+        global $DB, $USER;
+        $this->resetAfterTest(true);
+
+        if (!$DB->get_manager()->table_exists('block_playerhud_stack_log')) {
+            $this->markTestSkipped('block_playerhud_stack_log does not exist in this environment.');
+        }
+
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+
+        $dropid = $this->create_drop($instanceid, $itemid, 'NEWLIM1', 1, 0);
+
+        $DB->insert_record('block_playerhud_stack_log', (object) [
+            'userid' => $USER->id,
+            'itemid' => $itemid,
+            'dropid' => $dropid,
+            'delta' => 1,
+            'source' => 'map',
+            'xpawarded' => 100,
+            'timecreated' => time(),
+        ]);
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter('Done: [PLAYERHUD_DROP code=NEWLIM1]');
+
+        $this->assertStringContainsString('ph-owned', $filteredtext);
+        $this->assertStringContainsString('aria-disabled="true"', $filteredtext);
+        $this->assertStringNotContainsString('ph-action-collect', $filteredtext);
+    }
+
+    /**
+     * A drop whose value-per-collection is greater than 1 must have every unit counted towards
+     * its collection limit, not just one per new-engine ledger row.
+     *
+     * @covers \filter_playerhud\output\render::render_drop
+     */
+    public function test_render_drop_limit_reached_counts_stack_log_delta_not_rows(): void {
+        global $DB, $USER;
+        $this->resetAfterTest(true);
+
+        if (!$DB->get_manager()->table_exists('block_playerhud_stack_log')) {
+            $this->markTestSkipped('block_playerhud_stack_log does not exist in this environment.');
+        }
+
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+
+        // Maxusage=2, but a single grant entry already worth 2 units (value=2 collected once)
+        // must reach the limit on its own — the row count is 1, but the quantity is 2.
+        $dropid = $this->create_drop($instanceid, $itemid, 'NEWLIM2', 2, 0);
+
+        $DB->insert_record('block_playerhud_stack_log', (object) [
+            'userid' => $USER->id,
+            'itemid' => $itemid,
+            'dropid' => $dropid,
+            'delta' => 2,
+            'source' => 'map',
+            'xpawarded' => 200,
+            'timecreated' => time(),
+        ]);
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter('Done: [PLAYERHUD_DROP code=NEWLIM2]');
+
+        $this->assertStringContainsString('aria-disabled="true"', $filteredtext);
+        $this->assertStringNotContainsString('ph-action-collect', $filteredtext);
+    }
+
+    /**
      * A recently collected drop still within its respawn window must render in cooldown.
      *
      * @covers \filter_playerhud\output\render::render_drop
@@ -502,6 +580,63 @@ final class filter_test extends advanced_testcase {
         $this->assertStringNotContainsString('[PLAYERHUD_TRADE', $filteredtext);
         $this->assertStringContainsString('ph-trade-widget-card', $filteredtext);
         $this->assertStringContainsString('Magic Trade', $filteredtext);
+    }
+
+    /**
+     * A student whose balance for the required item lives only in block_playerhud's new-engine
+     * stacking storage (block_playerhud_stack) must still be able to afford the trade — the
+     * requirement check must not only sum the legacy per-unit inventory table. Regression test
+     * for a real gap found live alongside the collection-limit one above.
+     *
+     * @covers \filter_playerhud\output\render::render_trade
+     */
+    public function test_render_trade_affordable_via_new_engine_stack_balance(): void {
+        global $DB, $PAGE, $COURSE, $USER;
+        $this->resetAfterTest(true);
+
+        if (!$DB->get_manager()->table_exists('block_playerhud_stack')) {
+            $this->markTestSkipped('block_playerhud_stack does not exist in this environment.');
+        }
+
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+        $PAGE->set_url('/course/view.php', ['id' => $COURSE->id]);
+
+        $trade = new \stdClass();
+        $trade->blockinstanceid = $instanceid;
+        $trade->name = 'New Engine Trade';
+        $trade->groupid = 0;
+        $trade->centralized = 1;
+        $trade->onetime = 0;
+        $trade->timecreated = time();
+        $tradeid = $DB->insert_record('block_playerhud_trades', $trade);
+
+        $req = new \stdClass();
+        $req->tradeid = $tradeid;
+        $req->itemid = $itemid;
+        $req->qty = 2;
+        $DB->insert_record('block_playerhud_trade_reqs', $req);
+
+        $reward = new \stdClass();
+        $reward->tradeid = $tradeid;
+        $reward->itemid = $itemid;
+        $reward->qty = 1;
+        $DB->insert_record('block_playerhud_trade_rewards', $reward);
+
+        // Balance lives only in the new-engine table — nothing in block_playerhud_inventory.
+        $DB->insert_record('block_playerhud_stack', (object) [
+            'userid' => $USER->id,
+            'itemid' => $itemid,
+            'qty' => 2,
+            'timemodified' => time(),
+        ]);
+
+        $code = strtoupper(substr(md5($tradeid . '_' . $trade->timecreated), 0, 6));
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter("Offer: [PLAYERHUD_TRADE code={$code}]");
+
+        $this->assertStringContainsString('btn-success', $filteredtext);
+        $this->assertStringNotContainsString('btn-outline-secondary', $filteredtext);
     }
 
     /**
