@@ -29,7 +29,11 @@
         "collected": false,
         "is_image": true,
         "image_url": "http://example.com/item.png",
-        "name": "Hidden Treasure"
+        "name": "Hidden Treasure",
+        "is_infinite_drop_badge": false,
+        "show_value_badge": true,
+        "value_display": "2",
+        "qty_text": "Qty/collection: 2"
     }
 }}
 
@@ -102,6 +106,21 @@
             </span>
         {{/limit_reached}}
 
+        {{#is_infinite_drop_badge}}
+            <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
+                <i class="fa fa-infinity" aria-hidden="true"></i>
+            </span>
+            <span class="visually-hidden">{{#str}} infinite, block_playerhud {{/str}}</span>
+        {{/is_infinite_drop_badge}}
+        {{^is_infinite_drop_badge}}
+            {{#show_value_badge}}
+                <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
+                    x{{value_display}}
+                </span>
+                <span class="visually-hidden">{{qty_text}}</span>
+            {{/show_value_badge}}
+        {{/is_infinite_drop_badge}}
+
         {{#is_cooldown}}
             <div class="ph-timer badge bg-light text-dark border shadow-sm ph-badge-bottom-center"
                  data-deadline="{{readytime}}"
@@ -125,6 +144,21 @@
 {{#is_card}}
     <div class="playerhud-item-card ph-card-compact card p-2 ph-drop-card-container d-inline-flex {{#limit_reached}}ph-owned{{/limit_reached}}"
          {{{data_attributes}}}>
+
+        {{#is_infinite_drop_badge}}
+            <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
+                <i class="fa fa-infinity" aria-hidden="true"></i>
+            </span>
+            <span class="visually-hidden">{{#str}} infinite, block_playerhud {{/str}}</span>
+        {{/is_infinite_drop_badge}}
+        {{^is_infinite_drop_badge}}
+            {{#show_value_badge}}
+                <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
+                    x{{value_display}}
+                </span>
+                <span class="visually-hidden">{{qty_text}}</span>
+            {{/show_value_badge}}
+        {{/is_infinite_drop_badge}}
 
         {{! Icon/Trigger Area }}
         <div class="ph-item-details-trigger ph-drop-trigger-area"
