@@ -68,6 +68,15 @@ class render {
     protected static $dropvaluecolumnexists = null;
 
     /**
+     * Cache for a block instance's trades, keyed by blockinstanceid, used to resolve a trade
+     * shortcode without a query per lookup. Moved from static-local to class property so it can
+     * be reset between tests — see reset_caches().
+     *
+     * @var array
+     */
+    protected static $tradescache = [];
+
+    /**
      * Preloads drops, inventory and media in bulk to prevent N+1 queries.
      *
      * @param array $dropcodes Array of drop codes found in the text.
@@ -489,10 +498,9 @@ class render {
             return '';
         }
 
-        // Static cache to avoid N+1 if there are multiple shortcodes on the same page.
-        static $tradescache = [];
-        if (!isset($tradescache[$blockinstanceid])) {
-            $tradescache[$blockinstanceid] = $DB->get_records(
+        // Cache to avoid N+1 if there are multiple shortcodes on the same page.
+        if (!isset(self::$tradescache[$blockinstanceid])) {
+            self::$tradescache[$blockinstanceid] = $DB->get_records(
                 'block_playerhud_trades',
                 ['blockinstanceid' => $blockinstanceid],
                 '',
@@ -502,8 +510,8 @@ class render {
 
         $tradeid = 0;
 
-        if (!empty($tradescache[$blockinstanceid])) {
-            foreach ($tradescache[$blockinstanceid] as $t) {
+        if (!empty(self::$tradescache[$blockinstanceid])) {
+            foreach (self::$tradescache[$blockinstanceid] as $t) {
                 $expectedcode = strtoupper(substr(md5($t->id . '_' . $t->timecreated), 0, 6));
                 if ($expectedcode === strtoupper($code)) {
                     $tradeid = $t->id;
@@ -693,6 +701,7 @@ class render {
         self::$preloadeddropids = [];
         self::$playercache      = [];
         self::$classcache       = [];
+        self::$tradescache      = [];
     }
 
     /**
