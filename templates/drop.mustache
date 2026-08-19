@@ -29,7 +29,10 @@
         "collected": false,
         "is_image": true,
         "image_url": "http://example.com/item.png",
-        "name": "Hidden Treasure"
+        "name": "Hidden Treasure",
+        "show_units_badge": true,
+        "units_display": "4",
+        "progress_text": "2/2 collections (4 items)"
     }
 }}
 
@@ -40,9 +43,11 @@
               tabindex="0"
               role="button"
               aria-disabled="true"
+              {{#show_units_badge}}title="{{progress_text}}"{{/show_units_badge}}
               {{{data_attributes}}}>
             <i class="fa fa-check" aria-hidden="true"></i>
             <span class="visually-hidden">{{#str}} collected, filter_playerhud {{/str}}: </span>{{label}}
+            {{#show_units_badge}}<span class="visually-hidden"> — {{progress_text}}</span>{{/show_units_badge}}
         </span>
     {{/limit_reached}}
     {{^limit_reached}}
@@ -102,6 +107,13 @@
             </span>
         {{/limit_reached}}
 
+        {{#show_units_badge}}
+            <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
+                x{{units_display}}
+            </span>
+            <span class="visually-hidden">{{progress_text}}</span>
+        {{/show_units_badge}}
+
         {{#is_cooldown}}
             <div class="ph-timer badge bg-light text-dark border shadow-sm ph-badge-bottom-center"
                  data-deadline="{{readytime}}"
@@ -125,6 +137,13 @@
 {{#is_card}}
     <div class="playerhud-item-card ph-card-compact card p-2 ph-drop-card-container d-inline-flex {{#limit_reached}}ph-owned{{/limit_reached}}"
          {{{data_attributes}}}>
+
+        {{#show_units_badge}}
+            <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
+                x{{units_display}}
+            </span>
+            <span class="visually-hidden">{{progress_text}}</span>
+        {{/show_units_badge}}
 
         {{! Icon/Trigger Area }}
         <div class="ph-item-details-trigger ph-drop-trigger-area"

@@ -138,30 +138,33 @@ class render {
     }
 
     /**
-     * Sums the total quantity collected and the most recent collection timestamp for a drop,
-     * across both storage generations: the legacy per-unit inventory rows (1 unit each) and the
-     * new-engine stack_log grant entries (each worth its own delta, which can be more than 1
-     * when the drop's "value per collection" is greater than 1). A row-count alone would
-     * silently under-report both the collection count and the most recent date for any drop
-     * collected after the item-quantity redesign.
+     * Sums the collection event count and the total quantity granted for a drop, across both
+     * storage generations: the legacy per-unit inventory rows (1 row = 1 event = 1 unit) and the
+     * new-engine stack_log grant entries (1 row = 1 event, worth its own delta, which can be
+     * more than 1 unit when the drop's "value per collection" is greater than 1). Events and
+     * units are independent axes: a drop's maxusage limits collection EVENTS, not units, so a
+     * caller comparing units against maxusage would report the limit reached after fewer real
+     * collections than configured. Also tracks the most recent collection timestamp.
      *
      * @param array $entries List of {timecreated, qty} rows from the merged cache/fallback.
-     * @return array {count: int, last: \stdClass|null} Total quantity and the most recent entry.
+     * @return array {events: int, units: int, last: \stdClass|null}
      */
     private static function get_pickup_totals(array $entries): array {
-        $count = 0;
+        $events = 0;
+        $units = 0;
         $last = null;
         $lasttime = 0;
 
         foreach ($entries as $entry) {
-            $count += (int)($entry->qty ?? 1);
+            $events++;
+            $units += (int)($entry->qty ?? 1);
             if ($entry->timecreated > $lasttime) {
                 $lasttime = $entry->timecreated;
                 $last = $entry;
             }
         }
 
-        return ['count' => $count, 'last' => $last];
+        return ['events' => $events, 'units' => $units, 'last' => $last];
     }
 
     /**
@@ -284,11 +287,15 @@ class render {
         }
 
         $pickuptotals = self::get_pickup_totals($inventory);
-        $count = $pickuptotals['count'];
+        $events = $pickuptotals['events'];
+        $units = $pickuptotals['units'];
         $lastcollected = $pickuptotals['last'];
 
         $isunique = ($data->maxusage == 1);
-        $limitreached = ($data->maxusage > 0 && $count >= $data->maxusage);
+        // Compared against the collection EVENT count, not the unit total: maxusage limits how
+        // many times the drop can be collected, independent of how many units each collection
+        // grants (see get_pickup_totals()).
+        $limitreached = ($data->maxusage > 0 && $events >= $data->maxusage);
 
         $readytime = 0;
         $iscooldown = false;
@@ -303,7 +310,7 @@ class render {
 
         // Secret & Display Logic.
         $timestamp = 0;
-        $issecret = ($data->secret == 1 && $count == 0);
+        $issecret = ($data->secret == 1 && $events == 0);
         $xpvalue = isset($data->xp) ? $data->xp : 0;
 
         if ($issecret) {
@@ -364,6 +371,12 @@ class render {
         // with ?? '' before format_text() (which itself never returns null).
         $htmldesc = base64_encode($displaydesc);
         $rawimage = $media['is_image'] ? $media['url'] : strip_tags($media['content']);
+
+        // Precomputed once here so the modal (via data-progress-text) and the card/text-mode
+        // badge/title below always show identical wording, whatever the drop's maxusage/value.
+        $progresstext = \block_playerhud\utils::format_drop_progress($events, (int)$data->maxusage, $units);
+        $showunitsbadge = ($units > 1);
+
         $dataattributes = 'data-name="' . $safename . '" ' .
                           'data-desc-b64="' . $htmldesc . '" ' .
                           'data-image="' . s($rawimage) . '" ' .
@@ -371,7 +384,7 @@ class render {
                           'data-xp="' . s($xpdisplay) . '" ' .
                           'data-unique="' . ($isunique ? 1 : 0) . '" ' .
                           'data-timestamp="' . $timestamp . '" ' .
-                          'data-count="' . $count . '" ' .
+                          'data-progress-text="' . s($progresstext) . '" ' .
                           'data-maxusage="' . $data->maxusage . '" ' .
                           'data-respawntime-str="' . s($respawntimestr) . '"';
 
@@ -393,7 +406,9 @@ class render {
             'limit_reached' => $limitreached,
             'is_cooldown' => $iscooldown,
             'readytime' => $readytime,
-            'count' => $count,
+            'show_units_badge' => $showunitsbadge,
+            'units_display' => \block_playerhud\utils::format_compact_number($units),
+            'progress_text' => $progresstext,
             'safe_name' => $safename,
             'display_name' => $displayname,
             'label' => $textlabel,

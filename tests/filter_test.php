@@ -474,12 +474,16 @@ final class filter_test extends advanced_testcase {
     }
 
     /**
-     * A drop whose value-per-collection is greater than 1 must have every unit counted towards
-     * its collection limit, not just one per new-engine ledger row.
+     * A drop's maxusage limits collection EVENTS, not units. A single collection worth more
+     * than 1 unit (value > 1) must not be mistaken for having reached a higher maxusage — the
+     * student is still entitled to further collections. Regression test for a real bug: the
+     * card previously reached "collected" state after fewer real clicks than the teacher
+     * configured whenever a drop's value-per-collection was greater than 1, because the
+     * limit-reached check compared the unit total against maxusage instead of the event count.
      *
      * @covers \filter_playerhud\output\render::render_drop
      */
-    public function test_render_drop_limit_reached_counts_stack_log_delta_not_rows(): void {
+    public function test_render_drop_not_limit_reached_when_one_event_grants_multiple_units(): void {
         global $DB, $USER;
         $this->resetAfterTest(true);
 
@@ -489,8 +493,8 @@ final class filter_test extends advanced_testcase {
 
         [$context, $instanceid, $itemid] = $this->setup_environment();
 
-        // Maxusage=2, but a single grant entry already worth 2 units (value=2 collected once)
-        // must reach the limit on its own — the row count is 1, but the quantity is 2.
+        // Maxusage=2 (two collection events allowed), but only one event has happened so far —
+        // worth 2 units (value=2). One event out of two allowed must still be collectable.
         $dropid = $this->create_drop($instanceid, $itemid, 'NEWLIM2', 2, 0);
 
         $DB->insert_record('block_playerhud_stack_log', (object) [
@@ -505,6 +509,46 @@ final class filter_test extends advanced_testcase {
 
         $filter = new text_filter($context, []);
         $filteredtext = $filter->filter('Done: [PLAYERHUD_DROP code=NEWLIM2]');
+
+        $this->assertStringContainsString('ph-action-collect', $filteredtext);
+        $this->assertStringNotContainsString('aria-disabled="true"', $filteredtext);
+        // The progress text still communicates the real unit total alongside the event count.
+        $this->assertStringContainsString('1/2', $filteredtext);
+        $this->assertStringContainsString('2 items', $filteredtext);
+    }
+
+    /**
+     * Two collection events reach a maxusage of 2 regardless of how many units each one
+     * granted — the event count, not the unit total, is what a drop's maxusage limits.
+     *
+     * @covers \filter_playerhud\output\render::render_drop
+     */
+    public function test_render_drop_limit_reached_counts_events_not_units(): void {
+        global $DB, $USER;
+        $this->resetAfterTest(true);
+
+        if (!$DB->get_manager()->table_exists('block_playerhud_stack_log')) {
+            $this->markTestSkipped('block_playerhud_stack_log does not exist in this environment.');
+        }
+
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+
+        $dropid = $this->create_drop($instanceid, $itemid, 'NEWLIM2B', 2, 0);
+
+        for ($i = 0; $i < 2; $i++) {
+            $DB->insert_record('block_playerhud_stack_log', (object) [
+                'userid' => $USER->id,
+                'itemid' => $itemid,
+                'dropid' => $dropid,
+                'delta' => 2,
+                'source' => 'map',
+                'xpawarded' => 200,
+                'timecreated' => time(),
+            ]);
+        }
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter('Done: [PLAYERHUD_DROP code=NEWLIM2B]');
 
         $this->assertStringContainsString('aria-disabled="true"', $filteredtext);
         $this->assertStringNotContainsString('ph-action-collect', $filteredtext);
