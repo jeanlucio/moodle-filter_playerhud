@@ -187,8 +187,7 @@ class text_filter extends \core_filters\text_filter {
                 ]);
                 $PAGE->requires->strings_for_js([
                     'collected',
-                    'respawntime',
-                    'infinite',
+                    'drop_cooldown_badge',
                     'drops_immediate',
                     'single_collection',
                     'error_connection',
