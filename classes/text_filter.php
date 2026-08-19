@@ -185,9 +185,8 @@ class text_filter extends \core_filters\text_filter {
                     'coinImg'    => $coinimg,
                     'winImg'     => $winimg,
                 ]);
-                $PAGE->requires->strings_for_js([
+                $jsstrings = [
                     'collected',
-                    'drop_cooldown_badge',
                     'drops_immediate',
                     'single_collection',
                     'error_connection',
@@ -201,7 +200,15 @@ class text_filter extends \core_filters\text_filter {
                     'win_title',
                     'xp',
                     'no_description',
-                ], 'block_playerhud');
+                ];
+                // Only on block_playerhud versions that ship the item-quantity engine —
+                // strings_for_js() itself throws a debugging() notice (a fatal in strict test
+                // environments) for a string key that does not exist, so this cannot be
+                // requested unconditionally against an older installed version.
+                if (get_string_manager()->string_exists('drop_cooldown_badge', 'block_playerhud')) {
+                    $jsstrings[] = 'drop_cooldown_badge';
+                }
+                $PAGE->requires->strings_for_js($jsstrings, 'block_playerhud');
                 $PAGE->requires->string_for_js('confirmation', 'admin');
                 $PAGE->requires->strings_for_js(['yes', 'cancel', 'error', 'ok'], 'moodle');
                 $PAGE->requires->js_call_amd('block_playerhud/filter_collect', 'init', []);

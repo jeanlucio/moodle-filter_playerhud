@@ -59,6 +59,15 @@ class render {
     protected static $classcache = [];
 
     /**
+     * Whether block_playerhud_drops.value exists — null until first checked. Computed once per
+     * request rather than per preload_data() call: field_exists() issues its own DB query, and
+     * this schema fact cannot change mid-request.
+     *
+     * @var bool|null
+     */
+    protected static $dropvaluecolumnexists = null;
+
+    /**
      * Preloads drops, inventory and media in bulk to prevent N+1 queries.
      *
      * @param array $dropcodes Array of drop codes found in the text.
@@ -79,9 +88,10 @@ class render {
             // item-quantity engine — this queries block_playerhud's own table directly, so it
             // must not assume the installed version has it. "1 as value" matches that older
             // engine's behaviour: it never granted more than one unit per collection.
-            $valuecolumn = $DB->get_manager()->field_exists('block_playerhud_drops', 'value')
-                ? 'd.value'
-                : '1 as value';
+            if (self::$dropvaluecolumnexists === null) {
+                self::$dropvaluecolumnexists = $DB->get_manager()->field_exists('block_playerhud_drops', 'value');
+            }
+            $valuecolumn = self::$dropvaluecolumnexists ? 'd.value' : '1 as value';
 
             $sql = "SELECT d.id as dropid, d.maxusage, $valuecolumn, d.respawntime, d.blockinstanceid, d.code,
                            i.id as itemid, i.name as itemname, i.image, i.xp, i.description,
