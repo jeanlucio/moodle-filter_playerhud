@@ -88,8 +88,14 @@ class render {
 
         $context = \context_block::instance($instanceid);
 
-        if (!empty($dropcodes)) {
-            $uniquecodes = array_unique($dropcodes);
+        // Idempotency guard: a code already in self::$dropscache was already preloaded by an
+        // earlier call in this same request (e.g. the same shortcode appearing in both an
+        // activity's intro and its content). Re-querying it would append its inventory/
+        // stack_log rows to self::$inventorycache a second time, inflating the collection
+        // event count reported to the student.
+        $uniquecodes = array_values(array_diff(array_unique($dropcodes), array_keys(self::$dropscache)));
+
+        if (!empty($uniquecodes)) {
             [$insql, $inparams] = $DB->get_in_or_equal($uniquecodes, SQL_PARAMS_NAMED, 'dc');
             $inparams['bi'] = $instanceid;
 

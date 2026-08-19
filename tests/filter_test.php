@@ -563,6 +563,53 @@ final class filter_test extends advanced_testcase {
     }
 
     /**
+     * preload_data() is idempotent across two filter() calls carrying the same drop code in
+     * the same request (e.g. an activity's intro and content each filtered separately, both
+     * containing the same shortcode) — the second call must not double-count the one real
+     * collection event, which would otherwise report progress twice the actual value and could
+     * make limit_reached trip before the drop's real maxusage is reached.
+     *
+     * @covers \filter_playerhud\output\render::preload_data
+     */
+    public function test_render_drop_progress_is_not_doubled_by_a_repeated_filter_call(): void {
+        global $DB, $USER, $COURSE, $PAGE;
+        $this->resetAfterTest(true);
+
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+
+        // Locks $PAGE's course before the first filter() call triggers the lazy $OUTPUT/theme
+        // bootstrap — without this, that bootstrap defaults $PAGE to the site course and resets
+        // the global $COURSE back to it as a side effect, which only breaks a test (like this
+        // one) calling filter() more than once in the same method.
+        $PAGE->set_course($COURSE);
+
+        $dropid = $this->create_drop($instanceid, $itemid, 'DUPCALL', 3);
+
+        $DB->insert_record('block_playerhud_inventory', (object) [
+            'userid' => $USER->id,
+            'itemid' => $itemid,
+            'dropid' => $dropid,
+            'source' => 'map',
+            'timecreated' => time(),
+        ]);
+
+        $filter = new text_filter($context, []);
+        // Simulates the same shortcode being filtered twice in one request (e.g. an activity's
+        // intro filtered separately from its content) — preload_data() runs once per call.
+        $filter->filter('Intro: [PLAYERHUD_DROP code=DUPCALL]');
+        $filteredtext = $filter->filter('Content: [PLAYERHUD_DROP code=DUPCALL]');
+
+        $this->assertStringContainsString(
+            \block_playerhud\utils::format_drop_progress_count(1, 3),
+            $filteredtext
+        );
+        $this->assertStringNotContainsString(
+            \block_playerhud\utils::format_drop_progress_count(2, 3),
+            $filteredtext
+        );
+    }
+
+    /**
      * A recently collected drop still within its respawn window must render in cooldown.
      *
      * @covers \filter_playerhud\output\render::render_drop
