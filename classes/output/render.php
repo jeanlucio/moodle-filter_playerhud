@@ -380,18 +380,23 @@ class render {
         // value); ?? 1 covers an older installed version, where lib.php never selects it.
         $value = (int) ($data->value ?? 1);
 
-        // Precomputed once here so the modal (via data-progress-text) and the card/text-mode
+        // Precomputed once here so the modal (via data attributes) and the card/text-mode
         // badge/title below always show identical wording, whatever the drop's maxusage/value.
-        // Guarded: format_drop_progress() only exists on block_playerhud versions that ship the
-        // item-quantity engine. Older versions never grant more than one unit per collection, so
-        // the plain "N/M Collected" phrasing already covers that case exactly.
-        if (method_exists('\block_playerhud\utils', 'format_drop_progress')) {
-            $progresstext = \block_playerhud\utils::format_drop_progress($events, (int)$data->maxusage, $value);
+        // Guarded: format_drop_progress_count()/format_drop_qty_per_collection() only exist on
+        // block_playerhud versions that ship the item-quantity engine. Older versions never
+        // grant more than one unit per collection, so the plain "N/M Collected" phrasing already
+        // covers that case exactly.
+        if (method_exists('\block_playerhud\utils', 'format_drop_progress_count')) {
+            $progresstext = \block_playerhud\utils::format_drop_progress_count($events, (int)$data->maxusage);
         } else if ((int)$data->maxusage > 0) {
             $progresstext = $events . '/' . (int)$data->maxusage . ' ' . get_string('collected', 'block_playerhud');
         } else {
-            $progresstext = '';
+            $progresstext = get_string('infinite', 'block_playerhud');
         }
+
+        $qtytext = method_exists('\block_playerhud\utils', 'format_drop_qty_per_collection')
+            ? \block_playerhud\utils::format_drop_qty_per_collection($value)
+            : '';
 
         // Same guard: format_compact_number() is also new-engine-only. Falling back to the
         // plain number is a cosmetic difference only (no large-number "1.5k" shortening).
@@ -403,10 +408,11 @@ class render {
         // long before the item-quantity engine — shown on any block_playerhud version. The value
         // badge needs the new engine, so it is separately gated behind method_exists() above.
         $isinfinitedropbadge = ((int)$data->maxusage === 0);
-        $showvaluebadge = method_exists('\block_playerhud\utils', 'format_drop_progress') && $value > 1;
-        // Text mode has no room for a visible badge; surface the same information via
-        // title/aria-label instead, whenever there is something worth noting.
-        $showprogresstitle = ($progresstext !== '') && ($showvaluebadge || $isinfinitedropbadge);
+        $showvaluebadge = ($qtytext !== '') && $value > 1;
+        // Text mode has no room for two visible badges; surface both facts together via a
+        // single title/aria-label instead, whenever there is something worth noting.
+        $showprogresstitle = ($showvaluebadge || $isinfinitedropbadge);
+        $titletext = ($qtytext !== '') ? ($progresstext . ' · ' . $qtytext) : $progresstext;
 
         $dataattributes = 'data-name="' . $safename . '" ' .
                           'data-desc-b64="' . $htmldesc . '" ' .
@@ -416,6 +422,7 @@ class render {
                           'data-unique="' . ($isunique ? 1 : 0) . '" ' .
                           'data-timestamp="' . $timestamp . '" ' .
                           'data-progress-text="' . s($progresstext) . '" ' .
+                          'data-qty-text="' . s($qtytext) . '" ' .
                           'data-maxusage="' . $data->maxusage . '" ' .
                           'data-respawntime-str="' . s($respawntimestr) . '"';
 
@@ -441,7 +448,8 @@ class render {
             'show_value_badge' => $showvaluebadge,
             'show_progress_title' => $showprogresstitle,
             'value_display' => $valuedisplay,
-            'progress_text' => $progresstext,
+            'qty_text' => $qtytext,
+            'title_text' => $titletext,
             'safe_name' => $safename,
             'display_name' => $displayname,
             'label' => $textlabel,

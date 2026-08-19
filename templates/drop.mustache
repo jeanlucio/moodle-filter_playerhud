@@ -34,7 +34,8 @@
         "show_value_badge": true,
         "show_progress_title": true,
         "value_display": "2",
-        "progress_text": "Collection 1 of 2 - Quantity per collection: 2"
+        "qty_text": "Qty/collection: 2",
+        "title_text": "Collection 1 of 2 · Qty/collection: 2"
     }
 }}
 
@@ -45,11 +46,11 @@
               tabindex="0"
               role="button"
               aria-disabled="true"
-              {{#show_progress_title}}title="{{progress_text}}"{{/show_progress_title}}
+              {{#show_progress_title}}title="{{title_text}}"{{/show_progress_title}}
               {{{data_attributes}}}>
             <i class="fa fa-check" aria-hidden="true"></i>
             <span class="visually-hidden">{{#str}} collected, filter_playerhud {{/str}}: </span>{{label}}
-            {{#show_progress_title}}<span class="visually-hidden"> — {{progress_text}}</span>{{/show_progress_title}}
+            {{#show_progress_title}}<span class="visually-hidden"> — {{title_text}}</span>{{/show_progress_title}}
         </span>
     {{/limit_reached}}
     {{^limit_reached}}
@@ -120,7 +121,7 @@
                 <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
                     x{{value_display}}
                 </span>
-                <span class="visually-hidden">{{progress_text}}</span>
+                <span class="visually-hidden">{{qty_text}}</span>
             {{/show_value_badge}}
         {{/is_infinite_drop_badge}}
 
@@ -159,7 +160,7 @@
                 <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
                     x{{value_display}}
                 </span>
-                <span class="visually-hidden">{{progress_text}}</span>
+                <span class="visually-hidden">{{qty_text}}</span>
             {{/show_value_badge}}
         {{/is_infinite_drop_badge}}
 

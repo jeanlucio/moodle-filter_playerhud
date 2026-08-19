@@ -515,13 +515,13 @@ final class filter_test extends advanced_testcase {
 
         $this->assertStringContainsString('ph-action-collect', $filteredtext);
         $this->assertStringNotContainsString('aria-disabled="true"', $filteredtext);
-        // Progress text reports the event count against maxusage, plus the drop's own
-        // configured value-per-collection — never a running unit total.
+        // Progress data-attribute reports the event count against maxusage — never a running
+        // unit total.
         $this->assertStringContainsString(
-            \block_playerhud\utils::format_drop_progress(1, 2, 2),
+            \block_playerhud\utils::format_drop_progress_count(1, 2),
             $filteredtext
         );
-        // The card badge shows the same static per-collection value.
+        // The card badge shows the drop's static per-collection value.
         $this->assertStringContainsString('x2', $filteredtext);
     }
 
