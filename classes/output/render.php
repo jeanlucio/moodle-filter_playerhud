@@ -75,7 +75,15 @@ class render {
             [$insql, $inparams] = $DB->get_in_or_equal($uniquecodes, SQL_PARAMS_NAMED, 'dc');
             $inparams['bi'] = $instanceid;
 
-            $sql = "SELECT d.id as dropid, d.maxusage, d.respawntime, d.blockinstanceid, d.code,
+            // The drop "value" column only exists on block_playerhud versions that ship the
+            // item-quantity engine — this queries block_playerhud's own table directly, so it
+            // must not assume the installed version has it. "1 as value" matches that older
+            // engine's behaviour: it never granted more than one unit per collection.
+            $valuecolumn = $DB->get_manager()->field_exists('block_playerhud_drops', 'value')
+                ? 'd.value'
+                : '1 as value';
+
+            $sql = "SELECT d.id as dropid, d.maxusage, $valuecolumn, d.respawntime, d.blockinstanceid, d.code,
                            i.id as itemid, i.name as itemname, i.image, i.xp, i.description,
                            i.secret, i.required_class_id
                       FROM {block_playerhud_drops} d
@@ -106,7 +114,7 @@ class render {
                 [$didsql, $didparams] = $DB->get_in_or_equal($dropids, SQL_PARAMS_NAMED, 'did');
                 $didparams['uid'] = $USER->id;
 
-                $invsql = "SELECT id, dropid, timecreated, 1 as qty
+                $invsql = "SELECT id, dropid, timecreated
                              FROM {block_playerhud_inventory}
                             WHERE userid = :uid AND dropid $didsql
                          ORDER BY timecreated DESC";
@@ -121,7 +129,7 @@ class render {
                 // Also bulk load the new-engine stacking storage (grant entries only, never
                 // revoked) — see get_pickup_totals() for why both sources must be summed.
                 if ($DB->get_manager()->table_exists('block_playerhud_stack_log')) {
-                    $sqsql = "SELECT id, dropid, timecreated, delta as qty
+                    $sqsql = "SELECT id, dropid, timecreated
                                 FROM {block_playerhud_stack_log}
                                WHERE userid = :uid AND dropid $didsql
                                      AND delta > 0 AND source <> 'revoked'
@@ -138,33 +146,30 @@ class render {
     }
 
     /**
-     * Sums the collection event count and the total quantity granted for a drop, across both
-     * storage generations: the legacy per-unit inventory rows (1 row = 1 event = 1 unit) and the
-     * new-engine stack_log grant entries (1 row = 1 event, worth its own delta, which can be
-     * more than 1 unit when the drop's "value per collection" is greater than 1). Events and
-     * units are independent axes: a drop's maxusage limits collection EVENTS, not units, so a
-     * caller comparing units against maxusage would report the limit reached after fewer real
-     * collections than configured. Also tracks the most recent collection timestamp.
+     * Counts the collection event count for a drop, across both storage generations: the legacy
+     * per-unit inventory rows and the new-engine stack_log grant entries (both 1 row = 1
+     * collection event). Deliberately a count of EVENTS, never a sum of quantity granted: a
+     * drop's maxusage limits collection events, not units, so a caller comparing a unit total
+     * against maxusage would report the limit reached after fewer real collections than
+     * configured. Also tracks the most recent collection timestamp.
      *
-     * @param array $entries List of {timecreated, qty} rows from the merged cache/fallback.
-     * @return array {events: int, units: int, last: \stdClass|null}
+     * @param array $entries List of {timecreated} rows from the merged cache/fallback.
+     * @return array {events: int, last: \stdClass|null}
      */
     private static function get_pickup_totals(array $entries): array {
         $events = 0;
-        $units = 0;
         $last = null;
         $lasttime = 0;
 
         foreach ($entries as $entry) {
             $events++;
-            $units += (int)($entry->qty ?? 1);
             if ($entry->timecreated > $lasttime) {
                 $lasttime = $entry->timecreated;
                 $last = $entry;
             }
         }
 
-        return ['events' => $events, 'units' => $units, 'last' => $last];
+        return ['events' => $events, 'last' => $last];
     }
 
     /**
@@ -268,7 +273,6 @@ class render {
                 'dropid' => $dropid,
             ], 'timecreated DESC');
             foreach ($legacyfallback as $row) {
-                $row->qty = 1;
                 $inventory[] = $row;
             }
 
@@ -280,7 +284,6 @@ class render {
                     'timecreated DESC'
                 );
                 foreach ($stackfallback as $row) {
-                    $row->qty = $row->delta;
                     $inventory[] = $row;
                 }
             }
@@ -288,7 +291,6 @@ class render {
 
         $pickuptotals = self::get_pickup_totals($inventory);
         $events = $pickuptotals['events'];
-        $units = $pickuptotals['units'];
         $lastcollected = $pickuptotals['last'];
 
         $isunique = ($data->maxusage == 1);
@@ -372,26 +374,39 @@ class render {
         $htmldesc = base64_encode($displaydesc);
         $rawimage = $media['is_image'] ? $media['url'] : strip_tags($media['content']);
 
+        // The drop's own configured value-per-collection — a static property of the drop
+        // definition, not a sum of what this student has collected from it. Only set on
+        // block_playerhud versions that ship the item-quantity engine (block_playerhud_drops.
+        // value); ?? 1 covers an older installed version, where lib.php never selects it.
+        $value = (int) ($data->value ?? 1);
+
         // Precomputed once here so the modal (via data-progress-text) and the card/text-mode
         // badge/title below always show identical wording, whatever the drop's maxusage/value.
         // Guarded: format_drop_progress() only exists on block_playerhud versions that ship the
-        // item-quantity engine. Older versions never grant more than one unit per collection,
-        // so events and units are always equal there — no information is lost by falling back
-        // to the plain phrasing inline.
+        // item-quantity engine. Older versions never grant more than one unit per collection, so
+        // the plain "N/M Collected" phrasing already covers that case exactly.
         if (method_exists('\block_playerhud\utils', 'format_drop_progress')) {
-            $progresstext = \block_playerhud\utils::format_drop_progress($events, (int)$data->maxusage, $units);
+            $progresstext = \block_playerhud\utils::format_drop_progress($events, (int)$data->maxusage, $value);
         } else if ((int)$data->maxusage > 0) {
             $progresstext = $events . '/' . (int)$data->maxusage . ' ' . get_string('collected', 'block_playerhud');
         } else {
-            $progresstext = get_string('report_collected_times', 'block_playerhud', $units);
+            $progresstext = '';
         }
 
         // Same guard: format_compact_number() is also new-engine-only. Falling back to the
         // plain number is a cosmetic difference only (no large-number "1.5k" shortening).
-        $unitsdisplay = method_exists('\block_playerhud\utils', 'format_compact_number')
-            ? \block_playerhud\utils::format_compact_number($units)
-            : (string) $units;
-        $showunitsbadge = ($units > 1);
+        $valuedisplay = method_exists('\block_playerhud\utils', 'format_compact_number')
+            ? \block_playerhud\utils::format_compact_number($value)
+            : (string) $value;
+
+        // The infinite badge only needs maxusage, which has meant "unlimited collections" since
+        // long before the item-quantity engine — shown on any block_playerhud version. The value
+        // badge needs the new engine, so it is separately gated behind method_exists() above.
+        $isinfinitedropbadge = ((int)$data->maxusage === 0);
+        $showvaluebadge = method_exists('\block_playerhud\utils', 'format_drop_progress') && $value > 1;
+        // Text mode has no room for a visible badge; surface the same information via
+        // title/aria-label instead, whenever there is something worth noting.
+        $showprogresstitle = ($progresstext !== '') && ($showvaluebadge || $isinfinitedropbadge);
 
         $dataattributes = 'data-name="' . $safename . '" ' .
                           'data-desc-b64="' . $htmldesc . '" ' .
@@ -422,8 +437,10 @@ class render {
             'limit_reached' => $limitreached,
             'is_cooldown' => $iscooldown,
             'readytime' => $readytime,
-            'show_units_badge' => $showunitsbadge,
-            'units_display' => $unitsdisplay,
+            'is_infinite_drop_badge' => $isinfinitedropbadge,
+            'show_value_badge' => $showvaluebadge,
+            'show_progress_title' => $showprogresstitle,
+            'value_display' => $valuedisplay,
             'progress_text' => $progresstext,
             'safe_name' => $safename,
             'display_name' => $displayname,

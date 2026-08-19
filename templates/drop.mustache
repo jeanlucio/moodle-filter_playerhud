@@ -30,9 +30,11 @@
         "is_image": true,
         "image_url": "http://example.com/item.png",
         "name": "Hidden Treasure",
-        "show_units_badge": true,
-        "units_display": "4",
-        "progress_text": "2/2 collections (4 items)"
+        "is_infinite_drop_badge": false,
+        "show_value_badge": true,
+        "show_progress_title": true,
+        "value_display": "2",
+        "progress_text": "Collection 1 of 2 - Quantity per collection: 2"
     }
 }}
 
@@ -43,11 +45,11 @@
               tabindex="0"
               role="button"
               aria-disabled="true"
-              {{#show_units_badge}}title="{{progress_text}}"{{/show_units_badge}}
+              {{#show_progress_title}}title="{{progress_text}}"{{/show_progress_title}}
               {{{data_attributes}}}>
             <i class="fa fa-check" aria-hidden="true"></i>
             <span class="visually-hidden">{{#str}} collected, filter_playerhud {{/str}}: </span>{{label}}
-            {{#show_units_badge}}<span class="visually-hidden"> — {{progress_text}}</span>{{/show_units_badge}}
+            {{#show_progress_title}}<span class="visually-hidden"> — {{progress_text}}</span>{{/show_progress_title}}
         </span>
     {{/limit_reached}}
     {{^limit_reached}}
@@ -107,12 +109,20 @@
             </span>
         {{/limit_reached}}
 
-        {{#show_units_badge}}
+        {{#is_infinite_drop_badge}}
             <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
-                x{{units_display}}
+                ♾️
             </span>
-            <span class="visually-hidden">{{progress_text}}</span>
-        {{/show_units_badge}}
+            <span class="visually-hidden">{{#str}} infinite, block_playerhud {{/str}}</span>
+        {{/is_infinite_drop_badge}}
+        {{^is_infinite_drop_badge}}
+            {{#show_value_badge}}
+                <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
+                    x{{value_display}}
+                </span>
+                <span class="visually-hidden">{{progress_text}}</span>
+            {{/show_value_badge}}
+        {{/is_infinite_drop_badge}}
 
         {{#is_cooldown}}
             <div class="ph-timer badge bg-light text-dark border shadow-sm ph-badge-bottom-center"
@@ -138,12 +148,20 @@
     <div class="playerhud-item-card ph-card-compact card p-2 ph-drop-card-container d-inline-flex {{#limit_reached}}ph-owned{{/limit_reached}}"
          {{{data_attributes}}}>
 
-        {{#show_units_badge}}
+        {{#is_infinite_drop_badge}}
             <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
-                x{{units_display}}
+                ♾️
             </span>
-            <span class="visually-hidden">{{progress_text}}</span>
-        {{/show_units_badge}}
+            <span class="visually-hidden">{{#str}} infinite, block_playerhud {{/str}}</span>
+        {{/is_infinite_drop_badge}}
+        {{^is_infinite_drop_badge}}
+            {{#show_value_badge}}
+                <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
+                    x{{value_display}}
+                </span>
+                <span class="visually-hidden">{{progress_text}}</span>
+            {{/show_value_badge}}
+        {{/is_infinite_drop_badge}}
 
         {{! Icon/Trigger Area }}
         <div class="ph-item-details-trigger ph-drop-trigger-area"

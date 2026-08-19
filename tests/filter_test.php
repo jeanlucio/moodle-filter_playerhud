@@ -244,6 +244,7 @@ final class filter_test extends advanced_testcase {
      * @param string $code The drop collection code.
      * @param int $maxusage Maximum number of collections (0 = unlimited).
      * @param int $respawntime Cooldown in seconds before recollection (0 = none).
+     * @param int $value Quantity granted per collection.
      * @return int The new drop ID.
      */
     protected function create_drop(
@@ -251,7 +252,8 @@ final class filter_test extends advanced_testcase {
         int $itemid,
         string $code,
         int $maxusage = 1,
-        int $respawntime = 0
+        int $respawntime = 0,
+        int $value = 1
     ): int {
         global $DB;
 
@@ -260,6 +262,7 @@ final class filter_test extends advanced_testcase {
         $drop->itemid = $itemid;
         $drop->name = 'Drop ' . $code;
         $drop->maxusage = $maxusage;
+        $drop->value = $value;
         $drop->respawntime = $respawntime;
         $drop->code = $code;
         $drop->timecreated = time();
@@ -493,9 +496,9 @@ final class filter_test extends advanced_testcase {
 
         [$context, $instanceid, $itemid] = $this->setup_environment();
 
-        // Maxusage=2 (two collection events allowed), but only one event has happened so far —
-        // worth 2 units (value=2). One event out of two allowed must still be collectable.
-        $dropid = $this->create_drop($instanceid, $itemid, 'NEWLIM2', 2, 0);
+        // Maxusage=2 (two collection events allowed), value=2 (units per collection), but only
+        // one event has happened so far. One event out of two allowed must still be collectable.
+        $dropid = $this->create_drop($instanceid, $itemid, 'NEWLIM2', 2, 0, 2);
 
         $DB->insert_record('block_playerhud_stack_log', (object) [
             'userid' => $USER->id,
@@ -512,9 +515,14 @@ final class filter_test extends advanced_testcase {
 
         $this->assertStringContainsString('ph-action-collect', $filteredtext);
         $this->assertStringNotContainsString('aria-disabled="true"', $filteredtext);
-        // The progress text still communicates the real unit total alongside the event count.
-        $this->assertStringContainsString('1/2', $filteredtext);
-        $this->assertStringContainsString('2 items', $filteredtext);
+        // Progress text reports the event count against maxusage, plus the drop's own
+        // configured value-per-collection — never a running unit total.
+        $this->assertStringContainsString(
+            \block_playerhud\utils::format_drop_progress(1, 2, 2),
+            $filteredtext
+        );
+        // The card badge shows the same static per-collection value.
+        $this->assertStringContainsString('x2', $filteredtext);
     }
 
     /**
