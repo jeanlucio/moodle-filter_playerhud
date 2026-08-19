@@ -374,7 +374,23 @@ class render {
 
         // Precomputed once here so the modal (via data-progress-text) and the card/text-mode
         // badge/title below always show identical wording, whatever the drop's maxusage/value.
-        $progresstext = \block_playerhud\utils::format_drop_progress($events, (int)$data->maxusage, $units);
+        // Guarded: format_drop_progress() only exists on block_playerhud versions that ship the
+        // item-quantity engine. Older versions never grant more than one unit per collection,
+        // so events and units are always equal there — no information is lost by falling back
+        // to the plain phrasing inline.
+        if (method_exists('\block_playerhud\utils', 'format_drop_progress')) {
+            $progresstext = \block_playerhud\utils::format_drop_progress($events, (int)$data->maxusage, $units);
+        } else if ((int)$data->maxusage > 0) {
+            $progresstext = $events . '/' . (int)$data->maxusage . ' ' . get_string('collected', 'block_playerhud');
+        } else {
+            $progresstext = get_string('report_collected_times', 'block_playerhud', $units);
+        }
+
+        // Same guard: format_compact_number() is also new-engine-only. Falling back to the
+        // plain number is a cosmetic difference only (no large-number "1.5k" shortening).
+        $unitsdisplay = method_exists('\block_playerhud\utils', 'format_compact_number')
+            ? \block_playerhud\utils::format_compact_number($units)
+            : (string) $units;
         $showunitsbadge = ($units > 1);
 
         $dataattributes = 'data-name="' . $safename . '" ' .
@@ -407,7 +423,7 @@ class render {
             'is_cooldown' => $iscooldown,
             'readytime' => $readytime,
             'show_units_badge' => $showunitsbadge,
-            'units_display' => \block_playerhud\utils::format_compact_number($units),
+            'units_display' => $unitsdisplay,
             'progress_text' => $progresstext,
             'safe_name' => $safename,
             'display_name' => $displayname,
