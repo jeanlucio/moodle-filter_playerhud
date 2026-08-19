@@ -419,10 +419,6 @@ class render {
         // badge needs the new engine, so it is separately gated behind method_exists() above.
         $isinfinitedropbadge = ((int)$data->maxusage === 0);
         $showvaluebadge = ($qtytext !== '') && $value > 1;
-        // Text mode has no room for two visible badges; surface both facts together via a
-        // single title/aria-label instead, whenever there is something worth noting.
-        $showprogresstitle = ($showvaluebadge || $isinfinitedropbadge);
-        $titletext = ($qtytext !== '') ? ($progresstext . ' · ' . $qtytext) : $progresstext;
 
         $dataattributes = 'data-name="' . $safename . '" ' .
                           'data-desc-b64="' . $htmldesc . '" ' .
@@ -456,10 +452,8 @@ class render {
             'readytime' => $readytime,
             'is_infinite_drop_badge' => $isinfinitedropbadge,
             'show_value_badge' => $showvaluebadge,
-            'show_progress_title' => $showprogresstitle,
             'value_display' => $valuedisplay,
             'qty_text' => $qtytext,
-            'title_text' => $titletext,
             'safe_name' => $safename,
             'display_name' => $displayname,
             'label' => $textlabel,
