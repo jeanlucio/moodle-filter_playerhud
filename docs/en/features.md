@@ -2,6 +2,9 @@
 
 * 📍 **Item Drops:** insert collectible item drops directly into course content — pages, labels,
   books, forums, and any other HTML-supported activity.
+* 🔢 **Per-Collection Quantity Display:** a drop's card shows the actual number of units it
+  grants per collection (e.g. `x2`), read through the block's item-quantity engine when
+  present and falling back to single-unit display on an older installed block version.
 * 🏪 **Trade Widgets:** embed a PlayerHUD NPC shop trade card inline, resolved by a short
   lookup code rather than a raw database ID.
 * 🧩 **Shortcode-Based Integration:** three shortcodes (`[PLAYERHUD_WIDGET]`,

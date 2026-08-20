@@ -2,6 +2,9 @@
 
 * 📍 **Drops de Itens:** insere drops de itens colecionáveis diretamente no conteúdo do curso —
   páginas, rótulos, livros, fóruns e qualquer outra atividade com suporte a HTML.
+* 🔢 **Exibição de Quantidade por Coleta:** o card do drop mostra o número real de unidades
+  concedidas por coleta (ex.: `x2`), lido através do motor de quantidade de item do bloco
+  quando presente, com fallback pra exibição de unidade única numa versão mais antiga do bloco.
 * 🏪 **Widgets de Troca:** incorpora um card de troca da loja NPC do PlayerHUD embutido no
   conteúdo, resolvido por um código curto de consulta em vez de um ID de banco de dados cru.
 * 🧩 **Integração Baseada em Shortcode:** três shortcodes (`[PLAYERHUD_WIDGET]`,

@@ -7,14 +7,14 @@ on every CI push against the full Moodle 4.5 → 5.2 matrix (PostgreSQL & MariaD
 
 | Test file | Cases |
 |-----------|------:|
-| `filter_test.php` | 22 |
-| **Total** | **22** |
+| `filter_test.php` | 27 |
+| **Total** | **27** |
 
 ```bash
 vendor/bin/phpunit --testsuite filter_playerhud
 ```
 
-**Overall line coverage** (PHPUnit + Xdebug): **80%**.
+**Overall line coverage** (PHPUnit + Xdebug): **79%**.
 
 ### Behat — Acceptance Tests
 

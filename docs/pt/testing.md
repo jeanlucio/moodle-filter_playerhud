@@ -7,8 +7,8 @@ executados a cada push de CI contra a matriz completa (Moodle 4.5 → 5.2, Postg
 
 | Arquivo de teste | Casos | O que é coberto |
 |-------------------|------:|----------------|
-| `filter_test.php` | 22 | Parsing do shortcode no botão de coleta; zero queries N+1 com 5 shortcodes de drop simultâneos na mesma página; visibilidade do drop com gamificação pausada; string de motivo do provedor nulo de privacidade; shortcodes removidos para convidados/página inicial do site e para curso sem instância do bloco; o fragmento de modais dos assets renderiza HTML de verdade; um item secreto renderiza como placeholder de mistério até ser coletado; uma descrição de item nula não trava `base64_encode()`; estados de limite atingido e cooldown do drop renderizam desabilitados sem ação de coleta; um código de troca válido resolve e renderiza o card, um código desconhecido não renderiza nada (proteção contra enumeração de ID); o widget mostra um botão de opt-in quando pausado e o HUD completo quando ativo; o app do Moodle redireciona para a Mochila do bloco em vez de renderizar gatilhos AJAX; uma descrição de item com payload de XSS é higienizada com `format_text()` antes de ser codificada em base64 no `data-desc-b64`; um payload `configdata` forjado é desserializado com `unserialize_object()`, então o `__wakeup()` de uma classe arbitrária nunca dispara; os templates Mustache de drop e troca escapam conteúdo de ícone/emoji que não seja imagem (double-mustache); um usuário com `block/playerhud:view` explicitamente proibido nunca vê shortcodes renderizados; uma descrição contendo o próprio shortcode `[PLAYERHUD_DROP ...]` do filtro não é reexpandida, provando a proteção de reentrância sem disparar a recursão ilimitada real que ela evita |
-| **Total** | **22** | |
+| `filter_test.php` | 27 | Parsing do shortcode no botão de coleta; zero queries N+1 com 5 shortcodes de drop simultâneos na mesma página; visibilidade do drop com gamificação pausada; string de motivo do provedor nulo de privacidade; shortcodes removidos para convidados/página inicial do site e para curso sem instância do bloco; o fragmento de modais dos assets renderiza HTML de verdade; um item secreto renderiza como placeholder de mistério até ser coletado; uma descrição de item nula não trava `base64_encode()`; estados de limite atingido e cooldown do drop renderizam desabilitados sem ação de coleta; um código de troca válido resolve e renderiza o card, um código desconhecido não renderiza nada (proteção contra enumeração de ID); o widget mostra um botão de opt-in quando pausado e o HUD completo quando ativo; o app do Moodle redireciona para a Mochila do bloco em vez de renderizar gatilhos AJAX; uma descrição de item com payload de XSS é higienizada com `format_text()` antes de ser codificada em base64 no `data-desc-b64`; um payload `configdata` forjado é desserializado com `unserialize_object()`, então o `__wakeup()` de uma classe arbitrária nunca dispara; os templates Mustache de drop e troca escapam conteúdo de ícone/emoji que não seja imagem (double-mustache); um usuário com `block/playerhud:view` explicitamente proibido nunca vê shortcodes renderizados; uma descrição contendo o próprio shortcode `[PLAYERHUD_DROP ...]` do filtro não é reexpandida, provando a proteção de reentrância sem disparar a recursão ilimitada real que ela evita; o limite de coleta de um drop é atingido contando *eventos* contra o `stack_log` do motor novo, não unidades concedidas, e um drop com `value > 1` continua disponível após um único evento que concedeu várias unidades de uma vez; `render_trade()` reconhece saldo suficiente mantido só na tabela `stack` do motor novo, não apenas nas linhas legadas do inventário; chamar `filter()` duas vezes para o mesmo drop numa única requisição não duplica o progresso de coleta |
+| **Total** | **27** | |
 
 ```bash
 vendor/bin/phpunit --testsuite filter_playerhud
@@ -20,10 +20,10 @@ vendor/bin/phpunit --testsuite filter_playerhud
 |--------|:-------------------:|
 | `output\assets` | 100% |
 | `privacy\provider` | 100% |
-| `output\render` | 85% |
 | `text_filter` | 83% |
+| `output\render` | 82% |
 | `output\widget` | 73% |
-| **Total** | **80%** |
+| **Total** | **79%** |
 
 O número mais baixo, `output\widget` (73%), reflete ramos que a fixture atual dos testes nunca
 exercita, e não lógica sem teste: o jogador mínimo criado nos testes não tem classe RPG, nem

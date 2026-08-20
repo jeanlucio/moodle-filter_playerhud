@@ -7,8 +7,8 @@ on every CI push against the full matrix (Moodle 4.5 → 5.2, PostgreSQL & Maria
 
 | Test file | Cases | What is covered |
 |-----------|------:|----------------|
-| `filter_test.php` | 22 | Shortcode parsing into the collect button; zero N+1 queries across 5 simultaneous drop shortcodes on one page; drop visibility when gamification is paused; the privacy null provider's reason string; shortcodes stripped for guests/site front page and for a course without a block instance; the assets modals fragment renders real HTML; a secret item renders as a mystery placeholder until collected; a null item description does not crash `base64_encode()`; limit-reached and cooldown drop states render disabled with no collect action; a valid trade code resolves and renders the trade card, an unknown code renders nothing (guards against ID enumeration); the widget shows an opt-in button when paused and the full HUD when active; the Moodle app redirects to the block's Backpack view instead of rendering AJAX triggers; an item description containing an XSS payload is sanitised with `format_text()` before being base64-encoded into `data-desc-b64`; a crafted `configdata` payload is deserialised with `unserialize_object()`, so an arbitrary class's `__wakeup()` never fires; the drop and trade Mustache templates escape non-image icon/emoji content (double-mustache); a user with `block/playerhud:view` explicitly prohibited never sees rendered shortcodes; a description containing the filter's own `[PLAYERHUD_DROP ...]` shortcode is not re-expanded, proving the reentrancy guard without triggering the real unbounded recursion it prevents |
-| **Total** | **22** | |
+| `filter_test.php` | 27 | Shortcode parsing into the collect button; zero N+1 queries across 5 simultaneous drop shortcodes on one page; drop visibility when gamification is paused; the privacy null provider's reason string; shortcodes stripped for guests/site front page and for a course without a block instance; the assets modals fragment renders real HTML; a secret item renders as a mystery placeholder until collected; a null item description does not crash `base64_encode()`; limit-reached and cooldown drop states render disabled with no collect action; a valid trade code resolves and renders the trade card, an unknown code renders nothing (guards against ID enumeration); the widget shows an opt-in button when paused and the full HUD when active; the Moodle app redirects to the block's Backpack view instead of rendering AJAX triggers; an item description containing an XSS payload is sanitised with `format_text()` before being base64-encoded into `data-desc-b64`; a crafted `configdata` payload is deserialised with `unserialize_object()`, so an arbitrary class's `__wakeup()` never fires; the drop and trade Mustache templates escape non-image icon/emoji content (double-mustache); a user with `block/playerhud:view` explicitly prohibited never sees rendered shortcodes; a description containing the filter's own `[PLAYERHUD_DROP ...]` shortcode is not re-expanded, proving the reentrancy guard without triggering the real unbounded recursion it prevents; a drop's collection limit is reached by counting *events* against the new engine's `stack_log`, not units granted, and a `value > 1` drop still shows as available after a single event that granted several units at once; render_trade() recognises an affordable balance held only in the new engine's `stack` table, not just the legacy inventory rows; calling `filter()` twice for the same drop in one request does not double-count its collection progress |
+| **Total** | **27** | |
 
 ```bash
 vendor/bin/phpunit --testsuite filter_playerhud
@@ -20,10 +20,10 @@ vendor/bin/phpunit --testsuite filter_playerhud
 |-------|:-------------:|
 | `output\assets` | 100% |
 | `privacy\provider` | 100% |
-| `output\render` | 85% |
 | `text_filter` | 83% |
+| `output\render` | 82% |
 | `output\widget` | 73% |
-| **Overall** | **80%** |
+| **Overall** | **79%** |
 
 The lowest figure, `output\widget` (73%), reflects branches the current fixture never exercises
 rather than untested logic: the minimal test player has no RPG class, no karma progress, and no

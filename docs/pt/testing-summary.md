@@ -7,14 +7,14 @@ executados a cada push de CI contra a matriz completa (Moodle 4.5 → 5.2, Postg
 
 | Arquivo de teste | Casos |
 |-------------------|------:|
-| `filter_test.php` | 22 |
-| **Total** | **22** |
+| `filter_test.php` | 27 |
+| **Total** | **27** |
 
 ```bash
 vendor/bin/phpunit --testsuite filter_playerhud
 ```
 
-**Cobertura de linhas total** (PHPUnit + Xdebug): **80%**.
+**Cobertura de linhas total** (PHPUnit + Xdebug): **79%**.
 
 ### Behat — Testes de Aceitação
 
