@@ -201,6 +201,97 @@ final class filter_test extends advanced_testcase {
     }
 
     /**
+     * A drop's media, once bulk-loaded by an earlier preload_data() batch in the same request
+     * (e.g. two separate text blocks on the same page, like a forum post's intro and its own
+     * content), must still be served from cache in a later render — not silently dropped by a
+     * second, unrelated batch overwriting the whole media cache instead of merging into it.
+     *
+     * @covers \filter_playerhud\output\render::preload_data
+     */
+    public function test_media_cache_survives_a_later_unrelated_preload_batch(): void {
+        global $DB, $COURSE;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+        $course = get_course($context->instanceid);
+
+        $otheritem = new \stdClass();
+        $otheritem->blockinstanceid = $instanceid;
+        $otheritem->name = 'Other Item';
+        $otheritem->xp = 50;
+        $otheritem->image = '';
+        $otheritem->description = '';
+        $otheritem->enabled = 1;
+        $otheritem->secret = 0;
+        $otheritem->timecreated = time();
+        $otheritem->timemodified = time();
+        $otheritemid = $DB->insert_record('block_playerhud_items', $otheritem);
+
+        $drop = new \stdClass();
+        $drop->blockinstanceid = $instanceid;
+        $drop->itemid = $itemid;
+        $drop->name = 'First batch drop';
+        $drop->maxusage = 1;
+        $drop->respawntime = 0;
+        $drop->code = 'FIRSTBATCH';
+        $drop->timecreated = time();
+        $drop->timemodified = time();
+        $DB->insert_record('block_playerhud_drops', $drop);
+
+        $otherdrop = new \stdClass();
+        $otherdrop->blockinstanceid = $instanceid;
+        $otherdrop->itemid = $otheritemid;
+        $otherdrop->name = 'Second batch drop';
+        $otherdrop->maxusage = 1;
+        $otherdrop->respawntime = 0;
+        $otherdrop->code = 'SECONDBATCH';
+        $otherdrop->timecreated = time();
+        $otherdrop->timemodified = time();
+        $DB->insert_record('block_playerhud_drops', $otherdrop);
+
+        $filter = new text_filter($context, []);
+
+        // Warm up Moodle core caches, then reset only this plugin's static state.
+        $filter->filter('Warmup [PLAYERHUD_DROP code=FIRSTBATCH]');
+        \filter_playerhud\text_filter::reset_caches();
+        \filter_playerhud\output\render::reset_caches();
+
+        // A successful render's asset-injection branch (js_call_amd()/strings_for_js()) leaves
+        // $COURSE pointing back at the site course as a side effect of $PAGE's own lazy init in
+        // this bare PHPUnit context — restore it before every subsequent call, matching what a
+        // real page render keeps stable throughout a single request.
+        $COURSE = $course;
+
+        // Batch 1: preloads FIRSTBATCH's drop and its item's media.
+        $filter->filter('[PLAYERHUD_DROP code=FIRSTBATCH]');
+        $COURSE = $course;
+
+        // Batch 2: a completely unrelated code, in a separate filter() call — simulating a
+        // second text block on the same page. With the bug, this call's media preload
+        // (self::$dropmediacache = ...) wipes out FIRSTBATCH's item media collected above.
+        $filter->filter('[PLAYERHUD_DROP code=SECONDBATCH]');
+        $COURSE = $course;
+
+        // Batch 3: FIRSTBATCH's code again (e.g. the same drop referenced twice on the page).
+        // The idempotency guard skips re-querying its drop row, so this render must be served
+        // entirely from cache — including its media. The single expected read is
+        // text_filter::filter()'s own player-status lookup, which is not cached across separate
+        // filter() calls by design (it re-checks gamification status on every call) and is
+        // unrelated to the media-cache bug this test targets; a second read here would mean the
+        // media fallback fired, i.e. self::$dropmediacache lost FIRSTBATCH's item media.
+        $readsbefore = $DB->perf_get_reads();
+        $filteredtext = $filter->filter('[PLAYERHUD_DROP code=FIRSTBATCH]');
+        $readsafter = $DB->perf_get_reads();
+
+        $this->assertStringContainsString('ph-action-collect', $filteredtext);
+        $this->assertSame(
+            1,
+            $readsafter - $readsbefore,
+            'Re-rendering an already-preloaded drop must not query the file storage again — ' .
+            'its media should still be in self::$dropmediacache from batch 1.'
+        );
+    }
+
+    /**
      * Test Security: Shortcode must disappear if gamification is paused.
      *
      * @covers \filter_playerhud\text_filter::filter

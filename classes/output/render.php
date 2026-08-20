@@ -132,8 +132,15 @@ class render {
                     self::$preloadeddropids[$drop->dropid] = true;
                 }
 
-                // Bulk load media.
-                self::$dropmediacache = \block_playerhud\utils::get_items_display_data($fakeitems, $context);
+                // Bulk load media. Merged (never reassigned): a later preload_data() call in the
+                // same request must not discard media collected for drops from an earlier call —
+                // the idempotency guard above skips re-preloading a code already in
+                // self::$dropscache, but that skip only helps if self::$dropmediacache still has
+                // that code's item media too.
+                self::$dropmediacache = array_replace(
+                    self::$dropmediacache,
+                    \block_playerhud\utils::get_items_display_data($fakeitems, $context)
+                );
 
                 // Bulk load user inventory for all drops found.
                 [$didsql, $didparams] = $DB->get_in_or_equal($dropids, SQL_PARAMS_NAMED, 'did');

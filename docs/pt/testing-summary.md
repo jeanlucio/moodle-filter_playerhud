@@ -7,8 +7,8 @@ executados a cada push de CI contra a matriz completa (Moodle 4.5 → 5.2, Postg
 
 | Arquivo de teste | Casos |
 |-------------------|------:|
-| `filter_test.php` | 27 |
-| **Total** | **27** |
+| `filter_test.php` | 28 |
+| **Total** | **28** |
 
 ```bash
 vendor/bin/phpunit --testsuite filter_playerhud
