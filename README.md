@@ -27,6 +27,7 @@ The **PlayerHUD Filter** is a required companion plugin for the [PlayerHUD Block
 | Component | Version |
 |-----------|---------|
 | Moodle    | 4.5+    |
+| PHP       | 8.1+    |
 | Required dependency | [PlayerHUD Block](https://github.com/jeanlucio/moodle-block_playerhud) |
 
 ### 🛠️ Installation & Configuration
@@ -73,6 +74,7 @@ O **Filtro PlayerHUD** é um plugin complementar obrigatório do [Bloco PlayerHU
 | Componente | Versão |
 |------------|--------|
 | Moodle     | 4.5+   |
+| PHP        | 8.1+   |
 | Dependência obrigatória | [Bloco PlayerHUD](https://github.com/jeanlucio/moodle-block_playerhud) |
 
 ### 🛠️ Instalação e Configuração
