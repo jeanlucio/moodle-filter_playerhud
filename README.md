@@ -48,6 +48,7 @@ documentation for the shortcode syntax reference.
 
 Found a bug or have a question? Open an issue on the
 [issue tracker](https://github.com/jeanlucio/moodle-filter_playerhud/issues).
+For general questions or ideas, use [GitHub Discussions](https://github.com/jeanlucio/moodle-filter_playerhud/discussions).
 
 ### 📄 License
 
@@ -95,6 +96,7 @@ documentação completa para a referência de sintaxe dos shortcodes.
 
 Encontrou um bug ou tem alguma dúvida? Abra uma issue no
 [rastreador de issues](https://github.com/jeanlucio/moodle-filter_playerhud/issues).
+Para perguntas gerais ou ideias, use as [Discussions do GitHub](https://github.com/jeanlucio/moodle-filter_playerhud/discussions).
 
 ### 📄 Licença
 
