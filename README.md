@@ -39,7 +39,10 @@ The **PlayerHUD Filter** is a required companion plugin for the [PlayerHUD Block
    Final path:
    `your-moodle/filter/playerhud/`
 5. Visit **Site administration > Notifications** to complete installation.
-6. Enable the filter in **Site administration > Plugins > Filters > Manage filters**.
+
+The filter enables itself automatically once installed — no extra step needed. If shortcodes
+show up as literal text on your site, check that it was not manually disabled in
+**Site administration > Plugins > Filters > Manage filters**.
 
 See the [Usage](https://jeanlucio.github.io/moodle-filter_playerhud/#usage) section of the full
 documentation for the shortcode syntax reference.
@@ -87,7 +90,10 @@ O **Filtro PlayerHUD** é um plugin complementar obrigatório do [Bloco PlayerHU
    Caminho final:
    `seu-moodle/filter/playerhud/`
 5. Acesse **Administração do site > Notificações** para concluir a instalação.
-6. Ative o filtro em **Administração do site > Plugins > Filtros > Gerenciar filtros**.
+
+O filtro se habilita automaticamente após a instalação — nenhum passo extra é necessário. Se os
+shortcodes aparecerem como texto literal no seu site, confira se ele não foi desabilitado
+manualmente em **Administração do site > Plugins > Filtros > Gerenciar filtros**.
 
 Veja a seção [Como Usar](https://jeanlucio.github.io/moodle-filter_playerhud/pt.html#usage) da
 documentação completa para a referência de sintaxe dos shortcodes.

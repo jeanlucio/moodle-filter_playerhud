@@ -10,5 +10,7 @@
    Caminho final:
    `seu-moodle/filter/playerhud/`
 5. Acesse **Administração do site > Notificações** para concluir a instalação.
-6. Ative o filtro em:
-   **Administração do site > Plugins > Filtros > Gerenciar filtros**.
+
+O filtro se habilita automaticamente após a instalação — nenhum passo extra é necessário. Se os
+shortcodes aparecerem como texto literal no seu site, confira se ele não foi desabilitado
+manualmente em **Administração do site > Plugins > Filtros > Gerenciar filtros**.
