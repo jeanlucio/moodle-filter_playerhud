@@ -27,6 +27,9 @@ outras atividades que suportem HTML, integrando-se ao sistema de gamificação P
 
 ---
 
+<span id="screenshots"></span>
+{% include_relative pt/screenshots.md %}
+
 <span id="features"></span>
 {% include_relative pt/features.md %}
 

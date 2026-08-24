@@ -1,0 +1,12 @@
+# Each entry needs an image at docs/assets/img/screenshots/<file>, plus an
+# English and a Portuguese caption. The screenshots.md pages (en/pt) loop over
+# this list, so adding a new screenshot never touches the gallery markup.
+- file: drop-card.png
+  caption_en: "[PLAYERHUD_DROP] renders a self-contained collectible card, with a badge showing the collection count and per-collection quantity"
+  caption_pt: "[PLAYERHUD_DROP] renderiza um card de item colecionável, com um selo mostrando a contagem de coletas e a quantidade por coleta"
+- file: widget.png
+  caption_en: "[PLAYERHUD_WIDGET] embeds the compact HUD — avatar, level, XP bar and item stash — directly inside any content area"
+  caption_pt: "[PLAYERHUD_WIDGET] incorpora o HUD compacto — avatar, nível, barra de XP e estoque de itens — direto em qualquer área de conteúdo"
+- file: trade-widget.png
+  caption_en: "[PLAYERHUD_TRADE] embeds an NPC shop offer, checked against the student's live inventory balance"
+  caption_pt: "[PLAYERHUD_TRADE] incorpora uma oferta de loja NPC, verificada em tempo real contra o saldo de inventário do estudante"
