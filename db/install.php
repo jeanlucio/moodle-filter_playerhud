@@ -15,19 +15,26 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * PlayerHUD filter post install hook.
  *
  * @package    filter_playerhud
  * @copyright  2026 Jean Lúcio
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+/**
+ * Enables the filter by default on a fresh install.
+ *
+ * Without this, the filter would install in Moodle's default "Off, but available" state and
+ * shortcodes typed in course content would stay as literal unprocessed text until an admin
+ * manually enables it in Site administration > Plugins > Filters > Manage filters. Mirrors the
+ * pattern used by core filters such as filter_urltolink and filter_mediaplugin.
+ *
+ * @return void
+ */
+function xmldb_filter_playerhud_install(): void {
+    global $CFG;
+    require_once($CFG->libdir . '/filterlib.php');
 
-$plugin->component = 'filter_playerhud';
-$plugin->version   = 2026082400;
-$plugin->requires  = 2024100700;        // Requires: Moodle 4.5+.
-$plugin->supported = [405, 502];
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v1.6.4';
-$plugin->dependencies = ['block_playerhud' => 2026062400];
+    filter_set_global_state('playerhud', TEXTFILTER_ON);
+}
