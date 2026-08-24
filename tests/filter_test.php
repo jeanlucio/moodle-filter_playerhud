@@ -617,6 +617,114 @@ final class filter_test extends advanced_testcase {
     }
 
     /**
+     * In card mode, an unlimited drop that also grants more than one unit per collection must
+     * show the explicit "1 of ∞" progress badge, in normal document flow above the icon, AND
+     * fold the quantity into the button text — never a second badge overlaid on the artwork.
+     * Regression test for a real UX bug: corner badges absolutely positioned over the icon area
+     * covered part of the artwork whenever the drop used a real image instead of a small emoji.
+     *
+     * @covers \filter_playerhud\output\render::render_drop
+     */
+    public function test_render_drop_card_mode_combines_progress_badge_and_button_quantity(): void {
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+
+        $this->create_drop($instanceid, $itemid, 'BADGEBOTH1', 0, 0, 2);
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter('Take: [PLAYERHUD_DROP code=BADGEBOTH1]');
+
+        $this->assertMatchesRegularExpression(
+            '/ph-drop-badges-row[^>]*>\s*<span[^>]*>\s*'
+                . preg_quote(\block_playerhud\utils::format_drop_progress_badge(0, 0), '/') . '/',
+            $filteredtext
+        );
+        // The row must come before the icon in the markup, so it renders above it, not over it.
+        $this->assertLessThan(
+            strpos($filteredtext, 'ph-drop-icon-wrapper'),
+            strpos($filteredtext, 'ph-drop-badges-row')
+        );
+        // The quantity is folded into the collect button's own label, not a second badge.
+        $this->assertStringContainsString('(x2)', $filteredtext);
+        $this->assertStringNotContainsString('ph-badge-value', $filteredtext);
+    }
+
+    /**
+     * A finite drop collectible more than once (maxusage > 1) must show the explicit collection
+     * progress badge, not a bare number. Regression test: before this fix, a card never surfaced
+     * its collection limit at all unless the drop was unlimited, and once it did, it showed a
+     * bare number with no wording explaining what it counted.
+     *
+     * @covers \filter_playerhud\output\render::render_drop
+     */
+    public function test_render_drop_shows_progress_badge_for_finite_multi_use(): void {
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+
+        $this->create_drop($instanceid, $itemid, 'BADGELIMIT1', 3, 0, 1);
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter('Take: [PLAYERHUD_DROP code=BADGELIMIT1]');
+
+        $this->assertMatchesRegularExpression(
+            '/ph-drop-badges-row[^>]*>\s*<span[^>]*>\s*'
+                . preg_quote(\block_playerhud\utils::format_drop_progress_badge(0, 3), '/') . '/',
+            $filteredtext
+        );
+        // Value is 1 (trivial), so the button must carry no quantity suffix.
+        $this->assertStringNotContainsString('(x', $filteredtext);
+    }
+
+    /**
+     * A single-use, single-value drop is the trivial case: the progress badge carries no useful
+     * information (its only two states, available/collected, are already conveyed by the button
+     * itself), so it must not render.
+     *
+     * @covers \filter_playerhud\output\render::render_drop
+     */
+    public function test_render_drop_hides_progress_badge_for_trivial_drop(): void {
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+
+        $this->create_drop($instanceid, $itemid, 'BADGENONE1', 1, 0, 1);
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter('Take: [PLAYERHUD_DROP code=BADGENONE1]');
+
+        $this->assertStringNotContainsString('ph-drop-badges-row', $filteredtext);
+    }
+
+    /**
+     * Image mode has no button text to fold the quantity into (its collect control is a bare
+     * icon overlay), so it must keep a visible quantity badge of its own alongside the progress
+     * badge, both sharing the same normal-flow row above the artwork.
+     *
+     * @covers \filter_playerhud\output\render::render_drop
+     */
+    public function test_render_drop_image_mode_keeps_value_badge(): void {
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+
+        $this->create_drop($instanceid, $itemid, 'BADGEIMG1', 0, 0, 2);
+
+        $filter = new text_filter($context, []);
+        $filteredtext = $filter->filter('Take: [PLAYERHUD_DROP mode=image code=BADGEIMG1]');
+
+        $this->assertMatchesRegularExpression('/ph-badge-value[^>]*>\s*x2/', $filteredtext);
+        $this->assertMatchesRegularExpression(
+            '/ph-drop-badges-row.*'
+                . preg_quote(\block_playerhud\utils::format_drop_progress_badge(0, 0), '/') . '/s',
+            $filteredtext
+        );
+        // The row must come before the artwork in the markup, so it renders above it, not over it.
+        // (The test drop has no image configured, so the artwork is the emoji fallback span.)
+        $this->assertLessThan(
+            strpos($filteredtext, 'ph-drop-emoji-lg'),
+            strpos($filteredtext, 'ph-drop-badges-row')
+        );
+    }
+
+    /**
      * Two collection events reach a maxusage of 2 regardless of how many units each one
      * granted — the event count, not the unit total, is what a drop's maxusage limits.
      *

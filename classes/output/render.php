@@ -430,17 +430,34 @@ class render {
             ? \block_playerhud\utils::format_drop_qty_per_collection($value)
             : '';
 
+        // The visible corner badge uses a shorter form of $progresstext above — same figures,
+        // without the leading "Collection" word, which just doesn't fit a compact card. The full
+        // sentence stays reserved for the modal (via $progresstext / data-progress-text).
+        $badgetext = method_exists('\block_playerhud\utils', 'format_drop_progress_badge')
+            ? \block_playerhud\utils::format_drop_progress_badge($events, (int)$data->maxusage)
+            : $progresstext;
+
         // Same guard: format_compact_number() is also new-engine-only. Falling back to the
         // plain number is a cosmetic difference only (no large-number "1.5k" shortening).
         $valuedisplay = method_exists('\block_playerhud\utils', 'format_compact_number')
             ? \block_playerhud\utils::format_compact_number($value)
             : (string) $value;
 
-        // The infinite badge only needs maxusage, which has meant "unlimited collections" since
-        // long before the item-quantity engine — shown on any block_playerhud version. The value
-        // badge needs the new engine, so it is separately gated behind method_exists() above.
-        $isinfinitedropbadge = ((int)$data->maxusage === 0);
+        // A single corner badge shows the full "Collection X of Y" (or "of ∞") text — the same
+        // wording the modal already uses — instead of a bare, unexplained number. A single-use
+        // drop (maxusage=1) needs no badge: its only two states are "available"/"collected",
+        // already conveyed by the button itself.
+        $showprogressbadge = ((int)$data->maxusage !== 1);
+
+        // Image mode has no button text to fold the per-collection quantity into (its collect
+        // control is a bare icon overlay), so it keeps its own small quantity badge. Card mode
+        // instead folds this into the button label itself (see $btntext below).
         $showvaluebadge = ($qtytext !== '') && $value > 1;
+
+        // Image mode's badge row needs both flags combined: it has to render whenever either
+        // badge applies, since (unlike card mode, which only ever has the progress badge) it can
+        // show one, the other, or both.
+        $showbadgesrow = $showprogressbadge || $showvaluebadge;
 
         $dataattributes = 'data-name="' . $safename . '" ' .
                           'data-desc-b64="' . $htmldesc . '" ' .
@@ -462,6 +479,13 @@ class render {
             $btnemoji = '🕵️';
         }
 
+        // Per-collection quantity is surfaced on the button itself ("Take (x2)") rather than as
+        // a second, unlabelled corner badge — it reads clearly precisely where it matters: next
+        // to the action that grants it.
+        if ($value > 1) {
+            $btntext .= ' (x' . $valuedisplay . ')';
+        }
+
         $emojihyml = !empty($btnemoji) ? '<span aria-hidden="true" class="me-1">' . s($btnemoji) . '</span> ' : '';
         $textlabel = ($issecret && empty($customtext)) ? $displayname : ($customtext ?: $displayname);
 
@@ -472,7 +496,10 @@ class render {
             'limit_reached' => $limitreached,
             'is_cooldown' => $iscooldown,
             'readytime' => $readytime,
-            'is_infinite_drop_badge' => $isinfinitedropbadge,
+            'show_progress_badge' => $showprogressbadge,
+            'show_badges_row' => $showbadgesrow,
+            'progress_badge_text' => $badgetext,
+            'progress_text' => $progresstext,
             'show_value_badge' => $showvaluebadge,
             'value_display' => $valuedisplay,
             'qty_text' => $qtytext,

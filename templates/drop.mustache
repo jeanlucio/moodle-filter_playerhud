@@ -30,7 +30,10 @@
         "is_image": true,
         "image_url": "http://example.com/item.png",
         "name": "Hidden Treasure",
-        "is_infinite_drop_badge": false,
+        "show_badges_row": true,
+        "show_progress_badge": true,
+        "progress_badge_text": "1 of 3",
+        "progress_text": "Collection 1 of 3",
         "show_value_badge": true,
         "value_display": "2",
         "qty_text": "Qty/collection: 2"
@@ -91,6 +94,23 @@
             <span class="visually-hidden">{{safe_name}} - {{#str}} wait, filter_playerhud {{/str}}: </span>
         {{/is_cooldown}}
 
+        {{#show_badges_row}}
+            <div class="ph-drop-badges-row">
+                {{#show_value_badge}}
+                    <span class="badge bg-primary text-white rounded-pill shadow-sm ph-badge-value" aria-hidden="true">
+                        x{{value_display}}
+                    </span>
+                    <span class="visually-hidden">{{qty_text}}</span>
+                {{/show_value_badge}}
+                {{#show_progress_badge}}
+                    <span class="badge bg-dark text-white rounded-pill shadow-sm" aria-hidden="true">
+                        {{progress_badge_text}}
+                    </span>
+                    <span class="visually-hidden">{{progress_text}}</span>
+                {{/show_progress_badge}}
+            </div>
+        {{/show_badges_row}}
+
         <div class="{{#limit_reached}}ph-state-grayscale{{/limit_reached}} {{#is_cooldown}}ph-state-dimmed{{/is_cooldown}}">
             {{#is_image_media}}
                 <img src="{{media_url}}" class="ph-drop-img-lg rounded-0" alt="">
@@ -105,21 +125,6 @@
                 <i class="fa fa-check"></i>
             </span>
         {{/limit_reached}}
-
-        {{#is_infinite_drop_badge}}
-            <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
-                <i class="fa fa-infinity" aria-hidden="true"></i>
-            </span>
-            <span class="visually-hidden">{{#str}} infinite, block_playerhud {{/str}}</span>
-        {{/is_infinite_drop_badge}}
-        {{^is_infinite_drop_badge}}
-            {{#show_value_badge}}
-                <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
-                    x{{value_display}}
-                </span>
-                <span class="visually-hidden">{{qty_text}}</span>
-            {{/show_value_badge}}
-        {{/is_infinite_drop_badge}}
 
         {{#is_cooldown}}
             <div class="ph-timer badge bg-light text-dark border shadow-sm ph-badge-bottom-center"
@@ -145,20 +150,14 @@
     <div class="playerhud-item-card ph-card-compact card p-2 ph-drop-card-container d-inline-flex {{#limit_reached}}ph-owned{{/limit_reached}}"
          {{{data_attributes}}}>
 
-        {{#is_infinite_drop_badge}}
-            <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
-                <i class="fa fa-infinity" aria-hidden="true"></i>
-            </span>
-            <span class="visually-hidden">{{#str}} infinite, block_playerhud {{/str}}</span>
-        {{/is_infinite_drop_badge}}
-        {{^is_infinite_drop_badge}}
-            {{#show_value_badge}}
-                <span class="badge bg-dark text-white rounded-pill shadow-sm ph-badge-top-right" aria-hidden="true">
-                    x{{value_display}}
+        {{#show_progress_badge}}
+            <div class="ph-drop-badges-row">
+                <span class="badge bg-dark text-white rounded-pill shadow-sm" aria-hidden="true">
+                    {{progress_badge_text}}
                 </span>
-                <span class="visually-hidden">{{qty_text}}</span>
-            {{/show_value_badge}}
-        {{/is_infinite_drop_badge}}
+                <span class="visually-hidden">{{progress_text}}</span>
+            </div>
+        {{/show_progress_badge}}
 
         {{! Icon/Trigger Area }}
         <div class="ph-item-details-trigger ph-drop-trigger-area"
@@ -182,7 +181,7 @@
 
         {{! Button State }}
         {{#limit_reached}}
-            <button type="button" class="btn btn-light btn-sm w-100 text-success border-success disabled" aria-disabled="true">
+            <button type="button" class="btn btn-light btn-sm w-100 text-success border-success disabled mt-2" aria-disabled="true">
                 <i class="fa fa-check" aria-hidden="true"></i>
                 <span class="visually-hidden">{{safe_name}}: </span>{{#str}} collected, filter_playerhud {{/str}}
             </button>
@@ -190,7 +189,7 @@
 
         {{^limit_reached}}
             {{#is_cooldown}}
-                <button type="button" class="btn btn-light btn-sm w-100 ph-text-dimmed disabled" aria-disabled="true">
+                <button type="button" class="btn btn-light btn-sm w-100 ph-text-dimmed disabled mt-2" aria-disabled="true">
                     <span aria-hidden="true">⏳</span>
                     <span class="visually-hidden">{{#str}} wait, filter_playerhud {{/str}} {{safe_name}}: </span>
                     <span class="ph-timer" data-deadline="{{readytime}}">{{#str}} loading, filter_playerhud {{/str}}</span>

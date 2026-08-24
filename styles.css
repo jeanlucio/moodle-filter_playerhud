@@ -187,12 +187,20 @@ span.ph-badge-bottom-center {
     border: 1px solid var(--gray-300, #dee2e6);
 }
 
-span.ph-badge-top-right {
-    position: absolute;
-    top: 5px;
-    inset-inline-end: 5px;
+div.ph-drop-badges-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+div.ph-drop-badges-row .badge {
     font-size: 0.7rem;
-    z-index: 5;
+}
+
+div.ph-drop-badges-row .ph-badge-value {
+    margin-inline-end: auto;
 }
 
 a.ph-link-overlay {
