@@ -25,9 +25,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'filter_playerhud';
-$plugin->version   = 2026082400;
+$plugin->version   = 2026090300;
 $plugin->requires  = 2024100700;        // Requires: Moodle 4.5+.
 $plugin->supported = [405, 502];
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v1.6.4';
-$plugin->dependencies = ['block_playerhud' => 2026062400];
+$plugin->release   = 'v1.7.0';
+$plugin->dependencies = ['block_playerhud' => 2026090301]; // Needs v1.9.0 for the item-quantity engine.

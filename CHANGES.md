@@ -1,5 +1,23 @@
 # Changes
 
+## [v1.7.0] — 2026-09-03
+
+- New: the filter is now enabled automatically on a fresh install, so drop shortcodes
+  render without a separate "enable the filter" step.
+- New: drop cards and the drop modal show how many units each collection grants, matching
+  block_playerhud's item-quantity feature; collection count and per-collection quantity
+  are shown as separate badges.
+- Change: the drop card's info badges (progress, cooldown, unlimited) were clarified and
+  repositioned; the unlimited-badge contrast was fixed.
+- Fix: drop limits and trade affordability now sum both block_playerhud's legacy per-unit
+  storage and its new quantity balance, so a drop is no longer locked prematurely and
+  trades are priced correctly.
+- Fix: `preload_data()` no longer double-counts a drop's collection events or overwrites
+  its own media cache.
+- Fix: the client-side collect error path no longer fails for lack of its own status
+  strings.
+- Requires block_playerhud 2026090301 (v1.9.0) or later.
+
 ## [v1.6.4] — 2026-08-03
 
 - Update: renamed an internal test fixture and softened wording in the security
