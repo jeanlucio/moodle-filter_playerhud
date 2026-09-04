@@ -459,18 +459,6 @@ class render {
         // show one, the other, or both.
         $showbadgesrow = $showprogressbadge || $showvaluebadge;
 
-        $dataattributes = 'data-name="' . $safename . '" ' .
-                          'data-desc-b64="' . $htmldesc . '" ' .
-                          'data-image="' . s($rawimage) . '" ' .
-                          'data-isimage="' . ($media['is_image'] ? 1 : 0) . '" ' .
-                          'data-xp="' . s($xpdisplay) . '" ' .
-                          'data-unique="' . ($isunique ? 1 : 0) . '" ' .
-                          'data-timestamp="' . $timestamp . '" ' .
-                          'data-progress-text="' . s($progresstext) . '" ' .
-                          'data-qty-text="' . s($qtytext) . '" ' .
-                          'data-maxusage="' . $data->maxusage . '" ' .
-                          'data-respawntime-str="' . s($respawntimestr) . '"';
-
         $btntext = !empty($attrs['button_text']) ? $attrs['button_text'] : get_string('take', 'filter_playerhud');
         $btnemoji = isset($attrs['button_emoji']) ? $attrs['button_emoji'] : '🖐';
 
@@ -512,7 +500,22 @@ class render {
             'btn_text' => $btntext,
             'emoji_html' => $emojihyml,
             'collect_url' => $collecturl->out(false),
-            'data_attributes' => $dataattributes,
+            // Individual data-* values, one per template key: the template's own {{ }}
+            // auto-escaping is the single point of truth for how each is rendered, so a
+            // future attribute added here can never skip escaping by omission (see
+            // filter_playerhud CHANGES.md and the MDL Shield review that flagged the old
+            // single hand-built $dataattributes string as fragile).
+            'data_name' => $displayname,
+            'data_desc_b64' => $htmldesc,
+            'data_image' => $rawimage,
+            'data_isimage' => ($media['is_image'] ? 1 : 0),
+            'data_xp' => $xpdisplay,
+            'data_unique' => ($isunique ? 1 : 0),
+            'data_timestamp' => (int) $timestamp,
+            'data_progress_text' => $progresstext,
+            'data_qty_text' => $qtytext,
+            'data_maxusage' => (int) $data->maxusage,
+            'data_respawntime_str' => $respawntimestr,
         ];
 
         return $OUTPUT->render_from_template('filter_playerhud/drop', $templatedata);

@@ -47,7 +47,17 @@
               tabindex="0"
               role="button"
               aria-disabled="true"
-              {{{data_attributes}}}>
+              data-name="{{data_name}}"
+              data-desc-b64="{{data_desc_b64}}"
+              data-image="{{data_image}}"
+              data-isimage="{{data_isimage}}"
+              data-xp="{{data_xp}}"
+              data-unique="{{data_unique}}"
+              data-timestamp="{{data_timestamp}}"
+              data-progress-text="{{data_progress_text}}"
+              data-qty-text="{{data_qty_text}}"
+              data-maxusage="{{data_maxusage}}"
+              data-respawntime-str="{{data_respawntime_str}}">
             <i class="fa fa-check" aria-hidden="true"></i>
             <span class="visually-hidden">{{#str}} collected, filter_playerhud {{/str}}: </span>{{label}}
         </span>
@@ -58,7 +68,17 @@
                   tabindex="0"
                   role="button"
                   aria-disabled="true"
-                  {{{data_attributes}}}>
+                  data-name="{{data_name}}"
+                  data-desc-b64="{{data_desc_b64}}"
+                  data-image="{{data_image}}"
+                  data-isimage="{{data_isimage}}"
+                  data-xp="{{data_xp}}"
+                  data-unique="{{data_unique}}"
+                  data-timestamp="{{data_timestamp}}"
+                  data-progress-text="{{data_progress_text}}"
+                  data-qty-text="{{data_qty_text}}"
+                  data-maxusage="{{data_maxusage}}"
+                  data-respawntime-str="{{data_respawntime_str}}">
                 <span aria-hidden="true">⏳</span>
                 <span class="visually-hidden">{{#str}} wait, filter_playerhud {{/str}}: </span>{{label}}
                 <small class="ph-timer ms-1" data-deadline="{{readytime}}">
@@ -70,7 +90,17 @@
             <a href="{{collect_url}}"
                class="ph-action-collect fw-bold d-inline-flex align-items-center gap-1"
                data-mode="text"
-               {{{data_attributes}}}>
+               data-name="{{data_name}}"
+               data-desc-b64="{{data_desc_b64}}"
+               data-image="{{data_image}}"
+               data-isimage="{{data_isimage}}"
+               data-xp="{{data_xp}}"
+               data-unique="{{data_unique}}"
+               data-timestamp="{{data_timestamp}}"
+               data-progress-text="{{data_progress_text}}"
+               data-qty-text="{{data_qty_text}}"
+               data-maxusage="{{data_maxusage}}"
+               data-respawntime-str="{{data_respawntime_str}}">
                {{label}}
             </a>
         {{/is_cooldown}}
@@ -84,7 +114,17 @@
                 {{#is_cooldown}}ph-item-details-trigger ph-cursor-wait{{/is_cooldown}}"
          {{#limit_reached}}role="button" tabindex="0" aria-disabled="true"{{/limit_reached}}
          {{#is_cooldown}}role="button" tabindex="0" aria-disabled="true"{{/is_cooldown}}
-         {{{data_attributes}}}>
+         data-name="{{data_name}}"
+         data-desc-b64="{{data_desc_b64}}"
+         data-image="{{data_image}}"
+         data-isimage="{{data_isimage}}"
+         data-xp="{{data_xp}}"
+         data-unique="{{data_unique}}"
+         data-timestamp="{{data_timestamp}}"
+         data-progress-text="{{data_progress_text}}"
+         data-qty-text="{{data_qty_text}}"
+         data-maxusage="{{data_maxusage}}"
+         data-respawntime-str="{{data_respawntime_str}}">
 
         {{! Hidden text for screen reader to provide context to the icon }}
         {{#limit_reached}}
@@ -139,7 +179,17 @@
                class="ph-action-collect ph-hover-scale ph-link-overlay"
                aria-label="{{#str}} take, filter_playerhud {{/str}}: {{safe_name}}"
                data-mode="image"
-               {{{data_attributes}}}>
+               data-name="{{data_name}}"
+               data-desc-b64="{{data_desc_b64}}"
+               data-image="{{data_image}}"
+               data-isimage="{{data_isimage}}"
+               data-xp="{{data_xp}}"
+               data-unique="{{data_unique}}"
+               data-timestamp="{{data_timestamp}}"
+               data-progress-text="{{data_progress_text}}"
+               data-qty-text="{{data_qty_text}}"
+               data-maxusage="{{data_maxusage}}"
+               data-respawntime-str="{{data_respawntime_str}}">
             </a>
         {{/is_cooldown}}{{/limit_reached}}
     </div>
@@ -148,7 +198,17 @@
 {{! --- MODE: CARD (Default) --- }}
 {{#is_card}}
     <div class="playerhud-item-card ph-card-compact card p-2 ph-drop-card-container d-inline-flex {{#limit_reached}}ph-owned{{/limit_reached}}"
-         {{{data_attributes}}}>
+         data-name="{{data_name}}"
+         data-desc-b64="{{data_desc_b64}}"
+         data-image="{{data_image}}"
+         data-isimage="{{data_isimage}}"
+         data-xp="{{data_xp}}"
+         data-unique="{{data_unique}}"
+         data-timestamp="{{data_timestamp}}"
+         data-progress-text="{{data_progress_text}}"
+         data-qty-text="{{data_qty_text}}"
+         data-maxusage="{{data_maxusage}}"
+         data-respawntime-str="{{data_respawntime_str}}">
 
         {{#show_progress_badge}}
             <div class="ph-drop-badges-row">
