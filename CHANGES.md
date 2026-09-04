@@ -1,5 +1,12 @@
 # Changes
 
+## [v1.7.1] — 2026-09-04
+
+- Fix: drop card `data-*` attributes are now escaped individually by the Mustache template
+  instead of being assembled by hand into a single string, closing a latent risk that a
+  future attribute could be added without escaping.
+- Update: added the MDL Shield security-review badge to the README and documentation site.
+
 ## [v1.7.0] — 2026-09-03
 
 - New: the filter is now enabled automatically on a fresh install, so drop shortcodes
