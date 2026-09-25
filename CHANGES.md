@@ -1,5 +1,9 @@
 # Changes
 
+## [v1.7.2] — 2026-09-25
+
+- Confirmed: tested and confirmed compatible with Moodle 5.3.
+
 ## [v1.7.1] — 2026-09-04
 
 - Fix: drop card `data-*` attributes are now escaped individually by the Mustache template

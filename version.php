@@ -29,5 +29,5 @@ $plugin->version   = 2026092300;
 $plugin->requires  = 2024100700;        // Requires: Moodle 4.5+.
 $plugin->supported = [405, 503];
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v1.7.1';
+$plugin->release   = 'v1.7.2';
 $plugin->dependencies = ['block_playerhud' => 2026090301]; // Needs v1.9.0 for the item-quantity engine.
