@@ -1496,4 +1496,54 @@ final class filter_test extends advanced_testcase {
         $this->assertNotSame('', trim($matches[1] ?? ''), 'The heading that names the dialog must have text.');
         $this->assertDoesNotMatchRegularExpression('/id="phModalTitleF"/', $html);
     }
+
+    /**
+     * The cooldown badge of an image drop is a descendant of the image container, and the stylesheet
+     * positions it by a selector that matches that markup (it is a div, not a span).
+     *
+     * @covers \filter_playerhud\output\render::render_drop
+     */
+    public function test_image_cooldown_badge_matches_its_stylesheet_rule(): void {
+        global $OUTPUT;
+        $this->resetAfterTest(true);
+
+        $html = $OUTPUT->render_from_template('filter_playerhud/drop', [
+            'is_image_mode' => true,
+            'is_cooldown' => true,
+            'readytime' => time() + 600,
+            'safe_name' => 'Test',
+            'data_name' => 'Test',
+        ]);
+        $dom = new \DOMDocument();
+        @$dom->loadHTML('<?xml encoding="utf-8"?><body>' . $html . '</body>');
+        $xpath = new \DOMXPath($dom);
+        $badges = $xpath->query(
+            "//*[contains(concat(' ', normalize-space(@class), ' '), ' ph-drop-image-container ')]" .
+            "//*[contains(concat(' ', normalize-space(@class), ' '), ' ph-badge-bottom-center ')]"
+        );
+        $this->assertSame(1, $badges->length);
+
+        $css = file_get_contents(__DIR__ . '/../styles.css');
+        $this->assertStringContainsString('.ph-drop-image-container .ph-badge-bottom-center {', $css);
+        $this->assertDoesNotMatchRegularExpression(
+            '/^(span|div)\.ph-badge-bottom-center\b/m',
+            $css,
+            'A tag-qualified selector would miss the element the template and the script emit.'
+        );
+    }
+
+    /**
+     * Every template of the plugin declares the plugin's own component as its package.
+     *
+     * @covers \filter_playerhud\output\render
+     */
+    public function test_templates_declare_their_own_package(): void {
+        foreach (glob(__DIR__ . '/../templates/*.mustache') as $file) {
+            $this->assertMatchesRegularExpression(
+                '/@package\s+filter_playerhud\b/',
+                file_get_contents($file),
+                basename($file) . ' must declare @package filter_playerhud.'
+            );
+        }
+    }
 }

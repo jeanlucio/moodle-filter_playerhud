@@ -24,6 +24,7 @@
  * @copyright  2026 Jean Lúcio
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+/* The filter renders on pages it does not own, so no .path-* body class applies: rules hang off plugin-prefixed classes. */
 div.ph-drop-icon-wrapper .ph-icon-large {
     font-size: 3rem;
     line-height: 1.2;
@@ -175,7 +176,7 @@ span.ph-badge-bottom-right {
     z-index: 5;
 }
 
-span.ph-badge-bottom-center {
+.ph-drop-image-container .ph-badge-bottom-center {
     position: absolute;
     bottom: -18px;
     left: 50%;
