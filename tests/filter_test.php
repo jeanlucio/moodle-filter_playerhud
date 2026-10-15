@@ -1249,4 +1249,169 @@ final class filter_test extends advanced_testcase {
         $this->assertStringContainsString('[PLAYERHUD_DROP code=SELF1]', $decoded);
         $this->assertStringNotContainsString('ph-action-collect', $decoded);
     }
+
+    /**
+     * Helper to insert a trade that pays one unit of an item for one unit of another.
+     *
+     * @param int $instanceid The block instance ID.
+     * @param int $reqitemid Item the player pays.
+     * @param int $rewarditemid Item the player receives.
+     * @param int $groupid The trade's groupid (0 = everyone, positive = group, negative = grouping).
+     * @return string The trade's shortcode code.
+     */
+    protected function create_trade(int $instanceid, int $reqitemid, int $rewarditemid, int $groupid = 0): string {
+        global $DB;
+
+        $tradeid = $DB->insert_record('block_playerhud_trades', (object) [
+            'blockinstanceid' => $instanceid, 'name' => 'Restricted Trade', 'groupid' => $groupid,
+            'centralized' => 1, 'onetime' => 0, 'timecreated' => time(),
+        ]);
+        $DB->insert_record('block_playerhud_trade_reqs', (object) [
+            'tradeid' => $tradeid, 'itemid' => $reqitemid, 'qty' => 1,
+        ]);
+        $DB->insert_record('block_playerhud_trade_rewards', (object) [
+            'tradeid' => $tradeid, 'itemid' => $rewarditemid, 'qty' => 1,
+        ]);
+        return \block_playerhud\utils::assign_trade_code((int) $tradeid);
+    }
+
+    /**
+     * Helper to insert a second item in the block instance.
+     *
+     * @param int $instanceid The block instance ID.
+     * @param string $requiredclass Value of required_class_id.
+     * @param int $enabled Whether the item is enabled.
+     * @return int The new item ID.
+     */
+    protected function create_item(int $instanceid, string $requiredclass = '0', int $enabled = 1): int {
+        global $DB;
+
+        return $DB->insert_record('block_playerhud_items', (object) [
+            'blockinstanceid' => $instanceid, 'name' => 'Second Item', 'xp' => 0, 'image' => '', 'description' => '',
+            'enabled' => $enabled, 'secret' => 0, 'required_class_id' => $requiredclass,
+            'timecreated' => time(), 'timemodified' => time(),
+        ]);
+    }
+
+    /**
+     * With the items feature turned off in the block, drop and trade shortcodes disappear, as
+     * the server refuses both actions; the widget shortcode is untouched.
+     *
+     * @covers \filter_playerhud\text_filter::filter
+     */
+    public function test_filter_strips_drops_and_trades_when_items_disabled(): void {
+        global $DB, $PAGE, $COURSE;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+        $PAGE->set_url('/course/view.php', ['id' => $COURSE->id]);
+        // Keep the lazy $OUTPUT bootstrap from resetting $COURSE between the filter() calls below.
+        $PAGE->set_course($COURSE);
+        $PAGE->set_course($COURSE);
+        $this->create_drop($instanceid, $itemid, 'OFF123');
+        $code = $this->create_trade($instanceid, $itemid, $this->create_item($instanceid));
+
+        $text = "A [PLAYERHUD_DROP code=OFF123] B [PLAYERHUD_TRADE code={$code}] C";
+
+        $filter = new text_filter($context, []);
+        $this->assertStringContainsString('ph-action-collect', $filter->filter($text));
+
+        \filter_playerhud\output\render::reset_caches();
+        \filter_playerhud\text_filter::reset_caches();
+        $config = (object) ['enable_items' => 0];
+        $DB->set_field('block_instances', 'configdata', base64_encode(serialize($config)), ['id' => $instanceid]);
+
+        $this->assertSame('A  B  C', (new text_filter($context, []))->filter($text));
+    }
+
+    /**
+     * A trade with a disabled requirement or reward item is hidden, like in the block's shop.
+     *
+     * @covers \filter_playerhud\output\render::render_trade
+     */
+    public function test_render_trade_hidden_when_an_item_is_disabled(): void {
+        global $DB, $PAGE, $COURSE;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+        $PAGE->set_url('/course/view.php', ['id' => $COURSE->id]);
+        // Keep the lazy $OUTPUT bootstrap from resetting $COURSE between the filter() calls below.
+        $PAGE->set_course($COURSE);
+        $rewarditemid = $this->create_item($instanceid);
+        $code = $this->create_trade($instanceid, $itemid, $rewarditemid);
+
+        $shortcode = "[PLAYERHUD_TRADE code={$code}]";
+        $this->assertStringContainsString('ph-trade-widget-card', (new text_filter($context, []))->filter($shortcode));
+
+        \filter_playerhud\output\render::reset_caches();
+        \filter_playerhud\text_filter::reset_caches();
+        $DB->set_field('block_playerhud_items', 'enabled', 0, ['id' => $rewarditemid]);
+
+        $this->assertSame('', (new text_filter($context, []))->filter($shortcode));
+    }
+
+    /**
+     * A trade whose reward is restricted to another RPG class is hidden; it shows for that class.
+     *
+     * @covers \filter_playerhud\output\render::render_trade
+     */
+    public function test_render_trade_hidden_when_reward_is_for_another_class(): void {
+        global $DB, $PAGE, $COURSE;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid, $user] = $this->setup_environment();
+        $PAGE->set_url('/course/view.php', ['id' => $COURSE->id]);
+        // Keep the lazy $OUTPUT bootstrap from resetting $COURSE between the filter() calls below.
+        $PAGE->set_course($COURSE);
+        $classid = $DB->insert_record('block_playerhud_classes', (object) [
+            'blockinstanceid' => $instanceid, 'name' => 'Knight', 'description' => '', 'base_hp' => 100,
+            'timecreated' => time(), 'timemodified' => time(),
+        ]);
+        $code = $this->create_trade($instanceid, $itemid, $this->create_item($instanceid, (string) $classid));
+        $shortcode = "[PLAYERHUD_TRADE code={$code}]";
+
+        $this->assertSame('', (new text_filter($context, []))->filter($shortcode));
+
+        \filter_playerhud\output\render::reset_caches();
+        \filter_playerhud\text_filter::reset_caches();
+        $DB->insert_record('block_playerhud_rpg_progress', (object) [
+            'blockinstanceid' => $instanceid, 'userid' => $user->id, 'classid' => $classid, 'karma' => 0,
+            'current_nodes' => '{}', 'completed_chapters' => '[]', 'timecreated' => time(), 'timemodified' => time(),
+        ]);
+
+        $this->assertStringContainsString(
+            'ph-trade-widget-card',
+            (new text_filter($context, []))->filter($shortcode)
+        );
+    }
+
+    /**
+     * A trade restricted to a group or grouping is hidden from users outside it.
+     *
+     * @covers \filter_playerhud\output\render::render_trade
+     */
+    public function test_render_trade_hidden_outside_its_group_or_grouping(): void {
+        global $PAGE, $COURSE;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid, $user] = $this->setup_environment();
+        $PAGE->set_url('/course/view.php', ['id' => $COURSE->id]);
+        // Keep the lazy $OUTPUT bootstrap from resetting $COURSE between the filter() calls below.
+        $PAGE->set_course($COURSE);
+        $rewarditemid = $this->create_item($instanceid);
+        $generator = $this->getDataGenerator();
+        $group = $generator->create_group(['courseid' => $COURSE->id]);
+        $grouping = $generator->create_grouping(['courseid' => $COURSE->id]);
+        $generator->create_grouping_group(['groupingid' => $grouping->id, 'groupid' => $group->id]);
+
+        $forgroup = "[PLAYERHUD_TRADE code=" . $this->create_trade($instanceid, $itemid, $rewarditemid, (int) $group->id) . ']';
+        $forgrouping = "[PLAYERHUD_TRADE code=" .
+            $this->create_trade($instanceid, $itemid, $rewarditemid, -(int) $grouping->id) . ']';
+
+        $this->assertSame('', (new text_filter($context, []))->filter($forgroup));
+        $this->assertSame('', (new text_filter($context, []))->filter($forgrouping));
+
+        $generator->create_group_member(['groupid' => $group->id, 'userid' => $user->id]);
+        \filter_playerhud\output\render::reset_caches();
+        \filter_playerhud\text_filter::reset_caches();
+
+        $this->assertStringContainsString('ph-trade-widget-card', (new text_filter($context, []))->filter($forgroup));
+        $this->assertStringContainsString('ph-trade-widget-card', (new text_filter($context, []))->filter($forgrouping));
+    }
 }

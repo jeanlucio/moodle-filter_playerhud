@@ -271,21 +271,7 @@ class render {
         // Class restriction: only query RPG progress when the item actually has a restriction.
         $userclassid = 0;
         if (!empty($data->required_class_id) && $data->required_class_id !== '0') {
-            if (!isset(self::$classcache[$cachekey])) {
-                $myclassid = 0;
-                if ($DB->get_manager()->table_exists('block_playerhud_rpg_progress')) {
-                    $prog = $DB->get_record(
-                        'block_playerhud_rpg_progress',
-                        ['userid' => $USER->id, 'blockinstanceid' => $blockinstanceid],
-                        'classid'
-                    );
-                    if ($prog) {
-                        $myclassid = (int) $prog->classid;
-                    }
-                }
-                self::$classcache[$cachekey] = $myclassid;
-            }
-            $userclassid = self::$classcache[$cachekey];
+            $userclassid = self::get_user_class_id($blockinstanceid);
         }
         if (!self::is_item_visible_for_class($data->required_class_id, $userclassid)) {
             return '';
@@ -610,19 +596,41 @@ class render {
 
         $context = context_block::instance($blockinstanceid);
 
+        // Same group restriction trade_manager::execute_trade() enforces.
+        if (!self::is_trade_group_allowed((int) $trade->groupid, (int) $COURSE->id)) {
+            return '';
+        }
+
         // Fetch Requirements.
-        $sqlreqs = "SELECT req.id, req.itemid, req.qty, i.name, i.image
+        $sqlreqs = "SELECT req.id, req.itemid, req.qty, i.name, i.image, i.enabled, i.required_class_id
                       FROM {block_playerhud_trade_reqs} req
                       JOIN {block_playerhud_items} i ON req.itemid = i.id
                      WHERE req.tradeid = :tradeid";
         $reqs = $DB->get_records_sql($sqlreqs, ['tradeid' => $id]);
 
         // Fetch Rewards.
-        $sqlrewards = "SELECT rew.id, rew.itemid, rew.qty, i.name, i.image
+        $sqlrewards = "SELECT rew.id, rew.itemid, rew.qty, i.name, i.image, i.enabled, i.required_class_id
                          FROM {block_playerhud_trade_rewards} rew
                          JOIN {block_playerhud_items} i ON rew.itemid = i.id
                         WHERE rew.tradeid = :tradeid";
         $rewards = $DB->get_records_sql($sqlrewards, ['tradeid' => $id]);
+
+        // A trade the block hides and refuses is not offered here either: any disabled item,
+        // or a reward restricted to a class the player does not belong to.
+        $tradeitems = array_merge($reqs ?: [], $rewards ?: []);
+        foreach ($tradeitems as $tradeitem) {
+            if (!$tradeitem->enabled) {
+                return '';
+            }
+        }
+        if ($rewards) {
+            $userclassid = self::get_user_class_id($blockinstanceid);
+            foreach ($rewards as $rew) {
+                if (!self::is_item_visible_for_class((string) $rew->required_class_id, $userclassid)) {
+                    return '';
+                }
+            }
+        }
 
         // 1. BULK FETCH: Group all necessary items for the current trade.
         $fakeitems = [];
@@ -719,6 +727,55 @@ class render {
         ];
 
         return $OUTPUT->render_from_template('filter_playerhud/trade', $templatedata);
+    }
+
+    /**
+     * The RPG class of the current user in a block instance, 0 when none is chosen.
+     *
+     * @param int $blockinstanceid The block instance ID.
+     * @return int Class ID.
+     */
+    private static function get_user_class_id(int $blockinstanceid): int {
+        global $DB, $USER;
+
+        $cachekey = $blockinstanceid . '_' . $USER->id;
+        if (!isset(self::$classcache[$cachekey])) {
+            $myclassid = 0;
+            if ($DB->get_manager()->table_exists('block_playerhud_rpg_progress')) {
+                $prog = $DB->get_record(
+                    'block_playerhud_rpg_progress',
+                    ['userid' => $USER->id, 'blockinstanceid' => $blockinstanceid],
+                    'classid'
+                );
+                if ($prog) {
+                    $myclassid = (int) $prog->classid;
+                }
+            }
+            self::$classcache[$cachekey] = $myclassid;
+        }
+        return self::$classcache[$cachekey];
+    }
+
+    /**
+     * Tells whether the current user belongs to the group or grouping a trade is restricted to.
+     *
+     * Mirrors the check in \block_playerhud\trade_manager::execute_trade(): a positive group id is
+     * a group, a negative one is a grouping, and zero means the trade is open to everyone.
+     *
+     * @param int $groupid The trade's groupid column.
+     * @param int $courseid The course ID.
+     * @return bool True when the user may see and perform the trade.
+     */
+    private static function is_trade_group_allowed(int $groupid, int $courseid): bool {
+        global $USER;
+
+        if ($groupid === 0) {
+            return true;
+        }
+        if ($groupid > 0) {
+            return groups_is_member($groupid, $USER->id);
+        }
+        return !empty(groups_get_all_groups($courseid, $USER->id, abs($groupid)));
     }
 
     /**

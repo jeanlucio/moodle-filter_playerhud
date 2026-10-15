@@ -111,6 +111,14 @@ class text_filter extends \core_filters\text_filter {
             }
         }
 
+        // Drops and trades belong to the items feature: with it turned off in the block the server
+        // refuses every collection and trade, so the cards would only offer actions that fail.
+        $config = unserialize_object(base64_decode((string) $blockinstance->configdata));
+        if (!\block_playerhud\utils::config_feature_enabled($config, 'items')) {
+            $text = preg_replace('/\[PLAYERHUD_DROP\s+[^\]]+\]/i', '', $text);
+            $text = preg_replace('/\[PLAYERHUD_TRADE\s+[^\]]+\]/i', '', $text);
+        }
+
         // Extract shortcode parameters for bulk loading (Zero N+1 Strategy).
         $dropcodes = [];
         if (preg_match_all('/\[PLAYERHUD_DROP\s+([^\]]+)\]/i', $text, $matches)) {
