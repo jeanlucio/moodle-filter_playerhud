@@ -524,11 +524,11 @@ class render {
     /**
      * Resolves a short lookup code to its trade ID and renders it.
      *
-     * The code is derived from md5($id . '_' . $timecreated), truncated to 6 hex chars —
-     * a convenience identifier for the shortcode syntax, not a security boundary. It is
-     * derivable from two low-entropy values and offline-bruteforceable; do not rely on it
-     * to gate access. The real access control lives in process_trade.php (sesskey,
-     * capability and group checks), which this method never bypasses.
+     * The code is stored on the trade and survives backup and restore. Older trades keep the
+     * md5($id . '_' . $timecreated) prefix they were first shown with, so it is a convenience
+     * identifier for the shortcode syntax, not a security boundary; do not rely on it to gate
+     * access. The real access control lives in process_trade.php (sesskey, capability and
+     * group checks), which this method never bypasses.
      *
      * @param string $code The 6-character lookup code.
      * @param int $blockinstanceid The block instance ID.
@@ -543,11 +543,12 @@ class render {
 
         // Cache to avoid N+1 if there are multiple shortcodes on the same page.
         if (!isset(self::$tradescache[$blockinstanceid])) {
+            // Lowest id first: if two trades ever shared a code, the older one keeps resolving.
             self::$tradescache[$blockinstanceid] = $DB->get_records(
                 'block_playerhud_trades',
                 ['blockinstanceid' => $blockinstanceid],
-                '',
-                'id, timecreated'
+                'id ASC',
+                'id, code, timecreated'
             );
         }
 
@@ -555,8 +556,10 @@ class render {
 
         if (!empty(self::$tradescache[$blockinstanceid])) {
             foreach (self::$tradescache[$blockinstanceid] as $t) {
-                $expectedcode = strtoupper(substr(md5($t->id . '_' . $t->timecreated), 0, 6));
-                if ($expectedcode === strtoupper($code)) {
+                // A trade inserted without a code is shown with the id-derived one, as before.
+                $stored = (string) $t->code !== '' ? $t->code
+                    : \block_playerhud\utils::legacy_trade_code((int) $t->id, $t->timecreated);
+                if (strtoupper($stored) === strtoupper($code)) {
                     $tradeid = $t->id;
                     break;
                 }

@@ -869,8 +869,7 @@ final class filter_test extends advanced_testcase {
         $reward->qty = 1;
         $DB->insert_record('block_playerhud_trade_rewards', $reward);
 
-        // The public code is the first 6 hex chars of md5("{id}_{timecreated}").
-        $code = strtoupper(substr(md5($tradeid . '_' . $trade->timecreated), 0, 6));
+        $code = \block_playerhud\utils::assign_trade_code((int) $tradeid);
 
         $filter = new text_filter($context, []);
         $filteredtext = $filter->filter("Offer: [PLAYERHUD_TRADE code={$code}]");
@@ -928,13 +927,44 @@ final class filter_test extends advanced_testcase {
             'timemodified' => time(),
         ]);
 
-        $code = strtoupper(substr(md5($tradeid . '_' . $trade->timecreated), 0, 6));
+        $code = \block_playerhud\utils::assign_trade_code((int) $tradeid);
 
         $filter = new text_filter($context, []);
         $filteredtext = $filter->filter("Offer: [PLAYERHUD_TRADE code={$code}]");
 
         $this->assertStringContainsString('btn-success', $filteredtext);
         $this->assertStringNotContainsString('btn-outline-secondary', $filteredtext);
+    }
+
+    /**
+     * A trade is found by its stored code, not by a code derived from its id.
+     *
+     * A restore gives the trade a new id but keeps its code, so the shortcodes restored with the
+     * content only keep working if the code is read from the record.
+     *
+     * @covers \filter_playerhud\output\render::render_trade_by_code
+     */
+    public function test_render_trade_by_stored_code_after_id_change(): void {
+        global $DB, $PAGE, $COURSE;
+        $this->resetAfterTest(true);
+
+        [$context, $instanceid, $itemid] = $this->setup_environment();
+        $PAGE->set_url('/course/view.php', ['id' => $COURSE->id]);
+
+        $tradeid = $DB->insert_record('block_playerhud_trades', (object) [
+            'blockinstanceid' => $instanceid, 'name' => 'Restored Trade', 'groupid' => 0, 'centralized' => 1,
+            'onetime' => 0, 'code' => 'RSTR01', 'timecreated' => time(),
+        ]);
+        $DB->insert_record('block_playerhud_trade_reqs', (object) ['tradeid' => $tradeid, 'itemid' => $itemid, 'qty' => 1]);
+        $DB->insert_record('block_playerhud_trade_rewards', (object) ['tradeid' => $tradeid, 'itemid' => $itemid, 'qty' => 1]);
+
+        $filter = new text_filter($context, []);
+        $this->assertStringContainsString('Restored Trade', $filter->filter('Offer: [PLAYERHUD_TRADE code=RSTR01]'));
+
+        \filter_playerhud\output\render::reset_caches();
+        $timecreated = $DB->get_field('block_playerhud_trades', 'timecreated', ['id' => $tradeid]);
+        $derived = \block_playerhud\utils::legacy_trade_code((int) $tradeid, $timecreated);
+        $this->assertStringNotContainsString('Restored Trade', $filter->filter("Offer: [PLAYERHUD_TRADE code={$derived}]"));
     }
 
     /**
