@@ -460,7 +460,6 @@ class render {
             $btntext .= ' (x' . $valuedisplay . ')';
         }
 
-        $emojihyml = !empty($btnemoji) ? '<span aria-hidden="true" class="me-1">' . s($btnemoji) . '</span> ' : '';
         $textlabel = ($issecret && empty($customtext)) ? $displayname : ($customtext ?: $displayname);
 
         $templatedata = [
@@ -484,7 +483,7 @@ class render {
             'media_url' => $media['url'],
             'media_content' => $media['content'],
             'btn_text' => $btntext,
-            'emoji_html' => $emojihyml,
+            'btn_emoji' => $btnemoji,
             'collect_url' => $collecturl->out(false),
             // Individual data-* values, one per template key: the template's own {{ }}
             // auto-escaping is the single point of truth for how each is rendered, so a
@@ -601,6 +600,15 @@ class render {
             return '';
         }
 
+        // A one-time trade the user already performed is done for good: the block's shop shows it
+        // as completed and execute_trade() refuses it.
+        if (
+            $trade->onetime == 1
+            && $DB->record_exists('block_playerhud_trade_log', ['tradeid' => $id, 'userid' => $USER->id])
+        ) {
+            return '';
+        }
+
         // Fetch Requirements.
         $sqlreqs = "SELECT req.id, req.itemid, req.qty, i.name, i.image, i.enabled, i.required_class_id
                       FROM {block_playerhud_trade_reqs} req
@@ -647,20 +655,13 @@ class render {
 
         $allmedia = \block_playerhud\utils::get_items_display_data($fakeitems, $context);
 
-        // 2. Bulk fetch user inventory to validate if they can afford the trade. Sums both
-        // storage generations: the legacy per-unit inventory rows and the new-engine stack
-        // balance (block_playerhud_stack) — an item obtained only through the new engine would
-        // otherwise never count towards affordability.
-        $sqlinv = "SELECT itemid, COUNT(id) as qty FROM {block_playerhud_inventory} WHERE userid = :userid GROUP BY itemid";
-        $myinventory = $DB->get_records_sql_menu($sqlinv, ['userid' => $USER->id]);
-
-        if ($DB->get_manager()->table_exists('block_playerhud_stack')) {
-            $sqlstack = "SELECT itemid, qty FROM {block_playerhud_stack} WHERE userid = :userid";
-            $mystack = $DB->get_records_sql_menu($sqlstack, ['userid' => $USER->id]);
-            foreach ($mystack as $stackitemid => $stackqty) {
-                $myinventory[$stackitemid] = ($myinventory[$stackitemid] ?? 0) + $stackqty;
-            }
-        }
+        // 2. Balance of each item, by the same rule the server applies when the trade is performed
+        // (units already consumed or revoked do not count).
+        $myinventory = \block_playerhud\local\external_items::get_available_quantities_bulk(
+            $blockinstanceid,
+            array_keys($fakeitems),
+            $USER->id
+        );
 
         // 3. Format Requirements and Check Affordability simultaneously.
         $reqsdata = [];

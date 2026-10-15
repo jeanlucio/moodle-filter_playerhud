@@ -260,7 +260,7 @@
                 <a href="{{collect_url}}"
                    class="btn btn-primary btn-sm w-100 ph-action-collect shadow-sm mt-2"
                    data-mode="card">
-                   {{{emoji_html}}} <span class="visually-hidden">{{safe_name}}: </span>{{btn_text}}
+                   {{#btn_emoji}}<span aria-hidden="true" class="me-1">{{btn_emoji}}</span> {{/btn_emoji}}<span class="visually-hidden">{{safe_name}}: </span>{{btn_text}}
                 </a>
             {{/is_cooldown}}
         {{/limit_reached}}

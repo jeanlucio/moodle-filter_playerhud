@@ -33,8 +33,8 @@ class assets {
         global $OUTPUT;
 
         $data = [
-            'str_details' => get_string('details', 'block_playerhud'),
-            'str_close' => get_string('close', 'block_playerhud'), // Or 'close' from core.
+            'item_name_placeholder' => get_string('details', 'block_playerhud'),
+            'str_close' => get_string('close', 'block_playerhud'),
         ];
 
         return $OUTPUT->render_from_template('filter_playerhud/modals', $data);

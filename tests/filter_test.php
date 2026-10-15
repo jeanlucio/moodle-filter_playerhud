@@ -1147,12 +1147,13 @@ final class filter_test extends advanced_testcase {
             'display_name' => 'Test',
             'collect_url' => '#',
             'btn_text' => 'Take',
-            'emoji_html' => '🖐',
-            'data_attributes' => '',
+            'btn_emoji' => '<b>x</b>',
         ]);
 
         $this->assertStringNotContainsString($payload, $html);
         $this->assertStringContainsString('&lt;script&gt;', $html);
+        $this->assertStringNotContainsString('<b>x</b>', $html);
+        $this->assertStringContainsString('&lt;b&gt;x&lt;/b&gt;', $html);
     }
 
     /**
@@ -1413,5 +1414,86 @@ final class filter_test extends advanced_testcase {
 
         $this->assertStringContainsString('ph-trade-widget-card', (new text_filter($context, []))->filter($forgroup));
         $this->assertStringContainsString('ph-trade-widget-card', (new text_filter($context, []))->filter($forgrouping));
+    }
+
+    /**
+     * Units the block marks as consumed or revoked no longer count towards what the player can pay.
+     *
+     * @covers \filter_playerhud\output\render::render_trade
+     */
+    public function test_render_trade_balance_ignores_consumed_and_revoked_units(): void {
+        global $DB, $PAGE, $COURSE;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid, $user] = $this->setup_environment();
+        $PAGE->set_url('/course/view.php', ['id' => $COURSE->id]);
+        $PAGE->set_course($COURSE);
+        $code = $this->create_trade($instanceid, $itemid, $this->create_item($instanceid));
+        $shortcode = "[PLAYERHUD_TRADE code={$code}]";
+
+        $unitid = $DB->insert_record('block_playerhud_inventory', (object) [
+            'userid' => $user->id, 'itemid' => $itemid, 'dropid' => 0, 'source' => 'map', 'timecreated' => time(),
+        ]);
+        $html = (new text_filter($context, []))->filter($shortcode);
+        $this->assertStringContainsString('btn-success', $html);
+
+        foreach (['consumed', 'revoked'] as $source) {
+            \filter_playerhud\output\render::reset_caches();
+            \filter_playerhud\text_filter::reset_caches();
+            $DB->set_field('block_playerhud_inventory', 'source', $source, ['id' => $unitid]);
+
+            $html = (new text_filter($context, []))->filter($shortcode);
+            $this->assertStringContainsString('ph-trade-widget-card', $html);
+            $this->assertStringNotContainsString('btn-success', $html, "A {$source} unit must not be payable.");
+        }
+    }
+
+    /**
+     * A one-time trade the user already performed is no longer offered; one still pending, or a
+     * repeatable trade already performed, is.
+     *
+     * @covers \filter_playerhud\output\render::render_trade
+     */
+    public function test_render_trade_hidden_once_a_one_time_trade_is_done(): void {
+        global $DB, $PAGE, $COURSE;
+        $this->resetAfterTest(true);
+        [$context, $instanceid, $itemid, $user] = $this->setup_environment();
+        $PAGE->set_url('/course/view.php', ['id' => $COURSE->id]);
+        $PAGE->set_course($COURSE);
+        $rewarditemid = $this->create_item($instanceid);
+        $onetime = $this->create_trade($instanceid, $itemid, $rewarditemid);
+        $repeatable = $this->create_trade($instanceid, $itemid, $rewarditemid);
+        $DB->set_field('block_playerhud_trades', 'onetime', 1, ['code' => $onetime]);
+        $DB->set_field('block_playerhud_trades', 'onetime', 0, ['code' => $repeatable]);
+        $text = "[PLAYERHUD_TRADE code={$onetime}][PLAYERHUD_TRADE code={$repeatable}]";
+
+        $this->assertSame(2, substr_count((new text_filter($context, []))->filter($text), 'ph-trade-widget-card'));
+
+        foreach ([$onetime, $repeatable] as $code) {
+            $tradeid = $DB->get_field('block_playerhud_trades', 'id', ['code' => $code]);
+            $DB->insert_record('block_playerhud_trade_log', (object) [
+                'tradeid' => $tradeid, 'userid' => $user->id, 'timecreated' => time(),
+            ]);
+        }
+        \filter_playerhud\output\render::reset_caches();
+        \filter_playerhud\text_filter::reset_caches();
+
+        $this->assertSame(1, substr_count((new text_filter($context, []))->filter($text), 'ph-trade-widget-card'));
+    }
+
+    /**
+     * The item modal is named by the heading the script fills with the item name, and every key the
+     * template uses is supplied by the class that renders it.
+     *
+     * @covers \filter_playerhud\output\assets::get_modals_html
+     */
+    public function test_modal_has_an_accessible_name(): void {
+        $this->resetAfterTest(true);
+
+        $html = (new assets())->get_modals_html();
+
+        $this->assertMatchesRegularExpression('/id="phItemModalFilter"[^>]*aria-labelledby="phModalNameF"/', $html);
+        preg_match('/<h4 id="phModalNameF"[^>]*>(.*?)<\/h4>/s', $html, $matches);
+        $this->assertNotSame('', trim($matches[1] ?? ''), 'The heading that names the dialog must have text.');
+        $this->assertDoesNotMatchRegularExpression('/id="phModalTitleF"/', $html);
     }
 }
