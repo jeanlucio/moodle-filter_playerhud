@@ -25,9 +25,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'filter_playerhud';
-$plugin->version   = 2026101500;
+$plugin->version   = 2026101501;
 $plugin->requires  = 2024100700;        // Requires: Moodle 4.5+.
 $plugin->supported = [405, 503];
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v1.7.2';
+$plugin->release   = 'v1.8.0';
 $plugin->dependencies = ['block_playerhud' => 2026101500]; // Needs the stored trade code.

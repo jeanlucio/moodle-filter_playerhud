@@ -1,5 +1,24 @@
 # Changes
 
+## [v1.8.0] — 2026-10-15
+
+- Fix: `[PLAYERHUD_TRADE]` shortcodes are resolved by the trade code that block_playerhud now
+  stores, so they keep working after a course backup and restore. Requires block_playerhud
+  v1.11.0 or later.
+- Fix: drop and trade shortcodes are removed when the Items feature is turned off in the block,
+  instead of showing cards whose button the server always refuses.
+- Fix: a trade card is no longer shown when the block would refuse the trade: an item of the
+  trade is disabled, a reward is restricted to another RPG class, the user is outside the group
+  or grouping the trade is limited to, or a one-time trade was already performed.
+- Fix: the balance on a trade card ignores units already consumed or revoked, using the same
+  rule the server applies when the trade is made, so the card no longer offers a trade the user
+  cannot pay for.
+- Fix: the item details dialog has an accessible name for screen readers.
+- Fix: the cooldown badge of a drop shown as an image is positioned over the image again; its
+  style rule never matched the element.
+- Fix: the emoji on the drop button is escaped by the template instead of being built as HTML in
+  PHP.
+
 ## [v1.7.2] — 2026-09-25
 
 - Confirmed: tested and confirmed compatible with Moodle 5.3.
