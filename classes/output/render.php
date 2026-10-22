@@ -340,7 +340,7 @@ class render {
             $xpdisplay = '???';
         } else {
             $context = context_block::instance($blockinstanceid);
-            $displayname = format_string($data->itemname);
+            $displayname = \block_playerhud\utils::plain_string($data->itemname, $context);
             // The widget stash path (widget.php) already cleans this same column with
             // format_text() before rendering; this path skipped that step and shipped the
             // raw HTML to the client instead, where the block's JS injects it verbatim.
@@ -385,7 +385,6 @@ class render {
             'courseid' => $COURSE->id,
             'sesskey' => sesskey(),
         ]);
-        $safename = s($displayname);
         // The description is always a string by this point: the mystery-item branch uses
         // get_string(), and the real-item branch coerces the nullable description column
         // with ?? '' before format_text() (which itself never returns null).
@@ -476,7 +475,7 @@ class render {
             'show_value_badge' => $showvaluebadge,
             'value_display' => $valuedisplay,
             'qty_text' => $qtytext,
-            'safe_name' => $safename,
+            'safe_name' => $displayname,
             'display_name' => $displayname,
             'label' => $textlabel,
             'is_image_media' => $media['is_image'],
@@ -678,7 +677,7 @@ class render {
 
                 $reqsdata[] = [
                     'qty' => $req->qty,
-                    'name' => format_string($req->name),
+                    'name' => \block_playerhud\utils::plain_string($req->name),
                     'is_image' => $media['is_image'],
                     'url' => $media['url'],
                     'content' => $media['content'],
@@ -695,7 +694,7 @@ class render {
                 $media = $allmedia[$rew->itemid];
                 $rewsdata[] = [
                     'qty' => $rew->qty,
-                    'name' => format_string($rew->name),
+                    'name' => \block_playerhud\utils::plain_string($rew->name),
                     'is_image' => $media['is_image'],
                     'url' => $media['url'],
                     'content' => $media['content'],
@@ -716,7 +715,7 @@ class render {
         ]);
 
         $templatedata = [
-            'trade_name' => format_string($trade->name),
+            'trade_name' => \block_playerhud\utils::plain_string($trade->name),
             'reqs' => $reqsdata,
             'rewards' => $rewsdata,
             'trade_url' => $tradeurl->out(false),

@@ -164,7 +164,7 @@ class widget implements renderable, templatable {
                 $imagepayload = $media['is_image'] ? $media['url'] : strip_tags($media['content']);
 
                 $recentitems[] = [
-                    'name' => format_string($invitem->name),
+                    'name' => \block_playerhud\utils::plain_string($invitem->name),
                     'xp' => $invitem->xp . ' ' . $strxp,
                     'image' => $imagepayload,
                     'isimage' => $media['is_image'] ? 1 : 0,
@@ -188,7 +188,7 @@ class widget implements renderable, templatable {
                 foreach ($overflowdisplay as $oid => $ovitem) {
                     $m = $allmedia[$oid] ?? ['is_image' => false, 'url' => '', 'content' => ''];
                     $overflowjsonitems[] = [
-                        'n' => format_string($ovitem->name),
+                        'n' => \block_playerhud\utils::plain_string($ovitem->name),
                         'i' => (int)(bool)$m['is_image'],
                         'u' => $m['is_image'] ? $m['url'] : strip_tags($m['content']),
                     ];
@@ -256,8 +256,8 @@ class widget implements renderable, templatable {
                     $portraittier,
                     $context
                 );
-                $classname = format_string($class->name);
-                $classfullname = format_string($class->name);
+                $classname = \block_playerhud\utils::plain_string($class->name);
+                $classfullname = \block_playerhud\utils::plain_string($class->name);
                 $classtier = $portraittier;
                 $classtiername = get_string('class_tier_' . $portraittier, 'block_playerhud');
                 // The 'filter' => false option: a class description never needs shortcode expansion, and
@@ -394,7 +394,7 @@ class widget implements renderable, templatable {
             'ranking' => $rankdata,
             'hasgroup'     => $groupinfo !== null,
             'groupbadge'   => $groupinfo ? $groupinfo->badge : '',
-            'groupname'    => $groupinfo ? format_string($groupinfo->groupname) : '',
+            'groupname'    => $groupinfo ? \block_playerhud\utils::plain_string($groupinfo->groupname) : '',
             'groupmembers' => $groupinfo
                 ? $groupinfo->membercount . '/' . $groupinfo->maxmembers
                 : '',
